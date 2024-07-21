@@ -25,7 +25,8 @@ func main() {
 
 	rpc := http.NewServeMux()
 	rpc.Handle(apiv1connect.NewHelloServiceHandler(&Handler{}))
-	rpc.Handle(apiv1connect.NewGameServiceHandler(&handler.Handler{}))
+	gmHandler := handler.NewHandler(context.Background())
+	rpc.Handle(apiv1connect.NewGameServiceHandler(gmHandler))
 
 	mux := http.NewServeMux()
 	// mux.HandleFunc("/", notFoundHandler)

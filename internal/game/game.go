@@ -115,6 +115,11 @@ func (g *Game) Action(user string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != user {
 		return ErrIsnotYourTurn
 	}
+	if g.getTimeout().Add(time.Duration(500) * time.Millisecond).After(time.Now()) {
+		// timeoutよりも500milsec大きいときにタイムアウト判定
+		g.Leave(user)
+		return ErrTimeout
+	}
 	if camp > campSize {
 		return ErrOutOfCampSize
 	}

@@ -18,6 +18,13 @@ type Playground struct {
 	gameByUser map[string]*Game
 }
 
+func NewPlayground() *Playground {
+	return &Playground{
+		gameById:   map[string]*Game{},
+		gameByUser: map[string]*Game{},
+	}
+}
+
 func (pg *Playground) NewGame(users [2]string) *Game {
 	island1 := rand.Int63n(campSize)
 	island2 := rand.Int63n(campSize)
@@ -36,8 +43,16 @@ func (pg *Playground) NewGame(users [2]string) *Game {
 	return g
 }
 
-func (pg *Playground) Use(id string) *Game {
-	return pg.gameById[id]
+func (pg *Playground) Use(id string) (*Game, error) {
+	gm, found := pg.gameById[id]
+	if !found {
+		return nil, ErrInvalidGameId
+	}
+	return gm, nil
+}
+
+func (pg *Playground) Found(user string) *Game {
+	return pg.gameByUser[user]
 }
 
 func (pg *Playground) DeleteRunner(ctx context.Context) {

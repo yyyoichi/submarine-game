@@ -2,7 +2,7 @@ genbuf:
 	buf lint && buf generate
 
 server:
-	@go run cmd/api/main.go
+	@go run main.go
 	echo "🪖 Running Server"
 
 client:

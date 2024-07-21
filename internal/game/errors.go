@@ -8,4 +8,6 @@ var (
 	ErrInvalidAction = errors.New("invalid action")
 	ErrInvalidCamp   = errors.New("invalid camp")
 	ErrGameIsOver    = errors.New("game is over")
+	ErrInvalidGameId = errors.New("invalid game id")
+	ErrTimeout       = errors.New("timeout")
 )
