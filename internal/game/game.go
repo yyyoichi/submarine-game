@@ -46,9 +46,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 			resp.Description = "💣Lose.."
 		}
 	case resp.MyTurn:
-		resp.Description = "👀Enemy turn"
-	default:
 		resp.Description = "🪖My turn"
+	default:
+		resp.Description = "👀Enemy turn"
 	}
 
 	for i, hist := range g.histories {

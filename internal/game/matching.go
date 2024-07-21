@@ -25,6 +25,7 @@ func (m *Matching) Join() (string, *[2]string) {
 	defer m.mu.Unlock()
 	u1 := uuid.NewString()
 	if m.waitUser == "" {
+		m.waitUser = u1
 		return u1, nil
 	}
 	u2 := m.waitUser
