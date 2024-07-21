@@ -11,6 +11,8 @@ import (
 	"connectrpc.com/connect"
 	apiv1 "github.com/yyyoichi/submarine-game/internal/gen/api/v1"
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v1/apiv1connect"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func main() {
@@ -27,7 +29,7 @@ func main() {
 	// mux.HandleFunc("/", notFoundHandler)
 	mux.Handle("/rpc/", http.StripPrefix("/rpc", rpc))
 
-	if err := http.ListenAndServe(port, mux); err != nil {
+	if err := http.ListenAndServe(port, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		log.Panic(err)
 	}
 }
@@ -43,3 +45,16 @@ func (h *handler) Say(ctx context.Context, req *connect.Request[apiv1.SayRequest
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// func (h *handler) Count(ctx context.Context, req *connect.Request[apiv1.CountRequest], strem *connect.ServerStream[apiv1.CountResponse]) error {
+// 	for i := range 100 {
+// 		if err := strem.Send(&apiv1.CountResponse{Count: int64(i)}); err != nil {
+// 			return err
+// 		}
+// 		select {
+// 		case <-ctx.Done():
+// 		case <-time.After(time.Duration(1) * time.Second):
+// 		}
+// 	}
+// 	return nil
+// }

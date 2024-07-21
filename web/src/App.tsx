@@ -10,7 +10,6 @@ console.log(`${window.location.origin}/rpc`);
 const transport = createConnectTransport({
 	baseUrl: `${window.location.origin}/rpc`,
 });
-
 const client = createPromiseClient(HelloService, transport);
 
 function App() {

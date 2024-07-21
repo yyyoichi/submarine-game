@@ -3,8 +3,72 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { SayRequest, SayResponse } from "./game_pb.js";
+import { ActionRequest, ActionResponse, HistoryRequest, HistoryResponse, JoinRequest, JoinResponse, LeaveRequest, LeaveResponse, SayRequest, SayResponse, WaitRequest, WaitResponse } from "./game_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
+
+/**
+ * @generated from service api.v1.GameService
+ */
+export const GameService = {
+  typeName: "api.v1.GameService",
+  methods: {
+    /**
+     * 対戦する
+     *
+     * @generated from rpc api.v1.GameService.Join
+     */
+    join: {
+      name: "Join",
+      I: JoinRequest,
+      O: JoinResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * 対戦から離れる
+     *
+     * @generated from rpc api.v1.GameService.Leave
+     */
+    leave: {
+      name: "Leave",
+      I: LeaveRequest,
+      O: LeaveResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * 行動履歴を取得する
+     *
+     * @generated from rpc api.v1.GameService.History
+     */
+    history: {
+      name: "History",
+      I: HistoryRequest,
+      O: HistoryResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * 行動する
+     *
+     * @generated from rpc api.v1.GameService.Action
+     */
+    action: {
+      name: "Action",
+      I: ActionRequest,
+      O: ActionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * 相手の行動を待機する
+     *
+     * @generated from rpc api.v1.GameService.Wait
+     */
+    wait: {
+      name: "Wait",
+      I: WaitRequest,
+      O: WaitResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+  }
+} as const;
 
 /**
  * @generated from service api.v1.HelloService

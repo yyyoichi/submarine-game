@@ -4,7 +4,556 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
+
+/**
+ * @generated from enum api.v1.ActionType
+ */
+export enum ActionType {
+  /**
+   * @generated from enum value: ACTION_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * 移動
+   *
+   * @generated from enum value: ACTION_TYPE_MOVE = 1;
+   */
+  MOVE = 1,
+
+  /**
+   * ボム
+   *
+   * @generated from enum value: ACTION_TYPE_BOMB = 2;
+   */
+  BOMB = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(ActionType)
+proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
+  { no: 0, name: "ACTION_TYPE_UNSPECIFIED" },
+  { no: 1, name: "ACTION_TYPE_MOVE" },
+  { no: 2, name: "ACTION_TYPE_BOMB" },
+]);
+
+/**
+ * @generated from message api.v1.JoinRequest
+ */
+export class JoinRequest extends Message<JoinRequest> {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<JoinRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.JoinRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinRequest {
+    return new JoinRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JoinRequest {
+    return new JoinRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JoinRequest {
+    return new JoinRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: JoinRequest | PlainMessage<JoinRequest> | undefined, b: JoinRequest | PlainMessage<JoinRequest> | undefined): boolean {
+    return proto3.util.equals(JoinRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.JoinResponse
+ */
+export class JoinResponse extends Message<JoinResponse> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<JoinResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.JoinResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinResponse {
+    return new JoinResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JoinResponse {
+    return new JoinResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JoinResponse {
+    return new JoinResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: JoinResponse | PlainMessage<JoinResponse> | undefined, b: JoinResponse | PlainMessage<JoinResponse> | undefined): boolean {
+    return proto3.util.equals(JoinResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.LeaveRequest
+ */
+export class LeaveRequest extends Message<LeaveRequest> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<LeaveRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.LeaveRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LeaveRequest {
+    return new LeaveRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): LeaveRequest {
+    return new LeaveRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): LeaveRequest {
+    return new LeaveRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: LeaveRequest | PlainMessage<LeaveRequest> | undefined, b: LeaveRequest | PlainMessage<LeaveRequest> | undefined): boolean {
+    return proto3.util.equals(LeaveRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.LeaveResponse
+ */
+export class LeaveResponse extends Message<LeaveResponse> {
+  constructor(data?: PartialMessage<LeaveResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.LeaveResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LeaveResponse {
+    return new LeaveResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): LeaveResponse {
+    return new LeaveResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): LeaveResponse {
+    return new LeaveResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: LeaveResponse | PlainMessage<LeaveResponse> | undefined, b: LeaveResponse | PlainMessage<LeaveResponse> | undefined): boolean {
+    return proto3.util.equals(LeaveResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.HistoryRequest
+ */
+export class HistoryRequest extends Message<HistoryRequest> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<HistoryRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.HistoryRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryRequest {
+    return new HistoryRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): HistoryRequest {
+    return new HistoryRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): HistoryRequest {
+    return new HistoryRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: HistoryRequest | PlainMessage<HistoryRequest> | undefined, b: HistoryRequest | PlainMessage<HistoryRequest> | undefined): boolean {
+    return proto3.util.equals(HistoryRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.HistoryResponse
+ */
+export class HistoryResponse extends Message<HistoryResponse> {
+  /**
+   * 島
+   *
+   * @generated from field: repeated int64 island = 1;
+   */
+  island: bigint[] = [];
+
+  /**
+   * 自分のターンか
+   *
+   * @generated from field: bool my_turn = 2;
+   */
+  myTurn = false;
+
+  /**
+   * 勝利者
+   *
+   * @generated from field: string winner = 3;
+   */
+  winner = "";
+
+  /**
+   * 行動履歴
+   *
+   * @generated from field: repeated api.v1.History histories = 4;
+   */
+  histories: History[] = [];
+
+  /**
+   * 行動期限
+   *
+   * @generated from field: int64 timeout = 5;
+   */
+  timeout = protoInt64.zero;
+
+  /**
+   * 説明
+   *
+   * @generated from field: string description = 6;
+   */
+  description = "";
+
+  constructor(data?: PartialMessage<HistoryResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.HistoryResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "island", kind: "scalar", T: 3 /* ScalarType.INT64 */, repeated: true },
+    { no: 2, name: "my_turn", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "winner", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "histories", kind: "message", T: History, repeated: true },
+    { no: 5, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 6, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse {
+    return new HistoryResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): HistoryResponse {
+    return new HistoryResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): HistoryResponse {
+    return new HistoryResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: HistoryResponse | PlainMessage<HistoryResponse> | undefined, b: HistoryResponse | PlainMessage<HistoryResponse> | undefined): boolean {
+    return proto3.util.equals(HistoryResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.History
+ */
+export class History extends Message<History> {
+  /**
+   * 行動ユーザ
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * 行動順
+   *
+   * @generated from field: int64 turn = 2;
+   */
+  turn = protoInt64.zero;
+
+  /**
+   * 行動場所
+   *
+   * @generated from field: uint32 camp = 3;
+   */
+  camp = 0;
+
+  /**
+   * 行動内容
+   *
+   * @generated from field: api.v1.ActionType type = 4;
+   */
+  type = ActionType.UNSPECIFIED;
+
+  /**
+   * 行動内容説明
+   *
+   * @generated from field: string description = 5;
+   */
+  description = "";
+
+  constructor(data?: PartialMessage<History>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.History";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "turn", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
+    { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): History {
+    return new History().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): History {
+    return new History().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): History {
+    return new History().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: History | PlainMessage<History> | undefined, b: History | PlainMessage<History> | undefined): boolean {
+    return proto3.util.equals(History, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.ActionRequest
+ */
+export class ActionRequest extends Message<ActionRequest> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId = "";
+
+  /**
+   * 行動場所
+   *
+   * @generated from field: uint32 camp = 3;
+   */
+  camp = 0;
+
+  /**
+   * 行動内容
+   *
+   * @generated from field: api.v1.ActionType type = 4;
+   */
+  type = ActionType.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<ActionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.ActionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActionRequest {
+    return new ActionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActionRequest {
+    return new ActionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActionRequest {
+    return new ActionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ActionRequest | PlainMessage<ActionRequest> | undefined, b: ActionRequest | PlainMessage<ActionRequest> | undefined): boolean {
+    return proto3.util.equals(ActionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.ActionResponse
+ */
+export class ActionResponse extends Message<ActionResponse> {
+  constructor(data?: PartialMessage<ActionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.ActionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActionResponse {
+    return new ActionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActionResponse {
+    return new ActionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActionResponse {
+    return new ActionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ActionResponse | PlainMessage<ActionResponse> | undefined, b: ActionResponse | PlainMessage<ActionResponse> | undefined): boolean {
+    return proto3.util.equals(ActionResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.WaitRequest
+ */
+export class WaitRequest extends Message<WaitRequest> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId = "";
+
+  constructor(data?: PartialMessage<WaitRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.WaitRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitRequest {
+    return new WaitRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitRequest {
+    return new WaitRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitRequest {
+    return new WaitRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WaitRequest | PlainMessage<WaitRequest> | undefined, b: WaitRequest | PlainMessage<WaitRequest> | undefined): boolean {
+    return proto3.util.equals(WaitRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.WaitResponse
+ */
+export class WaitResponse extends Message<WaitResponse> {
+  /**
+   * 相手の行動終了
+   *
+   * @generated from field: bool done = 1;
+   */
+  done = false;
+
+  constructor(data?: PartialMessage<WaitResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.WaitResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "done", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitResponse {
+    return new WaitResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitResponse {
+    return new WaitResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitResponse {
+    return new WaitResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WaitResponse | PlainMessage<WaitResponse> | undefined, b: WaitResponse | PlainMessage<WaitResponse> | undefined): boolean {
+    return proto3.util.equals(WaitResponse, a, b);
+  }
+}
 
 /**
  * @generated from message api.v1.SayRequest

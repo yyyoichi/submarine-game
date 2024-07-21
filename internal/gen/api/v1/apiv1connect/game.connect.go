@@ -21,6 +21,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
+	// GameServiceName is the fully-qualified name of the GameService service.
+	GameServiceName = "api.v1.GameService"
 	// HelloServiceName is the fully-qualified name of the HelloService service.
 	HelloServiceName = "api.v1.HelloService"
 )
@@ -33,15 +35,213 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// GameServiceJoinProcedure is the fully-qualified name of the GameService's Join RPC.
+	GameServiceJoinProcedure = "/api.v1.GameService/Join"
+	// GameServiceLeaveProcedure is the fully-qualified name of the GameService's Leave RPC.
+	GameServiceLeaveProcedure = "/api.v1.GameService/Leave"
+	// GameServiceHistoryProcedure is the fully-qualified name of the GameService's History RPC.
+	GameServiceHistoryProcedure = "/api.v1.GameService/History"
+	// GameServiceActionProcedure is the fully-qualified name of the GameService's Action RPC.
+	GameServiceActionProcedure = "/api.v1.GameService/Action"
+	// GameServiceWaitProcedure is the fully-qualified name of the GameService's Wait RPC.
+	GameServiceWaitProcedure = "/api.v1.GameService/Wait"
 	// HelloServiceSayProcedure is the fully-qualified name of the HelloService's Say RPC.
 	HelloServiceSayProcedure = "/api.v1.HelloService/Say"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	helloServiceServiceDescriptor   = v1.File_api_v1_game_proto.Services().ByName("HelloService")
-	helloServiceSayMethodDescriptor = helloServiceServiceDescriptor.Methods().ByName("Say")
+	gameServiceServiceDescriptor       = v1.File_api_v1_game_proto.Services().ByName("GameService")
+	gameServiceJoinMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Join")
+	gameServiceLeaveMethodDescriptor   = gameServiceServiceDescriptor.Methods().ByName("Leave")
+	gameServiceHistoryMethodDescriptor = gameServiceServiceDescriptor.Methods().ByName("History")
+	gameServiceActionMethodDescriptor  = gameServiceServiceDescriptor.Methods().ByName("Action")
+	gameServiceWaitMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Wait")
+	helloServiceServiceDescriptor      = v1.File_api_v1_game_proto.Services().ByName("HelloService")
+	helloServiceSayMethodDescriptor    = helloServiceServiceDescriptor.Methods().ByName("Say")
 )
+
+// GameServiceClient is a client for the api.v1.GameService service.
+type GameServiceClient interface {
+	// 対戦する
+	Join(context.Context, *connect.Request[v1.JoinRequest]) (*connect.ServerStreamForClient[v1.JoinResponse], error)
+	// 対戦から離れる
+	Leave(context.Context, *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error)
+	// 行動履歴を取得する
+	History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error)
+	// 行動する
+	Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error)
+	// 相手の行動を待機する
+	Wait(context.Context, *connect.Request[v1.WaitRequest]) (*connect.ServerStreamForClient[v1.WaitResponse], error)
+}
+
+// NewGameServiceClient constructs a client for the api.v1.GameService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GameServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &gameServiceClient{
+		join: connect.NewClient[v1.JoinRequest, v1.JoinResponse](
+			httpClient,
+			baseURL+GameServiceJoinProcedure,
+			connect.WithSchema(gameServiceJoinMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		leave: connect.NewClient[v1.LeaveRequest, v1.LeaveResponse](
+			httpClient,
+			baseURL+GameServiceLeaveProcedure,
+			connect.WithSchema(gameServiceLeaveMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		history: connect.NewClient[v1.HistoryRequest, v1.HistoryResponse](
+			httpClient,
+			baseURL+GameServiceHistoryProcedure,
+			connect.WithSchema(gameServiceHistoryMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		action: connect.NewClient[v1.ActionRequest, v1.ActionResponse](
+			httpClient,
+			baseURL+GameServiceActionProcedure,
+			connect.WithSchema(gameServiceActionMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		wait: connect.NewClient[v1.WaitRequest, v1.WaitResponse](
+			httpClient,
+			baseURL+GameServiceWaitProcedure,
+			connect.WithSchema(gameServiceWaitMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// gameServiceClient implements GameServiceClient.
+type gameServiceClient struct {
+	join    *connect.Client[v1.JoinRequest, v1.JoinResponse]
+	leave   *connect.Client[v1.LeaveRequest, v1.LeaveResponse]
+	history *connect.Client[v1.HistoryRequest, v1.HistoryResponse]
+	action  *connect.Client[v1.ActionRequest, v1.ActionResponse]
+	wait    *connect.Client[v1.WaitRequest, v1.WaitResponse]
+}
+
+// Join calls api.v1.GameService.Join.
+func (c *gameServiceClient) Join(ctx context.Context, req *connect.Request[v1.JoinRequest]) (*connect.ServerStreamForClient[v1.JoinResponse], error) {
+	return c.join.CallServerStream(ctx, req)
+}
+
+// Leave calls api.v1.GameService.Leave.
+func (c *gameServiceClient) Leave(ctx context.Context, req *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error) {
+	return c.leave.CallUnary(ctx, req)
+}
+
+// History calls api.v1.GameService.History.
+func (c *gameServiceClient) History(ctx context.Context, req *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error) {
+	return c.history.CallUnary(ctx, req)
+}
+
+// Action calls api.v1.GameService.Action.
+func (c *gameServiceClient) Action(ctx context.Context, req *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error) {
+	return c.action.CallUnary(ctx, req)
+}
+
+// Wait calls api.v1.GameService.Wait.
+func (c *gameServiceClient) Wait(ctx context.Context, req *connect.Request[v1.WaitRequest]) (*connect.ServerStreamForClient[v1.WaitResponse], error) {
+	return c.wait.CallServerStream(ctx, req)
+}
+
+// GameServiceHandler is an implementation of the api.v1.GameService service.
+type GameServiceHandler interface {
+	// 対戦する
+	Join(context.Context, *connect.Request[v1.JoinRequest], *connect.ServerStream[v1.JoinResponse]) error
+	// 対戦から離れる
+	Leave(context.Context, *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error)
+	// 行動履歴を取得する
+	History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error)
+	// 行動する
+	Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error)
+	// 相手の行動を待機する
+	Wait(context.Context, *connect.Request[v1.WaitRequest], *connect.ServerStream[v1.WaitResponse]) error
+}
+
+// NewGameServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	gameServiceJoinHandler := connect.NewServerStreamHandler(
+		GameServiceJoinProcedure,
+		svc.Join,
+		connect.WithSchema(gameServiceJoinMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	gameServiceLeaveHandler := connect.NewUnaryHandler(
+		GameServiceLeaveProcedure,
+		svc.Leave,
+		connect.WithSchema(gameServiceLeaveMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	gameServiceHistoryHandler := connect.NewUnaryHandler(
+		GameServiceHistoryProcedure,
+		svc.History,
+		connect.WithSchema(gameServiceHistoryMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	gameServiceActionHandler := connect.NewUnaryHandler(
+		GameServiceActionProcedure,
+		svc.Action,
+		connect.WithSchema(gameServiceActionMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	gameServiceWaitHandler := connect.NewServerStreamHandler(
+		GameServiceWaitProcedure,
+		svc.Wait,
+		connect.WithSchema(gameServiceWaitMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/api.v1.GameService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case GameServiceJoinProcedure:
+			gameServiceJoinHandler.ServeHTTP(w, r)
+		case GameServiceLeaveProcedure:
+			gameServiceLeaveHandler.ServeHTTP(w, r)
+		case GameServiceHistoryProcedure:
+			gameServiceHistoryHandler.ServeHTTP(w, r)
+		case GameServiceActionProcedure:
+			gameServiceActionHandler.ServeHTTP(w, r)
+		case GameServiceWaitProcedure:
+			gameServiceWaitHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedGameServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedGameServiceHandler struct{}
+
+func (UnimplementedGameServiceHandler) Join(context.Context, *connect.Request[v1.JoinRequest], *connect.ServerStream[v1.JoinResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.Join is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) Leave(context.Context, *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.Leave is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.History is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.Action is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) Wait(context.Context, *connect.Request[v1.WaitRequest], *connect.ServerStream[v1.WaitResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.Wait is not implemented"))
+}
 
 // HelloServiceClient is a client for the api.v1.HelloService service.
 type HelloServiceClient interface {

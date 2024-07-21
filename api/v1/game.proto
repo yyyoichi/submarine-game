@@ -4,6 +4,80 @@ syntax = "proto3";
 package api.v1;
 option go_package = "github.com/yyyoichi/submarine-game/internal/gen/api/v1;apiv1";
 
+service GameService {
+  // 対戦する
+  rpc Join(JoinRequest) returns (stream JoinResponse) {}
+  // 対戦から離れる
+  rpc Leave(LeaveRequest) returns (LeaveResponse) {}
+  // 行動履歴を取得する
+  rpc History(HistoryRequest) returns (HistoryResponse) {}
+  // 行動する
+  rpc Action(ActionRequest) returns (ActionResponse) {}
+  // 相手の行動を待機する
+  rpc Wait(WaitRequest) returns (stream WaitResponse) {}
+}
+
+message JoinRequest {
+  string user_id = 1;
+}
+
+message JoinResponse {
+  string game_id = 1;
+  string user_id = 2;
+}
+
+message LeaveRequest {
+  string game_id = 1;
+  string user_id = 2;
+}
+
+message LeaveResponse {}
+
+message HistoryRequest {
+  string game_id = 1;
+  string user_id = 2;
+}
+
+message HistoryResponse {
+  repeated int64 island = 1; // 島
+  bool my_turn = 2; // 自分のターンか
+  string winner = 3; // 勝利者
+  repeated History histories = 4; // 行動履歴
+  int64 timeout = 5; // 行動期限
+  string description = 6; // 説明
+}
+
+message History {
+  string user_id = 1; // 行動ユーザ
+  int64 turn = 2; // 行動順
+  uint32 camp = 3; // 行動場所
+  ActionType type = 4; // 行動内容
+  string description = 5; // 行動内容説明
+}
+
+message ActionRequest {
+  string game_id = 1;
+  string user_id = 2;
+  uint32 camp = 3; // 行動場所
+  ActionType type = 4; // 行動内容
+}
+message ActionResponse {}
+
+message WaitRequest {
+  string game_id = 1;
+  string user_id = 2;
+}
+
+message WaitResponse {
+  bool done = 1; // 相手の行動終了
+}
+
+enum ActionType {
+ ACTION_TYPE_UNSPECIFIED = 0;
+ ACTION_TYPE_MOVE = 1; // 移動
+ ACTION_TYPE_BOMB = 2; // ボム
+}
+
 
 service HelloService {
 	rpc Say(SayRequest) returns (SayResponse) {}
