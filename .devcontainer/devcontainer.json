@@ -1,0 +1,34 @@
+{
+  "name": "SubmarineContainer",
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "workspaceFolder": "/workspaces/submarine-game",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/submarine-game,type=bind,consistency=cached",
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "submarine-game-node_modules",
+      "target": "/workspaces/submarine-game/web/node_modules"
+    }
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+			"version": "1.22.5"
+		},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "v20.15"
+    }
+  },
+  "postCreateCommand": "sh /workspaces/submarine-game/.devcontainer/init.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "biomejs.biome"
+      ]
+    }
+  },
+  "containerEnv": {
+    "TZ": "Asia/Tokyo",
+    "API_PORT": ":8080"
+  },
+  "remoteUser": "root"
+}

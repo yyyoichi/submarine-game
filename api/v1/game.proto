@@ -1,0 +1,18 @@
+syntax = "proto3";
+// import "google/protobuf/timestamp.proto";
+
+package api.v1;
+option go_package = "github.com/yyyoichi/submarine-game/internal/gen/api/v1;apiv1";
+
+
+service HelloService {
+	rpc Say(SayRequest) returns (SayResponse) {}
+}
+
+message SayRequest {
+  string name = 1;
+}
+
+message SayResponse {
+  string hello = 1;
+}
