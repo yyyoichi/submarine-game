@@ -1,0 +1,66 @@
+package game
+
+import (
+	"context"
+	"math/rand"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// 6x6
+const lineSize = 6
+const campSize = 35
+
+type Playground struct {
+	gameById   map[string]*Game
+	gameByUser map[string]*Game
+}
+
+func (pg *Playground) NewGame(users [2]string) *Game {
+	island1 := rand.Int63n(campSize)
+	island2 := rand.Int63n(campSize)
+	g := &Game{
+		Id:        uuid.NewString(),
+		Users:     users,
+		Island:    [2]int64{island1, island2},
+		createdAt: time.Now(),
+
+		mu:       sync.RWMutex{},
+		NextUser: users[1],
+	}
+	pg.gameById[g.Id] = g
+	pg.gameByUser[users[0]] = g
+	pg.gameByUser[users[1]] = g
+	return g
+}
+
+func (pg *Playground) Use(id string) *Game {
+	return pg.gameById[id]
+}
+
+func (pg *Playground) DeleteRunner(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Duration(1) * time.Minute):
+			pg.deleteTimeoutGame()
+		}
+	}
+}
+
+func (pg *Playground) deleteTimeoutGame() {
+	// 開始後1時間経過のゲームは削除する。
+	for id, g := range pg.gameById {
+		hours := time.Since(g.createdAt).Hours()
+		if hours > 1 {
+			user1 := g.Users[0]
+			user2 := g.Users[1]
+			delete(pg.gameById, id)
+			delete(pg.gameByUser, user1)
+			delete(pg.gameByUser, user2)
+		}
+	}
+}

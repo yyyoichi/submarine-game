@@ -18,7 +18,6 @@ service GameService {
 }
 
 message JoinRequest {
-  string user_id = 1;
 }
 
 message JoinResponse {
@@ -76,6 +75,8 @@ enum ActionType {
  ACTION_TYPE_UNSPECIFIED = 0;
  ACTION_TYPE_MOVE = 1; // 移動
  ACTION_TYPE_BOMB = 2; // ボム
+ ACTION_TYPE_LEAVE = 3; // 中断
+ ACTION_TYPE_PLACE = 4; // 配置
 }
 
 

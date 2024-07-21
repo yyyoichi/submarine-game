@@ -28,23 +28,34 @@ export enum ActionType {
    * @generated from enum value: ACTION_TYPE_BOMB = 2;
    */
   BOMB = 2,
+
+  /**
+   * 中断
+   *
+   * @generated from enum value: ACTION_TYPE_LEAVE = 3;
+   */
+  LEAVE = 3,
+
+  /**
+   * 配置
+   *
+   * @generated from enum value: ACTION_TYPE_PLACE = 4;
+   */
+  PLACE = 4,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ActionType)
 proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
   { no: 0, name: "ACTION_TYPE_UNSPECIFIED" },
   { no: 1, name: "ACTION_TYPE_MOVE" },
   { no: 2, name: "ACTION_TYPE_BOMB" },
+  { no: 3, name: "ACTION_TYPE_LEAVE" },
+  { no: 4, name: "ACTION_TYPE_PLACE" },
 ]);
 
 /**
  * @generated from message api.v1.JoinRequest
  */
 export class JoinRequest extends Message<JoinRequest> {
-  /**
-   * @generated from field: string user_id = 1;
-   */
-  userId = "";
-
   constructor(data?: PartialMessage<JoinRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -53,7 +64,6 @@ export class JoinRequest extends Message<JoinRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.JoinRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinRequest {

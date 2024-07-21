@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	apiv1 "github.com/yyyoichi/submarine-game/internal/gen/api/v1"
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v1/apiv1connect"
+	"github.com/yyyoichi/submarine-game/internal/handler"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -23,7 +24,8 @@ func main() {
 	}
 
 	rpc := http.NewServeMux()
-	rpc.Handle(apiv1connect.NewHelloServiceHandler(&handler{}))
+	rpc.Handle(apiv1connect.NewHelloServiceHandler(&Handler{}))
+	rpc.Handle(apiv1connect.NewGameServiceHandler(&handler.Handler{}))
 
 	mux := http.NewServeMux()
 	// mux.HandleFunc("/", notFoundHandler)
@@ -34,11 +36,11 @@ func main() {
 	}
 }
 
-type handler struct {
+type Handler struct {
 	apiv1connect.HelloServiceHandler
 }
 
-func (h *handler) Say(ctx context.Context, req *connect.Request[apiv1.SayRequest]) (*connect.Response[apiv1.SayResponse], error) {
+func (h *Handler) Say(ctx context.Context, req *connect.Request[apiv1.SayRequest]) (*connect.Response[apiv1.SayResponse], error) {
 	slog.InfoContext(ctx, "get request", slog.String("name", req.Msg.Name))
 	resp := &apiv1.SayResponse{
 		Hello: fmt.Sprintf("Hello, %s!", req.Msg.Name),
