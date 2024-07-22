@@ -2,11 +2,18 @@ package main
 
 import (
 	"context"
+	"embed"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
+	"mime"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"connectrpc.com/connect"
 	apiv1 "github.com/yyyoichi/submarine-game/internal/gen/api/v1"
@@ -29,12 +36,65 @@ func main() {
 	rpc.Handle(apiv1connect.NewGameServiceHandler(gmHandler))
 
 	mux := http.NewServeMux()
-	// mux.HandleFunc("/", notFoundHandler)
+	mux.HandleFunc("/", notFoundHandler)
 	mux.Handle("/rpc/", http.StripPrefix("/rpc", rpc))
 
 	if err := http.ListenAndServe(port, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		log.Panic(err)
 	}
+}
+
+//go:embed all:web/dist
+var assets embed.FS
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	err := tryRead(r.URL.Path, w)
+	if err == nil {
+		return
+	}
+	_ = tryRead("index.html", w)
+}
+
+func tryRead(requestedPath string, w http.ResponseWriter) error {
+	reqPath := path.Join("web/dist", requestedPath)
+	if reqPath == "web/dist" {
+		reqPath = "web/dist/index.html"
+	}
+
+	if extension := strings.LastIndex(reqPath, "."); extension == -1 {
+		reqPath = fmt.Sprintf("%s.html", reqPath)
+	}
+
+	// read file
+	f, err := assets.Open(reqPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// dir check
+	stat, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	if stat.IsDir() {
+		return errors.ErrUnsupported
+	}
+
+	// content type check
+	ext := filepath.Ext(requestedPath)
+	var contentType string
+
+	if m := mime.TypeByExtension(ext); m != "" {
+		contentType = m
+	} else {
+		contentType = "text/html"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	io.Copy(w, f)
+
+	return nil
 }
 
 type Handler struct {
