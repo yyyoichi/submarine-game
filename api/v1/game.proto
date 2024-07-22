@@ -44,6 +44,8 @@ message HistoryResponse {
   repeated History histories = 4; // 行動履歴
   int64 timeout = 5; // 行動期限
   string description = 6; // 説明
+  repeated ActionType enable_types = 7; // 利用可能なアクション
+  repeated uint32 enable_camps = 8; // 利用可能な位置
 }
 
 message History {
@@ -52,6 +54,7 @@ message History {
   uint32 camp = 3; // 行動場所
   ActionType type = 4; // 行動内容
   string description = 5; // 行動内容説明
+  string impact = 6; // 相手攻撃の影響 
 }
 
 message ActionRequest {

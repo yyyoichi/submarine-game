@@ -289,6 +289,20 @@ export class HistoryResponse extends Message<HistoryResponse> {
    */
   description = "";
 
+  /**
+   * 利用可能なアクション
+   *
+   * @generated from field: repeated api.v1.ActionType enable_types = 7;
+   */
+  enableTypes: ActionType[] = [];
+
+  /**
+   * 利用可能な位置
+   *
+   * @generated from field: repeated uint32 enable_camps = 8;
+   */
+  enableCamps: number[] = [];
+
   constructor(data?: PartialMessage<HistoryResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -303,6 +317,8 @@ export class HistoryResponse extends Message<HistoryResponse> {
     { no: 4, name: "histories", kind: "message", T: History, repeated: true },
     { no: 5, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 6, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "enable_types", kind: "enum", T: proto3.getEnumType(ActionType), repeated: true },
+    { no: 8, name: "enable_camps", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse {
@@ -361,6 +377,13 @@ export class History extends Message<History> {
    */
   description = "";
 
+  /**
+   * 相手攻撃の影響 
+   *
+   * @generated from field: string impact = 6;
+   */
+  impact = "";
+
   constructor(data?: PartialMessage<History>) {
     super();
     proto3.util.initPartial(data, this);
@@ -374,6 +397,7 @@ export class History extends Message<History> {
     { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
     { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "impact", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): History {

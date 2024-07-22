@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -41,67 +42,103 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	switch {
 	case g.Winner != "":
 		if me == g.Winner {
-			resp.Description = "🏆Win!!"
+			resp.Description = "🏆勝利！！"
 		} else {
-			resp.Description = "💣Lose.."
+			resp.Description = "💣敗北.."
 		}
 	case resp.MyTurn:
-		resp.Description = "🪖My turn"
+		if len(g.histories) < 2 {
+			resp.Description = "📍行動を開始する海域を決定しよう。"
+			resp.EnableTypes = []apiv1.ActionType{apiv1.ActionType_ACTION_TYPE_BOMB}
+		} else {
+			resp.Description = "🪖行動か、魚雷か。"
+			resp.EnableTypes = []apiv1.ActionType{apiv1.ActionType_ACTION_TYPE_BOMB, apiv1.ActionType_ACTION_TYPE_MOVE}
+			resp.EnableCamps = getAdjacentPositions(g.histories[len(g.histories)-2].camp)
+		}
 	default:
-		resp.Description = "👀Enemy turn"
+		resp.Description = "👀敵の行動を待機中.."
 	}
 
 	for i, hist := range g.histories {
+		var respHistory *apiv1.History
 		switch hist.user {
 		// 操作ユーザの履歴
 		case me:
-			resp.Histories[i] = &apiv1.History{
+			respHistory = &apiv1.History{
 				UserId: hist.user,
 				Turn:   int64(i),
 				Camp:   hist.camp,
 				Type:   hist.t,
 			}
-			if i == 0 || i == 1 {
-				resp.Histories[i].Description = fmt.Sprintf("📍Placed in '%d'", hist.camp)
-				continue
+			switch respHistory.Type {
+			case apiv1.ActionType_ACTION_TYPE_MOVE:
+				if i < 2 {
+					respHistory.Description = fmt.Sprintf("📍作戦開始海域を'%d'に決定。", hist.camp)
+				} else {
+					respHistory.Description = fmt.Sprintf("🌊海域'%d'に移動。", hist.camp)
+				}
+			case apiv1.ActionType_ACTION_TYPE_LEAVE:
+				respHistory.Description = "⚠️敗走した。"
+			case apiv1.ActionType_ACTION_TYPE_BOMB:
+				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
 			}
-			if hist.camp == uint32(apiv1.ActionType_ACTION_TYPE_MOVE) {
-				resp.Histories[i].Description = fmt.Sprintf("🌊Moved to '%d'", hist.camp)
-				continue
-			}
-			if hist.camp == uint32(apiv1.ActionType_ACTION_TYPE_LEAVE) {
-				resp.Histories[i].Description = "⚠️You escaped"
-				continue
-			}
-			resp.Histories[i].Description = fmt.Sprintf("💣Torpedo fired on '%d'", hist.camp)
-			continue
 
 		// 対戦相手の履歴
 		default:
 			mask := hist.mask()
-			resp.Histories[i] = &apiv1.History{
+			respHistory = &apiv1.History{
 				UserId: mask.user,
 				Turn:   int64(i),
 				Camp:   mask.camp,
 				Type:   mask.t,
 			}
-			if i == 0 || i == 1 {
-				resp.Histories[i].Description = "📍Placed in '?'"
-				continue
+			switch respHistory.Type {
+			case apiv1.ActionType_ACTION_TYPE_MOVE:
+				if i < 2 {
+					respHistory.Description = "📍作戦開始海域を'?'に決定。"
+				} else {
+					b := g.histories[i-2].camp
+					a := hist.camp
+					dir := calcDirection(b, a)
+					var jp string
+					switch dir {
+					case north:
+						jp = "北"
+					case south:
+						jp = "南"
+					case west:
+						jp = "西"
+					case east:
+						jp = "東"
+					}
+					respHistory.Description = fmt.Sprintf("🌊'%s'進。", jp)
+				}
+			case apiv1.ActionType_ACTION_TYPE_LEAVE:
+				respHistory.Description = "✨敗走した。"
+			case apiv1.ActionType_ACTION_TYPE_BOMB:
+				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
 			}
-			if hist.camp == uint32(apiv1.ActionType_ACTION_TYPE_MOVE) {
-				b := g.histories[i-2].camp
-				a := hist.camp
-				resp.Histories[i].Description = fmt.Sprintf("🌊Moved '%s'", calcDirection(b, a))
-				continue
-			}
-			if hist.camp == uint32(apiv1.ActionType_ACTION_TYPE_LEAVE) {
-				resp.Histories[i].Description = "✨Enemy escaped"
-				continue
-			}
-			resp.Histories[i].Description = fmt.Sprintf("💣Torpedo fired on '%d'", hist.camp)
+
 		}
+		if i < 2 {
+			continue
+		}
+		prev := resp.Histories[i-1]
+		if prev.Type != apiv1.ActionType_ACTION_TYPE_BOMB {
+			continue
+		}
+		switch bi := bombImpact(prev.Camp, hist.camp); bi {
+		case meichu:
+			respHistory.Impact = "🎯命中！！"
+		case omokaji:
+			respHistory.Impact = "💡面舵一杯！！"
+		case yosoro:
+			respHistory.Impact = "🧭ヨーソロー！！"
+		}
+
+		resp.Histories[i] = respHistory
 	}
+
 	return resp
 }
 
@@ -115,7 +152,7 @@ func (g *Game) Action(user string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != user {
 		return ErrIsnotYourTurn
 	}
-	if g.getTimeout().Add(time.Duration(500) * time.Millisecond).Before(time.Now()) {
+	if g.isTimeout() {
 		// timeoutよりも500milsec大きいときにタイムアウト判定
 		g.leave(user)
 		return ErrTimeout
@@ -138,7 +175,7 @@ func (g *Game) Action(user string, camp uint32, action apiv1.ActionType) error {
 
 	switch action {
 	case apiv1.ActionType_ACTION_TYPE_MOVE, apiv1.ActionType_ACTION_TYPE_BOMB:
-		if d := calcDirection(g.histories[len(g.histories)-2].camp, camp); d == "" {
+		if d := calcDirection(g.histories[len(g.histories)-2].camp, camp); d == unknownDirection {
 			return fmt.Errorf("%w: '%d'", ErrInvalidCamp, camp)
 		}
 	default:
@@ -183,6 +220,10 @@ func (g *Game) changeTurn(user string) {
 	}
 }
 
+func (g *Game) isTimeout() bool {
+	return g.getTimeout().Add(time.Duration(500) * time.Millisecond).Before(time.Now())
+}
+
 func (g *Game) getTimeout() time.Time {
 	if len(g.histories) == 0 {
 		return g.createdAt.Add(time.Duration(30) * time.Second)
@@ -199,16 +240,91 @@ func (h history) mask() history {
 	return h
 }
 
-func calcDirection(b, a uint32) string {
+type direction int
+
+const (
+	unknownDirection direction = iota
+	north
+	south
+	west
+	east
+)
+
+func calcDirection(b, a uint32) direction {
 	switch {
 	case b-a == lineSize:
-		return "north"
+		return north
 	case a-b == lineSize:
-		return "south"
+		return south
 	case b-a == 1:
-		return "west"
+		return west
 	case a-b == 1:
-		return "east"
+		return east
 	}
-	return ""
+	return unknownDirection
+}
+
+type bombImpactType int
+
+const (
+	meichu = iota
+	omokaji
+	yosoro
+)
+
+func bombImpact(bomb uint32, camp uint32) bombImpactType {
+	if bomb == camp {
+		return meichu
+	}
+	a := isAdjacent(int(bomb), int(camp))
+	if a {
+		return omokaji
+	}
+	return yosoro
+}
+
+// Check if the positions are adjacent and not the same position
+func isAdjacent(pos1, pos2 int) bool {
+	if pos1 == pos2 {
+		return false
+	}
+	// Calculate row and column for both positions
+	row1, col1 := pos1/lineSize, pos1%6
+	row2, col2 := pos2/lineSize, pos2%6
+
+	// Calculate the difference between the rows and columns
+	rowDiff := math.Abs(float64(row1 - row2))
+	colDiff := math.Abs(float64(col1 - col2))
+
+	return (rowDiff <= 1 && colDiff <= 1)
+}
+
+// 行動可能な位置リスト
+func getAdjacentPositions(pos uint32) []uint32 {
+	var adjPositions = make([]uint32, 0, 8)
+
+	// Calculate row and column for the given position
+	row, col := int(pos)/lineSize, int(pos)%lineSize
+
+	// Loop through all possible adjacent positions (including diagonally)
+	for i := -1; i <= 1; i++ {
+		for j := -1; j <= 1; j++ {
+			// Skip the same position
+			if i == 0 && j == 0 {
+				continue
+			}
+
+			// Calculate the new row and column
+			newRow, newCol := row+i, col+j
+
+			// Check if the new position is within the bounds of the grid
+			if newRow >= 0 && newRow < lineSize && newCol >= 0 && newCol < lineSize {
+				// Calculate the position number and add it to the list
+				adjPos := newRow*lineSize + newCol
+				adjPositions = append(adjPositions, uint32(adjPos))
+			}
+		}
+	}
+
+	return adjPositions
 }
