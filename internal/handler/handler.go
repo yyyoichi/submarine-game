@@ -87,8 +87,10 @@ func (h *Handler) Action(ctx context.Context, req *connect.Request[apiv1.ActionR
 	if err != nil {
 		return nil, err
 	}
-	err = gm.Action(req.Msg.UserId, req.Msg.Camp, req.Msg.Type)
-	return connect.NewResponse(&apiv1.ActionResponse{}), err
+	if err := gm.Action(req.Msg.UserId, req.Msg.Camp, req.Msg.Type); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.ActionResponse{}), nil
 }
 
 // 相手の行動を待機する
