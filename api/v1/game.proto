@@ -38,14 +38,18 @@ message HistoryRequest {
 }
 
 message HistoryResponse {
-  repeated int64 island = 1; // 島
+  message Camp {
+    repeated CampStatus status = 1;
+  }
+  message Line {
+    repeated Camp camps = 1;
+  }
+  repeated Line camps = 1; // 海域情報
   bool my_turn = 2; // 自分のターンか
   string winner = 3; // 勝利者
   repeated History histories = 4; // 行動履歴
   int64 timeout = 5; // 行動期限
   string description = 6; // 説明
-  repeated ActionType enable_types = 7; // 利用可能なアクション
-  repeated uint32 enable_camps = 8; // 利用可能な位置
 }
 
 message History {
@@ -80,6 +84,14 @@ enum ActionType {
  ACTION_TYPE_BOMB = 2; // ボム
  ACTION_TYPE_LEAVE = 3; // 中断
  ACTION_TYPE_PLACE = 4; // 配置
+}
+
+enum CampStatus {
+  CAMP_STATUS_UNSPECIFIED = 0;
+  CAMP_STATUS_MOVE = 1; // 移動可能
+  CAMP_STATUS_BOMB = 2; // 魚雷発射可能
+  CAMP_STATUS_ISLAND = 3; // 島
+  CAMP_STATUS_PLACE = 4; // 配置可能
 }
 
 

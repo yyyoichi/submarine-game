@@ -26,12 +26,12 @@ func NewPlayground() *Playground {
 }
 
 func (pg *Playground) NewGame(users [2]string) *Game {
-	island1 := rand.Int63n(campSize)
-	island2 := rand.Int63n(campSize)
+	island1 := rand.Int31n(campSize)
+	island2 := rand.Int31n(campSize)
 	g := &Game{
 		Id:        uuid.NewString(),
 		Users:     users,
-		Island:    [2]int64{island1, island2},
+		Island:    [2]uint32{uint32(island1), uint32(island2)},
 		createdAt: time.Now(),
 
 		mu:       sync.RWMutex{},

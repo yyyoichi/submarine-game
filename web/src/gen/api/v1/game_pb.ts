@@ -53,6 +53,52 @@ proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
 ]);
 
 /**
+ * @generated from enum api.v1.CampStatus
+ */
+export enum CampStatus {
+  /**
+   * @generated from enum value: CAMP_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * 移動可能
+   *
+   * @generated from enum value: CAMP_STATUS_MOVE = 1;
+   */
+  MOVE = 1,
+
+  /**
+   * 魚雷発射可能
+   *
+   * @generated from enum value: CAMP_STATUS_BOMB = 2;
+   */
+  BOMB = 2,
+
+  /**
+   * 島
+   *
+   * @generated from enum value: CAMP_STATUS_ISLAND = 3;
+   */
+  ISLAND = 3,
+
+  /**
+   * 配置可能
+   *
+   * @generated from enum value: CAMP_STATUS_PLACE = 4;
+   */
+  PLACE = 4,
+}
+// Retrieve enum metadata with: proto3.getEnumType(CampStatus)
+proto3.util.setEnumType(CampStatus, "api.v1.CampStatus", [
+  { no: 0, name: "CAMP_STATUS_UNSPECIFIED" },
+  { no: 1, name: "CAMP_STATUS_MOVE" },
+  { no: 2, name: "CAMP_STATUS_BOMB" },
+  { no: 3, name: "CAMP_STATUS_ISLAND" },
+  { no: 4, name: "CAMP_STATUS_PLACE" },
+]);
+
+/**
  * @generated from message api.v1.JoinRequest
  */
 export class JoinRequest extends Message<JoinRequest> {
@@ -248,11 +294,11 @@ export class HistoryRequest extends Message<HistoryRequest> {
  */
 export class HistoryResponse extends Message<HistoryResponse> {
   /**
-   * 島
+   * 海域情報
    *
-   * @generated from field: repeated int64 island = 1;
+   * @generated from field: repeated api.v1.HistoryResponse.Line camps = 1;
    */
-  island: bigint[] = [];
+  camps: HistoryResponse_Line[] = [];
 
   /**
    * 自分のターンか
@@ -289,20 +335,6 @@ export class HistoryResponse extends Message<HistoryResponse> {
    */
   description = "";
 
-  /**
-   * 利用可能なアクション
-   *
-   * @generated from field: repeated api.v1.ActionType enable_types = 7;
-   */
-  enableTypes: ActionType[] = [];
-
-  /**
-   * 利用可能な位置
-   *
-   * @generated from field: repeated uint32 enable_camps = 8;
-   */
-  enableCamps: number[] = [];
-
   constructor(data?: PartialMessage<HistoryResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -311,14 +343,12 @@ export class HistoryResponse extends Message<HistoryResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.HistoryResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "island", kind: "scalar", T: 3 /* ScalarType.INT64 */, repeated: true },
+    { no: 1, name: "camps", kind: "message", T: HistoryResponse_Line, repeated: true },
     { no: 2, name: "my_turn", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "winner", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "histories", kind: "message", T: History, repeated: true },
     { no: 5, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 6, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 7, name: "enable_types", kind: "enum", T: proto3.getEnumType(ActionType), repeated: true },
-    { no: 8, name: "enable_camps", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse {
@@ -335,6 +365,80 @@ export class HistoryResponse extends Message<HistoryResponse> {
 
   static equals(a: HistoryResponse | PlainMessage<HistoryResponse> | undefined, b: HistoryResponse | PlainMessage<HistoryResponse> | undefined): boolean {
     return proto3.util.equals(HistoryResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.HistoryResponse.Camp
+ */
+export class HistoryResponse_Camp extends Message<HistoryResponse_Camp> {
+  /**
+   * @generated from field: repeated api.v1.CampStatus status = 1;
+   */
+  status: CampStatus[] = [];
+
+  constructor(data?: PartialMessage<HistoryResponse_Camp>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.HistoryResponse.Camp";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(CampStatus), repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse_Camp {
+    return new HistoryResponse_Camp().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): HistoryResponse_Camp {
+    return new HistoryResponse_Camp().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): HistoryResponse_Camp {
+    return new HistoryResponse_Camp().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: HistoryResponse_Camp | PlainMessage<HistoryResponse_Camp> | undefined, b: HistoryResponse_Camp | PlainMessage<HistoryResponse_Camp> | undefined): boolean {
+    return proto3.util.equals(HistoryResponse_Camp, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.HistoryResponse.Line
+ */
+export class HistoryResponse_Line extends Message<HistoryResponse_Line> {
+  /**
+   * @generated from field: repeated api.v1.HistoryResponse.Camp camps = 1;
+   */
+  camps: HistoryResponse_Camp[] = [];
+
+  constructor(data?: PartialMessage<HistoryResponse_Line>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.HistoryResponse.Line";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "camps", kind: "message", T: HistoryResponse_Camp, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse_Line {
+    return new HistoryResponse_Line().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): HistoryResponse_Line {
+    return new HistoryResponse_Line().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): HistoryResponse_Line {
+    return new HistoryResponse_Line().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: HistoryResponse_Line | PlainMessage<HistoryResponse_Line> | undefined, b: HistoryResponse_Line | PlainMessage<HistoryResponse_Line> | undefined): boolean {
+    return proto3.util.equals(HistoryResponse_Line, a, b);
   }
 }
 
