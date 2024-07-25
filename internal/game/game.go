@@ -110,7 +110,8 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
 				var jp string
-				switch dir := calcDirection(prevHistory.camp, hist.camp); dir {
+				dir := calcDirection(prevHistory.camp, hist.camp)
+				switch dir {
 				case north:
 					jp = "北"
 				case south:
@@ -120,7 +121,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 				case east:
 					jp = "東"
 				}
-				respHistory.Description = fmt.Sprintf("🌊'%s'進。", jp)
+				respHistory.Description = fmt.Sprintf("🌊%s進。", jp)
 
 			case apiv1.ActionType_ACTION_TYPE_LEAVE:
 				respHistory.Description = "✨敗走した。"
@@ -317,9 +318,9 @@ func (g *Game) latestHistory(user string) *history {
 	return nil
 }
 
-// ユーザの[trun]以前の最新の行動を返す。
+// ユーザの[trun]未満の最新の行動を返す。
 func (g *Game) prevHistory(user string, trun int32) *history {
-	for i := int(trun) - 1; 0 <= i; i-- {
+	for i := int(trun) - 2; 0 <= i; i-- {
 		if g.histories[i].user == user {
 			return &g.histories[i]
 		}
@@ -384,15 +385,31 @@ const (
 
 // [b]eforeから[a]fterへの移動方向
 func calcDirection(b, a uint32) direction {
-	switch {
-	case b-a == lineSize:
-		return north
-	case a-b == lineSize:
-		return south
-	case b-a == 1:
-		return west
-	case a-b == 1:
-		return east
+	if a == b {
+		return unknownDirection
+	}
+	i1, i2 := int(a), int(b)
+
+	row1, col1 := i1/lineSize, i1%lineSize
+	row2, col2 := i2/lineSize, i2%lineSize
+
+	rowDiff := row1 - row2
+	colDiff := col1 - col2
+	if rowDiff == 0 {
+		if colDiff == -1 {
+			return west
+		}
+		if colDiff == 1 {
+			return east
+		}
+	}
+	if colDiff == 0 {
+		if rowDiff == -1 {
+			return north
+		}
+		if rowDiff == 1 {
+			return south
+		}
 	}
 	return unknownDirection
 }
