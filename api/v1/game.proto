@@ -40,6 +40,7 @@ message HistoryRequest {
 message HistoryResponse {
   message Camp {
     repeated CampStatus status = 1;
+    uint32 camp = 2;
   }
   message Line {
     repeated Camp camps = 1;

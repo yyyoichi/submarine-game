@@ -26,7 +26,7 @@ function Home() {
 	let enableStatus: CampStatus[] = [];
 	for (let i = 0; i < history.camps.length; i++) {
 		for (let j = 0; j < history.camps[i].camps.length; j++) {
-			const c = calcCamp(i, j);
+			const c = history.camps[i].camps[j].camp;
 			if (clickCamp === c) {
 				enableStatus = history.camps[i].camps[j].status;
 			}
@@ -53,13 +53,13 @@ function Home() {
 												<input
 													type="radio"
 													name="camp"
-													value={calcCamp(row, col)}
-													checked={clickCamp === calcCamp(row, col)}
+													value={s.camp}
+													checked={clickCamp === s.camp}
 													onChange={() => {
-														setClickCamp(calcCamp(row, col));
+														setClickCamp(s.camp);
 													}}
 												/>
-												{calcCamp(row, col)}
+												{s.camp}
 											</label>
 										)}
 									</td>

@@ -259,6 +259,7 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 			// 島
 			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
 				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_ISLAND},
+				Camp:   c,
 			}
 			continue
 		}
@@ -271,6 +272,7 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 		}
 		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
 			Status: status,
+			Camp:   c,
 		}
 	}
 	return resp
@@ -299,6 +301,7 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 		}
 		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
 			Status: status,
+			Camp:   c,
 		}
 	}
 	return resp

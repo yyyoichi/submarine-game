@@ -377,6 +377,11 @@ export class HistoryResponse_Camp extends Message<HistoryResponse_Camp> {
    */
   status: CampStatus[] = [];
 
+  /**
+   * @generated from field: uint32 camp = 2;
+   */
+  camp = 0;
+
   constructor(data?: PartialMessage<HistoryResponse_Camp>) {
     super();
     proto3.util.initPartial(data, this);
@@ -386,6 +391,7 @@ export class HistoryResponse_Camp extends Message<HistoryResponse_Camp> {
   static readonly typeName = "api.v1.HistoryResponse.Camp";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "enum", T: proto3.getEnumType(CampStatus), repeated: true },
+    { no: 2, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HistoryResponse_Camp {
