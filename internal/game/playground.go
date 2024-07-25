@@ -11,7 +11,7 @@ import (
 
 // 6x6
 const lineSize = 6
-const campSize = 35
+const campSize = 36
 
 type Playground struct {
 	gameById   map[string]*Game

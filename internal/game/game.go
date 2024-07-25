@@ -157,12 +157,12 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != me {
 		return ErrIsnotYourTurn
 	}
-	if g.isTimeout() {
-		// timeoutよりも500milsec大きいときにタイムアウト判定
-		g.leave(me)
-		return ErrTimeout
-	}
-	if camp > campSize {
+	// if g.isTimeout() {
+	// 	// timeoutよりも500milsec大きいときにタイムアウト判定
+	// 	g.leave(me)
+	// 	return ErrTimeout
+	// }
+	if camp >= campSize {
 		return ErrOutOfCampSize
 	}
 
@@ -174,17 +174,17 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	enableStatus := enableCamps[row].Camps[col].Status
 	switch action {
 	case apiv1.ActionType_ACTION_TYPE_MOVE:
-		if slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MOVE) {
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MOVE) {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
 	case apiv1.ActionType_ACTION_TYPE_BOMB:
-		if slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MOVE) {
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_BOMB) {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
 	case apiv1.ActionType_ACTION_TYPE_PLACE:
-		if slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
@@ -193,14 +193,16 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 
 	case apiv1.ActionType_ACTION_TYPE_LEAVE:
 	}
+	// end validation
 
 	defer g.changeTurn(me)
 
 	hist := history{
-		user: me,
-		camp: camp,
-		t:    action,
-		at:   time.Now(),
+		user:   me,
+		camp:   camp,
+		t:      action,
+		impact: unknownImpact,
+		at:     time.Now(),
 	}
 
 	// impact
@@ -210,6 +212,9 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 		if ehist != nil { // nilは実装上あり得ない
 			hist.impact = bombImpact(camp, ehist.camp)
 		}
+	}
+	if hist.impact == meichu {
+		g.Winner = me
 	}
 	g.histories = append(g.histories, hist)
 	return nil
@@ -246,12 +251,14 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 		row := c / lineSize
 		col := c % lineSize
 		if col == 0 {
-			resp[row].Camps = make([]*apiv1.HistoryResponse_Camp, lineSize)
+			resp[row] = &apiv1.HistoryResponse_Line{
+				Camps: make([]*apiv1.HistoryResponse_Camp, lineSize),
+			}
 		}
 		if slices.Contains(g.Island[:], c) {
 			// 島
-			resp[row].Camps[col].Status = []apiv1.CampStatus{
-				apiv1.CampStatus_CAMP_STATUS_ISLAND,
+			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
+				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_ISLAND},
 			}
 			continue
 		}
@@ -262,7 +269,9 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 		if slices.Contains(bombEnable, c) {
 			status = append(status, apiv1.CampStatus_CAMP_STATUS_BOMB)
 		}
-		resp[row].Camps[col].Status = status
+		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
+			Status: status,
+		}
 	}
 	return resp
 }
@@ -274,7 +283,9 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 		row := c / lineSize
 		col := c % lineSize
 		if col == 0 {
-			resp[row].Camps = make([]*apiv1.HistoryResponse_Camp, lineSize)
+			resp[row] = &apiv1.HistoryResponse_Line{
+				Camps: make([]*apiv1.HistoryResponse_Camp, lineSize),
+			}
 		}
 		var status []apiv1.CampStatus
 		if slices.Contains(g.Island[:], c) {
@@ -283,10 +294,12 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 			}
 		} else {
 			status = []apiv1.CampStatus{
-				apiv1.CampStatus_CAMP_STATUS_ISLAND,
+				apiv1.CampStatus_CAMP_STATUS_PLACE,
 			}
 		}
-		resp[row].Camps[col].Status = status
+		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
+			Status: status,
+		}
 	}
 	return resp
 }
@@ -384,7 +397,8 @@ func calcDirection(b, a uint32) direction {
 type bombImpactType int
 
 const (
-	meichu = iota
+	unknownImpact bombImpactType = iota
+	meichu
 	omokaji
 	yosoro
 )
