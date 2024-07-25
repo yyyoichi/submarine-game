@@ -462,9 +462,9 @@ export class History extends Message<History> {
   /**
    * 行動順
    *
-   * @generated from field: int64 turn = 2;
+   * @generated from field: int32 turn = 2;
    */
-  turn = protoInt64.zero;
+  turn = 0;
 
   /**
    * 行動場所
@@ -503,7 +503,7 @@ export class History extends Message<History> {
   static readonly typeName = "api.v1.History";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "turn", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 2, name: "turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
     { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },

@@ -10,6 +10,7 @@ import {
 	ActionType,
 	CampStatus,
 	HistoryRequest,
+	type History,
 	type HistoryResponse,
 } from "../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
@@ -21,6 +22,13 @@ function Home() {
 		const lineSize = history.camps.length;
 		return row * lineSize + col;
 	};
+
+	const myHistory = history.histories
+		.filter((x) => x.userId !== "")
+		.sort((a, b) => a.turn - b.turn);
+	const enemyHistory = history.histories
+		.filter((x) => x.userId === "")
+		.sort((a, b) => a.turn - b.turn);
 
 	const [clickCamp, setClickCamp] = useState<number | null>();
 	let enableStatus: CampStatus[] = [];
@@ -94,7 +102,29 @@ function Home() {
 					</label>
 				</div>
 			</Form>
+			<div style={{ display: "flex", gap: 10 }}>
+				<div>
+					<h3>{"自分の行動"}</h3>
+					{myHistory.map((x) => (
+						<ActionComponent x={x} key={x.turn} />
+					))}
+				</div>
+				<div>
+					<h3>{"相手の行動"}</h3>
+					{enemyHistory.map((x) => (
+						<ActionComponent x={x} key={x.turn} />
+					))}
+				</div>
+			</div>
 		</>
+	);
+}
+
+function ActionComponent({ x }: { x: History }) {
+	return (
+		<div>
+			<p>{`${x.description}${x.impact && ` >> ${x.impact}`}`}</p>
+		</div>
 	);
 }
 

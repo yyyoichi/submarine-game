@@ -55,7 +55,7 @@ message HistoryResponse {
 
 message History {
   string user_id = 1; // 行動ユーザ
-  int64 turn = 2; // 行動順
+  int32 turn = 2; // 行動順
   uint32 camp = 3; // 行動場所
   ActionType type = 4; // 行動内容
   string description = 5; // 行動内容説明

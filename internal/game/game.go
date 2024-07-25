@@ -318,7 +318,7 @@ func (g *Game) latestHistory(user string) *history {
 }
 
 // ユーザの[trun]以前の最新の行動を返す。
-func (g *Game) prevHistory(user string, trun int64) *history {
+func (g *Game) prevHistory(user string, trun int32) *history {
 	for i := int(trun) - 1; 0 <= i; i-- {
 		if g.histories[i].user == user {
 			return &g.histories[i]
@@ -328,10 +328,10 @@ func (g *Game) prevHistory(user string, trun int64) *history {
 }
 
 // trunNumberと行動履歴を返す。
-func (g *Game) loopHistories() map[int64]history {
-	var resp = make(map[int64]history, len(g.histories))
+func (g *Game) loopHistories() map[int32]history {
+	var resp = make(map[int32]history, len(g.histories))
 	for i, h := range g.histories {
-		resp[int64(i)+1] = h
+		resp[int32(i)+1] = h
 	}
 	return resp
 }
