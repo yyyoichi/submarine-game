@@ -346,7 +346,10 @@ func (g *Game) getLatestPlaceHistory(user string) *history {
 // ユーザの[trun]未満の最新の行動を返す。
 func (g *Game) getPrevPlaceHistory(user string, trun int32) *history {
 	for i := int(trun) - 2; 0 <= i; i-- {
-		if g.histories[i].user == user {
+		if g.histories[i].user != user {
+			continue
+		}
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
 			return &g.histories[i]
 		}
 	}
