@@ -93,6 +93,7 @@ enum CampStatus {
   CAMP_STATUS_BOMB = 2; // 魚雷発射可能
   CAMP_STATUS_ISLAND = 3; // 島
   CAMP_STATUS_PLACE = 4; // 配置可能
+  CAMP_STATUS_SUBMARINE = 5; // 位置
 }
 
 

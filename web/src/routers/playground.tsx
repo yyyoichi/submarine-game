@@ -49,14 +49,18 @@ function Home() {
 						{history.camps.map((line, row) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 							<tr key={row}>
-								{line.camps.map((s, col) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-									<td key={col}>
-										{!s.status.includes(CampStatus.MOVE) &&
-										!s.status.includes(CampStatus.BOMB) &&
-										!s.status.includes(CampStatus.PLACE) ? (
-											<>{calcCamp(row, col)}</>
-										) : (
+								{line.camps.map((s, col) => {
+									const Cell = () => {
+										if (s.status.length === 0) {
+											return <>🌊{s.camp}</>;
+										}
+										if (s.status.includes(CampStatus.ISLAND)) {
+											return <>🏝️{s.camp}</>;
+										}
+										if (s.status.includes(CampStatus.SUBMARINE)) {
+											return <>📍{s.camp}</>;
+										}
+										return (
 											<label>
 												<input
 													type="radio"
@@ -69,9 +73,15 @@ function Home() {
 												/>
 												{s.camp}
 											</label>
-										)}
-									</td>
-								))}
+										);
+									};
+									return (
+										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+										<td key={col}>
+											<Cell />
+										</td>
+									);
+								})}
 							</tr>
 						))}
 					</tbody>

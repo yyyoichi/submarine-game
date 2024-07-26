@@ -88,6 +88,13 @@ export enum CampStatus {
    * @generated from enum value: CAMP_STATUS_PLACE = 4;
    */
   PLACE = 4,
+
+  /**
+   * 位置
+   *
+   * @generated from enum value: CAMP_STATUS_SUBMARINE = 5;
+   */
+  SUBMARINE = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(CampStatus)
 proto3.util.setEnumType(CampStatus, "api.v1.CampStatus", [
@@ -96,6 +103,7 @@ proto3.util.setEnumType(CampStatus, "api.v1.CampStatus", [
   { no: 2, name: "CAMP_STATUS_BOMB" },
   { no: 3, name: "CAMP_STATUS_ISLAND" },
   { no: 4, name: "CAMP_STATUS_PLACE" },
+  { no: 5, name: "CAMP_STATUS_SUBMARINE" },
 ]);
 
 /**

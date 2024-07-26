@@ -264,6 +264,14 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 			}
 			continue
 		}
+		if latestHistory.camp == c {
+			// 自身
+			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
+				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_SUBMARINE},
+				Camp:   c,
+			}
+			continue
+		}
 		var status = make([]apiv1.CampStatus, 0, 2)
 		if slices.Contains(moveEnable, c) {
 			status = append(status, apiv1.CampStatus_CAMP_STATUS_MOVE)
