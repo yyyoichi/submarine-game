@@ -87,30 +87,32 @@ function Home() {
 					</tbody>
 				</table>
 				<div>
-					{enableStatus.includes(CampStatus.PLACE) && (
+					{history.winner === "" && enableStatus.includes(CampStatus.PLACE) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.PLACE} />
 							{"配置"}
 						</label>
 					)}
-					{enableStatus.includes(CampStatus.MOVE) && (
+					{history.winner === "" && enableStatus.includes(CampStatus.MOVE) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.MOVE} />
 							{"移動"}
 						</label>
 					)}
-					{enableStatus.includes(CampStatus.BOMB) && (
+					{history.winner === "" && enableStatus.includes(CampStatus.BOMB) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.BOMB} />
 							{"魚雷"}
 						</label>
 					)}
 				</div>
-				<div>
-					<label>
-						<input type="submit" value={"行動"} />
-					</label>
-				</div>
+				{history.winner === "" && (
+					<div>
+						<label>
+							<input type="submit" value={"行動"} />
+						</label>
+					</div>
+				)}
 			</Form>
 			<div style={{ display: "flex", gap: 10 }}>
 				<div>
