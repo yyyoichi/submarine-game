@@ -18,16 +18,19 @@ import { useState } from "react";
 
 function Home() {
 	const history = useLoaderData() as HistoryResponse;
-	const calcCamp = (row: number, col: number) => {
-		const lineSize = history.camps.length;
-		return row * lineSize + col;
-	};
 
-	const myHistory = history.histories
-		.filter((x) => x.userId !== "")
+	const iamTheFirst = history.myTurn === (history.histories.length % 2 === 1);
+	const histories = history.histories.map((x) => {
+		if (x.userId === "") {
+			x.impact = "";
+		}
+		return x;
+	});
+	const firstHistories = histories
+		.filter((x) => x.turn % 2 === 0)
 		.sort((a, b) => a.turn - b.turn);
-	const enemyHistory = history.histories
-		.filter((x) => x.userId === "")
+	const secondHistories = histories
+		.filter((x) => x.turn % 2 === 1)
 		.sort((a, b) => a.turn - b.turn);
 
 	const [clickCamp, setClickCamp] = useState<number | null>();
@@ -116,14 +119,20 @@ function Home() {
 			</Form>
 			<div style={{ display: "flex", gap: 10 }}>
 				<div>
-					<h3>{"自分の行動"}</h3>
-					{myHistory.map((x) => (
+					<h3>
+						{"先攻"}
+						{iamTheFirst && "📍"}
+					</h3>
+					{firstHistories.map((x) => (
 						<ActionComponent x={x} key={x.turn} />
 					))}
 				</div>
 				<div>
-					<h3>{"相手の行動"}</h3>
-					{enemyHistory.map((x) => (
+					<h3>
+						{"後攻"}
+						{!iamTheFirst && "📍"}
+					</h3>
+					{secondHistories.map((x) => (
 						<ActionComponent x={x} key={x.turn} />
 					))}
 				</div>
