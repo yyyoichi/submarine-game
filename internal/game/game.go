@@ -34,13 +34,17 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	var latestMyHistory = g.latestHistory(me)
+	var latestMyHistory = g.getLatestHistory(me)
+	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 	var resp = &apiv1.HistoryResponse{
-		Camps:     g.getCampStatus(latestMyHistory),
+		Camps:     g.getCampStatus(latestPlaceHistory),
 		MyTurn:    me == g.NextUser,
 		Winner:    g.Winner,
 		Histories: make([]*apiv1.History, 0, len(g.histories)),
 		Timeout:   g.getTimeout().UnixMilli(),
+	}
+	if resp.Winner != "" {
+		resp.MyTurn = false
 	}
 
 	// description
@@ -63,8 +67,8 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 	// histories
 	for trun, hist := range g.loopHistories() {
-		// histユーザの前回の行動
-		var prevHistory = g.prevHistory(hist.user, trun)
+		// histユーザの前回の配置
+		var prevPlaceHistory = g.getPrevPlaceHistory(hist.user, trun)
 
 		// respにpushする構造体
 		var respHistory apiv1.History
@@ -110,7 +114,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
 				var jp string
-				dir := calcDirection(prevHistory.camp, hist.camp)
+				dir := calcDirection(prevPlaceHistory.camp, hist.camp)
 				switch dir {
 				case north:
 					jp = "北"
@@ -167,10 +171,10 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 		return ErrOutOfCampSize
 	}
 
-	var latestHistory = g.latestHistory(me)
+	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 
 	// check enable action or not
-	var enableCamps = g.getCampStatus(latestHistory)
+	var enableCamps = g.getCampStatus(latestPlaceHistory)
 	row, col := camp/lineSize, camp%lineSize
 	enableStatus := enableCamps[row].Camps[col].Status
 	switch action {
@@ -209,7 +213,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	// impact
 	if action == apiv1.ActionType_ACTION_TYPE_BOMB {
 		enemy := g.getEnemy(me)
-		ehist := g.latestHistory(enemy)
+		ehist := g.getLatestPlaceHistory(enemy)
 		if ehist != nil { // nilは実装上あり得ない
 			hist.impact = bombImpact(camp, ehist.camp)
 		}
@@ -239,14 +243,14 @@ func (g *Game) leave(user string) {
 }
 
 // [latestHistory]の最近の履歴から、海域情報を返す。
-func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Line {
-	if latestHistory == nil {
+func (g *Game) getCampStatus(latestPlace *history) []*apiv1.HistoryResponse_Line {
+	if latestPlace == nil {
 		return g.getInitCampStatus()
 	}
 
 	var resp = make([]*apiv1.HistoryResponse_Line, lineSize)
-	moveEnable := getUDLRCamps(latestHistory.camp)
-	bombEnable := getAdjacentCamps(latestHistory.camp)
+	moveEnable := getUDLRCamps(latestPlace.camp)
+	bombEnable := getAdjacentCamps(latestPlace.camp)
 
 	for c := range uint32(campSize) {
 		row := c / lineSize
@@ -264,7 +268,7 @@ func (g *Game) getCampStatus(latestHistory *history) []*apiv1.HistoryResponse_Li
 			}
 			continue
 		}
-		if latestHistory.camp == c {
+		if latestPlace.camp == c {
 			// 自身
 			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
 				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_SUBMARINE},
@@ -317,7 +321,7 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 }
 
 // ユーザの最新の行動履歴を返す。
-func (g *Game) latestHistory(user string) *history {
+func (g *Game) getLatestHistory(user string) *history {
 	for i := len(g.histories) - 1; 0 <= i; i-- {
 		if g.histories[i].user == user {
 			return &g.histories[i]
@@ -326,8 +330,21 @@ func (g *Game) latestHistory(user string) *history {
 	return nil
 }
 
+// ユーザの最新の配置履歴を返す。
+func (g *Game) getLatestPlaceHistory(user string) *history {
+	for i := len(g.histories) - 1; 0 <= i; i-- {
+		if g.histories[i].user != user {
+			continue
+		}
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
+			return &g.histories[i]
+		}
+	}
+	return nil
+}
+
 // ユーザの[trun]未満の最新の行動を返す。
-func (g *Game) prevHistory(user string, trun int32) *history {
+func (g *Game) getPrevPlaceHistory(user string, trun int32) *history {
 	for i := int(trun) - 2; 0 <= i; i-- {
 		if g.histories[i].user == user {
 			return &g.histories[i]
