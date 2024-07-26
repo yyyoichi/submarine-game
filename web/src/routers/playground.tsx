@@ -90,26 +90,26 @@ function Home() {
 					</tbody>
 				</table>
 				<div>
-					{history.winner === "" && enableStatus.includes(CampStatus.PLACE) && (
+					{history.myTurn && enableStatus.includes(CampStatus.PLACE) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.PLACE} />
 							{"配置"}
 						</label>
 					)}
-					{history.winner === "" && enableStatus.includes(CampStatus.MOVE) && (
+					{history.myTurn && enableStatus.includes(CampStatus.MOVE) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.MOVE} />
 							{"移動"}
 						</label>
 					)}
-					{history.winner === "" && enableStatus.includes(CampStatus.BOMB) && (
+					{history.myTurn && enableStatus.includes(CampStatus.BOMB) && (
 						<label>
 							<input type="radio" name="action" value={ActionType.BOMB} />
 							{"魚雷"}
 						</label>
 					)}
 				</div>
-				{history.winner === "" && (
+				{history.myTurn && (
 					<div>
 						<label>
 							<input type="submit" value={"行動"} />
