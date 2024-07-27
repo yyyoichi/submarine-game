@@ -45,6 +45,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	}
 	if resp.Winner != "" {
 		resp.MyTurn = false
+		resp.Timeout = 0
 	}
 
 	// description
@@ -91,7 +92,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 				respHistory.Description = fmt.Sprintf("🌊海域'%d'に移動。", hist.camp)
 
 			case apiv1.ActionType_ACTION_TYPE_LEAVE:
-				respHistory.Description = "⚠️敗走した。"
+				respHistory.Description = "🏳️敗走した。"
 
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
@@ -128,7 +129,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 				respHistory.Description = fmt.Sprintf("🌊%s進。", jp)
 
 			case apiv1.ActionType_ACTION_TYPE_LEAVE:
-				respHistory.Description = "✨敗走した。"
+				respHistory.Description = "🏳️敗走した。"
 
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
@@ -162,11 +163,11 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != me {
 		return ErrIsnotYourTurn
 	}
-	// if g.isTimeout() {
-	// 	// timeoutよりも500milsec大きいときにタイムアウト判定
-	// 	g.leave(me)
-	// 	return ErrTimeout
-	// }
+	if g.isTimeout() {
+		// timeoutよりも500milsec大きいときにタイムアウト判定
+		g.leave(me)
+		return ErrTimeout
+	}
 	if camp >= campSize {
 		return ErrOutOfCampSize
 	}
@@ -386,10 +387,11 @@ func (g *Game) isTimeout() bool {
 }
 
 func (g *Game) getTimeout() time.Time {
+	timeout := time.Duration(32) * time.Second
 	if len(g.histories) == 0 {
-		return g.createdAt.Add(time.Duration(30) * time.Second)
+		return g.createdAt.Add(timeout)
 	}
-	return g.histories[len(g.histories)-1].at.Add(time.Duration(30) * time.Second)
+	return g.histories[len(g.histories)-1].at.Add(timeout)
 }
 
 func (h history) mask() history {

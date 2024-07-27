@@ -4,17 +4,18 @@ import type { History, HistoryResponse } from "../../gen/api/v1/game_pb";
 export function HistoryComponent() {
   const history = useLoaderData() as HistoryResponse;
 
-  const histories = history.histories.map((x) => {
-    if (x.userId === "") {
-      x.impact = "";
-    }
-    return x;
-  }).sort((a, b) => a.turn - b.turn);;
-  const iamTheFirst = histories.length === 0? history.myTurn: histories[0].userId !== "";
-  const firstHistories = histories
-    .filter((x) => x.turn % 2 === 1)
-  const secondHistories = histories
-    .filter((x) => x.turn % 2 === 0)
+  const histories = history.histories
+    .map((x) => {
+      if (x.userId === "") {
+        x.impact = "";
+      }
+      return x;
+    })
+    .sort((a, b) => a.turn - b.turn);
+  const iamTheFirst =
+    histories.length === 0 ? history.myTurn : histories[0].userId !== "";
+  const firstHistories = histories.filter((x) => x.turn % 2 === 1);
+  const secondHistories = histories.filter((x) => x.turn % 2 === 0);
 
   return (
     <div style={{ display: "flex", gap: 10 }}>

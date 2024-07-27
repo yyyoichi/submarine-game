@@ -31,6 +31,23 @@ function Home() {
     }
   }, [history.myTurn, submit]);
 
+  const [timeLeft, setTimeLeft] = useState(
+    Number(history.timeout) - Date.now(),
+  );
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!history.myTurn) {
+        return;
+      }
+      const currentTime = Number(history.timeout) - Date.now();
+      setTimeLeft(currentTime);
+      if (currentTime > 0) return;
+      submit(null, { method: "DELETE" });
+    }, 1000); // 毎秒更新
+
+    return () => clearInterval(interval);
+  }, [history.timeout, history.myTurn, submit]);
+
   const [clickCamp, setClickCamp] = useState<number | null>();
   let enableStatus: CampStatus[] = [];
   for (let i = 0; i < history.camps.length; i++) {
@@ -44,6 +61,7 @@ function Home() {
   return (
     <>
       <h2>{history.description}</h2>
+      {history.myTurn && <div>敗走まで残り{Math.floor(timeLeft / 1000)}秒</div>}
       <Form method="POST" ref={formRef}>
         <table>
           <tbody>
@@ -137,16 +155,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
     return history;
   } catch (err) {
     const connectErr = new ConnectError(err as string);
-    throw connectErr.message;
+    console.error(connectErr.message);
   }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
+  const { gameId, userId } = params;
   try {
     switch (request.method) {
       case "POST": {
-        const { gameId, userId } = params;
         let actionType = ActionType.UNSPECIFIED;
         const strActionType = formData.get("action")?.toString();
         if (strActionType === "1") {
@@ -176,26 +194,38 @@ export async function action({ request, params }: ActionFunctionArgs) {
       }
 
       case "PATCH": {
-        const { gameId, userId } = params;
         const clinet = getGameClient();
         const req = new WaitRequest({
           gameId,
           userId,
         });
         console.log(req);
-        for await (const _ of clinet.wait(req)) {
+        for await (const _ of clinet.wait(req, { signal: request.signal })) {
         }
+        break;
+      }
+
+      case "DELETE": {
+        const clinet = getGameClient();
+        const req = new ActionRequest({
+          type: ActionType.LEAVE,
+          gameId,
+          userId,
+          camp: 0,
+        });
+        console.log(req);
+        await clinet.action(req, { signal: request.signal });
         break;
       }
     }
   } catch (e) {
     if (e instanceof ConnectError) {
-      window.alert(e.message);
+      console.error(e.message);
     } else if (e instanceof Error) {
       const ce = new ConnectError(e.message);
-      window.alert(ce.message);
+      console.error(ce.message);
     } else {
-      window.alert(e);
+      console.error(e);
     }
   }
   return null;

@@ -95,9 +95,6 @@ func (h *Handler) Action(ctx context.Context, req *connect.Request[apiv1.ActionR
 
 // 相手の行動を待機する
 func (h *Handler) Wait(ctx context.Context, req *connect.Request[apiv1.WaitRequest], stream *connect.ServerStream[apiv1.WaitResponse]) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(31)*time.Second)
-	defer cancel()
-
 	gm, err := h.pg.Use(req.Msg.GameId)
 	if err != nil {
 		return err
@@ -107,7 +104,8 @@ func (h *Handler) Wait(ctx context.Context, req *connect.Request[apiv1.WaitReque
 		case <-ctx.Done():
 		case <-time.After(time.Duration(500) * time.Millisecond):
 		}
-		done := gm.NextUser == req.Msg.UserId
+		hist := gm.GetHistory(req.Msg.UserId)
+		done := hist.MyTurn || hist.Winner != ""
 		resp := &apiv1.WaitResponse{
 			Done: done,
 		}
