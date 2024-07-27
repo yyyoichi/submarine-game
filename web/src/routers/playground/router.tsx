@@ -10,28 +10,16 @@ import {
 	ActionType,
 	CampStatus,
 	HistoryRequest,
-	type History,
+	type HistoryResponse_Camp,
 	type HistoryResponse,
 } from "../../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
+import type React from "react";
 import { useState } from "react";
+import { HistoryComponent } from "./history";
 
 function Home() {
 	const history = useLoaderData() as HistoryResponse;
-
-	const iamTheFirst = history.myTurn === (history.histories.length % 2 === 1);
-	const histories = history.histories.map((x) => {
-		if (x.userId === "") {
-			x.impact = "";
-		}
-		return x;
-	});
-	const firstHistories = histories
-		.filter((x) => x.turn % 2 === 0)
-		.sort((a, b) => a.turn - b.turn);
-	const secondHistories = histories
-		.filter((x) => x.turn % 2 === 1)
-		.sort((a, b) => a.turn - b.turn);
 
 	const [clickCamp, setClickCamp] = useState<number | null>();
 	let enableStatus: CampStatus[] = [];
@@ -52,39 +40,21 @@ function Home() {
 						{history.camps.map((line, row) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 							<tr key={row}>
-								{line.camps.map((s, col) => {
-									const Cell = () => {
-										if (s.status.length === 0) {
-											return <>🌊{s.camp}</>;
-										}
-										if (s.status.includes(CampStatus.ISLAND)) {
-											return <>🏝️{s.camp}</>;
-										}
-										if (s.status.includes(CampStatus.SUBMARINE)) {
-											return <>📍{s.camp}</>;
-										}
-										return (
-											<label>
-												<input
-													type="radio"
-													name="camp"
-													value={s.camp}
-													checked={clickCamp === s.camp}
-													onChange={() => {
-														setClickCamp(s.camp);
-													}}
-												/>
-												{s.camp}
-											</label>
-										);
-									};
-									return (
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-										<td key={col}>
-											<Cell />
-										</td>
-									);
-								})}
+								{line.camps.map((camp, col) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+									<td key={col}>
+										<CampInput
+											camp={camp}
+											type="radio"
+											name="camp"
+											value={camp.camp}
+											checked={clickCamp === camp.camp}
+											onChange={() => {
+												setClickCamp(camp.camp);
+											}}
+										/>
+									</td>
+								))}
 							</tr>
 						))}
 					</tbody>
@@ -117,35 +87,29 @@ function Home() {
 					</div>
 				)}
 			</Form>
-			<div style={{ display: "flex", gap: 10 }}>
-				<div>
-					<h3>
-						{"先攻"}
-						{iamTheFirst && "📍"}
-					</h3>
-					{firstHistories.map((x) => (
-						<ActionComponent x={x} key={x.turn} />
-					))}
-				</div>
-				<div>
-					<h3>
-						{"後攻"}
-						{!iamTheFirst && "📍"}
-					</h3>
-					{secondHistories.map((x) => (
-						<ActionComponent x={x} key={x.turn} />
-					))}
-				</div>
-			</div>
+			<HistoryComponent />
 		</>
 	);
 }
 
-function ActionComponent({ x }: { x: History }) {
+function CampInput({
+	camp,
+	...props
+}: { camp: HistoryResponse_Camp } & React.ComponentProps<"input">) {
+	if (camp.status.length === 0) {
+		return <>🌊{camp.camp}</>;
+	}
+	if (camp.status.includes(CampStatus.ISLAND)) {
+		return <>🏝️{camp.camp}</>;
+	}
+	if (camp.status.includes(CampStatus.SUBMARINE)) {
+		return <>📍{camp.camp}</>;
+	}
 	return (
-		<div>
-			<p>{`${x.description}${x.impact && ` >> ${x.impact}`}`}</p>
-		</div>
+		<label>
+			<input {...props} />
+			{camp.camp}
+		</label>
 	);
 }
 
