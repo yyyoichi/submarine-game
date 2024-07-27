@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "npx biome lint --write ./app",
-    "format": "npx biome format --write ./app"
+    "lint": "npx biome lint --write ./src",
+    "format": "npx biome format --write ./src"
   },
   "dependencies": {
     "@connectrpc/connect": "^1.4.0",
