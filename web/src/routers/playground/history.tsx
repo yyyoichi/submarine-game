@@ -4,7 +4,7 @@ import type { History, HistoryResponse } from "../../gen/api/v1/game_pb";
 export function HistoryComponent() {
   const history = useLoaderData() as HistoryResponse;
 
-  const iamTheFirst = history.myTurn === (history.histories.length % 2 === 0);
+  const iamTheFirst = history.histories.length === 0? history.myTurn: history.histories[0].userId !== "";
   const histories = history.histories.map((x) => {
     if (x.userId === "") {
       x.impact = "";
