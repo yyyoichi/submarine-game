@@ -3,6 +3,7 @@ import {
 	useLoaderData,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
+	useSubmit,
 } from "react-router-dom";
 import { getGameClient } from "../../api/connect";
 import {
@@ -12,14 +13,23 @@ import {
 	HistoryRequest,
 	type HistoryResponse_Camp,
 	type HistoryResponse,
+	WaitRequest,
 } from "../../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HistoryComponent } from "./history";
 
 function Home() {
 	const history = useLoaderData() as HistoryResponse;
+
+	const formRef = useRef<HTMLFormElement>(null);
+	const submit = useSubmit();
+	useEffect(() => {
+		if (formRef.current && !history.myTurn) {
+			submit(formRef.current, { method: "PATCH" });
+		}
+	}, [history.myTurn, submit]);
 
 	const [clickCamp, setClickCamp] = useState<number | null>();
 	let enableStatus: CampStatus[] = [];
@@ -34,7 +44,7 @@ function Home() {
 	return (
 		<>
 			<h2>{history.description}</h2>
-			<Form method="post">
+			<Form method="POST" ref={formRef}>
 				<table>
 					<tbody>
 						{history.camps.map((line, row) => (
@@ -133,33 +143,51 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const formData = await request.formData();
-	const { gameId, userId } = params;
-	let actionType = ActionType.UNSPECIFIED;
-	const strActionType = formData.get("action")?.toString();
-	if (strActionType === "1") {
-		actionType = ActionType.MOVE;
-	} else if (strActionType === "2") {
-		actionType = ActionType.BOMB;
-	} else if (strActionType === "4") {
-		actionType = ActionType.PLACE;
-	}
-	let camp = 99999;
-	const strCamp = formData.get("camp")?.toString();
 	try {
-		camp = Number(strCamp);
-	} catch (e) {
-		console.error(e);
-	}
-	try {
-		const clinet = getGameClient();
-		const req = new ActionRequest({
-			type: actionType,
-			gameId,
-			userId,
-			camp: camp,
-		});
-		console.log(req);
-		await clinet.action(req);
+		switch (request.method) {
+			case "POST": {
+				const { gameId, userId } = params;
+				let actionType = ActionType.UNSPECIFIED;
+				const strActionType = formData.get("action")?.toString();
+				if (strActionType === "1") {
+					actionType = ActionType.MOVE;
+				} else if (strActionType === "2") {
+					actionType = ActionType.BOMB;
+				} else if (strActionType === "4") {
+					actionType = ActionType.PLACE;
+				}
+				let camp = 99999;
+				const strCamp = formData.get("camp")?.toString();
+				try {
+					camp = Number(strCamp);
+				} catch (e) {
+					console.error(e);
+				}
+				const clinet = getGameClient();
+				const req = new ActionRequest({
+					type: actionType,
+					gameId,
+					userId,
+					camp: camp,
+				});
+				console.log(req);
+				await clinet.action(req, { signal: request.signal });
+				break;
+			}
+
+			case "PATCH": {
+				const { gameId, userId } = params;
+				const clinet = getGameClient();
+				const req = new WaitRequest({
+					gameId,
+					userId,
+				});
+				console.log(req);
+				for await (const _ of clinet.wait(req)) {
+				}
+				break;
+			}
+		}
 	} catch (e) {
 		if (e instanceof ConnectError) {
 			window.alert(e.message);
