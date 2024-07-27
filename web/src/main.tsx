@@ -2,8 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ErrorPage from "./routers/error";
-import Home from "./routers/home";
-import Matching from "./routers/matching";
+import Home, { action as homeAction } from "./routers/home";
 import Playground, {
 	loader as playgroundLoader,
 	action as playgroundAction,
@@ -16,11 +15,7 @@ const router = createBrowserRouter([
 		path: "/",
 		element: <Home />,
 		errorElement: <ErrorPage />,
-	},
-	{
-		path: "/matching",
-		element: <Matching />,
-		errorElement: <ErrorPage />,
+		action: homeAction,
 	},
 	{
 		path: "playground/:gameId/:userId",
