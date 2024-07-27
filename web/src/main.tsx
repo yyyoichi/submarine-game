@@ -6,7 +6,7 @@ import Home, { action as homeAction } from "./routers/home";
 import Playground, {
 	loader as playgroundLoader,
 	action as playgroundAction,
-} from "./routers/playground";
+} from "./routers/playground/router";
 
 import "./index.css";
 

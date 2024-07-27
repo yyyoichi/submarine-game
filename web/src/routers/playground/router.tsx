@@ -4,7 +4,7 @@ import {
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 } from "react-router-dom";
-import { getGameClient } from "../api/connect";
+import { getGameClient } from "../../api/connect";
 import {
 	ActionRequest,
 	ActionType,
@@ -12,7 +12,7 @@ import {
 	HistoryRequest,
 	type History,
 	type HistoryResponse,
-} from "../gen/api/v1/game_pb";
+} from "../../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
 import { useState } from "react";
 
