@@ -19,6 +19,7 @@
     }
   },
   "postCreateCommand": "sh /workspaces/submarine-game/.devcontainer/init.sh",
+  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
     "vscode": {
       "extensions": [
