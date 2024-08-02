@@ -22,3 +22,4 @@ COPY --from=builder /run-app /usr/local/bin/
 
 # アプリケーションを起動
 CMD ["run-app"]
+EXPOSE 8080
