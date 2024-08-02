@@ -15,7 +15,7 @@
 			"version": "1.22.5"
 		},
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "v20.15"
+      "version": "v20.16"
     }
   },
   "postCreateCommand": "sh /workspaces/submarine-game/.devcontainer/init.sh",
@@ -28,7 +28,7 @@
   },
   "containerEnv": {
     "TZ": "Asia/Tokyo",
-    "API_PORT": ":8080"
+    "PORT": ":8080"
   },
   "remoteUser": "root"
 }

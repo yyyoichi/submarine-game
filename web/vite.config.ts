@@ -4,9 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    proxy:{
+    proxy: process.env.NODE_ENV === "production"? undefined: {
       "/rpc": {
-        target: `http://localhost${process.env.API_PORT}`,
+        target: `http://localhost${process.env.PORT}`,
         changeOrigin: true,
       },
     }

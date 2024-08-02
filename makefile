@@ -1,3 +1,5 @@
+include .env
+
 genbuf:
 	buf lint && buf generate
 
@@ -8,3 +10,6 @@ server:
 client:
 	@cd web && npm run dev
 	echo "🪖 Running Client"
+
+deploy:
+	gcloud builds submit --region=${LOCATION} --tag ${LOCATION}-docker.pkg.dev/${PROJECT_ID}/submarine-game/${IMAGE_NAME}:${TAG}
