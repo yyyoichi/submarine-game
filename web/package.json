@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "vite build --config vite.config.prod.ts",
     "preview": "vite preview",
     "lint": "npx biome lint --write ./src",
     "format": "npx biome format --write ./src"

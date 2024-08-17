@@ -4,8 +4,12 @@ ARG NODE_VERSION=20.16
 FROM node:${NODE_VERSION}-bookworm AS base
 
 WORKDIR /app
+
+COPY ./web/package*.json ./
+RUN npm ci
+
 COPY ./web/ ./
-RUN npm install && export NODE_ENV=production npm run build
+RUN npm run build:prod
 
 FROM golang:${GO_VERSION}-bookworm AS builder
 
