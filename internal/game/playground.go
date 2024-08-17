@@ -36,6 +36,10 @@ func (pg *Playground) NewGame(users [2]string) *Game {
 
 		mu:       sync.RWMutex{},
 		NextUser: users[1],
+		mines: map[string][]uint32{
+			users[0]: {},
+			users[1]: {},
+		},
 	}
 	pg.gameById[g.Id] = g
 	pg.gameByUser[users[0]] = g

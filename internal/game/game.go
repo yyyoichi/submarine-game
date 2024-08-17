@@ -20,6 +20,7 @@ type Game struct {
 	NextUser  string
 	Winner    string
 	histories []history
+	mines     map[string][]uint32 // 残機雷
 }
 
 type history struct {
@@ -27,6 +28,7 @@ type history struct {
 	camp   uint32
 	t      apiv1.ActionType
 	impact bombImpactType // t がbombのときの結果
+	mines  []uint32       // 残機雷
 	at     time.Time
 }
 
@@ -37,7 +39,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	var latestMyHistory = g.getLatestHistory(me)
 	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 	var resp = &apiv1.HistoryResponse{
-		Camps:     g.getCampStatus(latestPlaceHistory),
+		Camps:     g.getCampStatus(latestPlaceHistory, latestMyHistory),
 		MyTurn:    me == g.NextUser,
 		Winner:    g.Winner,
 		Histories: make([]*apiv1.History, 0, len(g.histories)),
@@ -97,6 +99,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
 
+			case apiv1.ActionType_ACTION_TYPE_MINE:
+				respHistory.Description = fmt.Sprintf("海域'%d'の機雷作動！", hist.camp)
+
 			}
 
 		// 対戦相手の履歴
@@ -133,6 +138,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
+
+			case apiv1.ActionType_ACTION_TYPE_MINE:
+				respHistory.Description = fmt.Sprintf("💣海域'%d'の機雷作動！", hist.camp)
 			}
 
 		}
@@ -154,8 +162,8 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 }
 
 func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	if g.Winner != "" {
 		return ErrGameIsOver
@@ -172,10 +180,11 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 		return ErrOutOfCampSize
 	}
 
+	var latestHistory = g.getLatestHistory(me)
 	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 
 	// check enable action or not
-	var enableCamps = g.getCampStatus(latestPlaceHistory)
+	var enableCamps = g.getCampStatus(latestPlaceHistory, latestHistory)
 	row, col := camp/lineSize, camp%lineSize
 	enableStatus := enableCamps[row].Camps[col].Status
 	switch action {
@@ -186,6 +195,11 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 
 	case apiv1.ActionType_ACTION_TYPE_BOMB:
 		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_BOMB) {
+			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
+		}
+
+	case apiv1.ActionType_ACTION_TYPE_MINE:
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MINE) {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
@@ -202,17 +216,27 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	// end validation
 
 	defer g.changeTurn(me)
+	if action == apiv1.ActionType_ACTION_TYPE_MINE {
+		// 機雷作動分を削除
+		g.mines[me] = slices.DeleteFunc(g.mines[me], func(c uint32) bool {
+			return c == camp
+		})
+	}
 
 	hist := history{
 		user:   me,
 		camp:   camp,
 		t:      action,
 		impact: unknownImpact,
+		mines:  make([]uint32, len(g.mines[me])),
 		at:     time.Now(),
 	}
+	_ = copy(hist.mines, g.mines[me])
 
 	// impact
-	if action == apiv1.ActionType_ACTION_TYPE_BOMB {
+	switch action {
+	// 魚雷と機雷のときは命中判定をする。
+	case apiv1.ActionType_ACTION_TYPE_BOMB, apiv1.ActionType_ACTION_TYPE_MINE:
 		enemy := g.getEnemy(me)
 		ehist := g.getLatestPlaceHistory(enemy)
 		if ehist != nil { // nilは実装上あり得ない
@@ -243,8 +267,8 @@ func (g *Game) leave(user string) {
 	g.Winner = enemy
 }
 
-// [latestHistory]の最近の履歴から、海域情報を返す。
-func (g *Game) getCampStatus(latestPlace *history) []*apiv1.HistoryResponse_Line {
+// 最新の配置場所[latestHistory]と最新の行動内容から、海域情報を返す。
+func (g *Game) getCampStatus(latestPlace *history, latestHist *history) []*apiv1.HistoryResponse_Line {
 	if latestPlace == nil {
 		return g.getInitCampStatus()
 	}
@@ -269,15 +293,23 @@ func (g *Game) getCampStatus(latestPlace *history) []*apiv1.HistoryResponse_Line
 			}
 			continue
 		}
+
+		var status = make([]apiv1.CampStatus, 0, 3)
+
+		// 機雷敷設場所
+		if slices.Contains(latestHist.mines, c) {
+			status = append(status, apiv1.CampStatus_CAMP_STATUS_MINE)
+		}
+
 		if latestPlace.camp == c {
 			// 自身
+			status = append(status, apiv1.CampStatus_CAMP_STATUS_SUBMARINE)
 			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
-				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_SUBMARINE},
+				Status: status,
 				Camp:   c,
 			}
 			continue
 		}
-		var status = make([]apiv1.CampStatus, 0, 2)
 		if slices.Contains(moveEnable, c) {
 			status = append(status, apiv1.CampStatus_CAMP_STATUS_MOVE)
 		}
@@ -310,7 +342,7 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 			}
 		} else {
 			status = []apiv1.CampStatus{
-				apiv1.CampStatus_CAMP_STATUS_PLACE,
+				apiv1.CampStatus_CAMP_STATUS_PLACE, apiv1.CampStatus_CAMP_STATUS_MINE,
 			}
 		}
 		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{

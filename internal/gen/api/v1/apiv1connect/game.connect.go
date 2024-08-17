@@ -41,6 +41,8 @@ const (
 	GameServiceLeaveProcedure = "/api.v1.GameService/Leave"
 	// GameServiceHistoryProcedure is the fully-qualified name of the GameService's History RPC.
 	GameServiceHistoryProcedure = "/api.v1.GameService/History"
+	// GameServiceFirstActionProcedure is the fully-qualified name of the GameService's FirstAction RPC.
+	GameServiceFirstActionProcedure = "/api.v1.GameService/FirstAction"
 	// GameServiceActionProcedure is the fully-qualified name of the GameService's Action RPC.
 	GameServiceActionProcedure = "/api.v1.GameService/Action"
 	// GameServiceWaitProcedure is the fully-qualified name of the GameService's Wait RPC.
@@ -51,14 +53,15 @@ const (
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	gameServiceServiceDescriptor       = v1.File_api_v1_game_proto.Services().ByName("GameService")
-	gameServiceJoinMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Join")
-	gameServiceLeaveMethodDescriptor   = gameServiceServiceDescriptor.Methods().ByName("Leave")
-	gameServiceHistoryMethodDescriptor = gameServiceServiceDescriptor.Methods().ByName("History")
-	gameServiceActionMethodDescriptor  = gameServiceServiceDescriptor.Methods().ByName("Action")
-	gameServiceWaitMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Wait")
-	helloServiceServiceDescriptor      = v1.File_api_v1_game_proto.Services().ByName("HelloService")
-	helloServiceSayMethodDescriptor    = helloServiceServiceDescriptor.Methods().ByName("Say")
+	gameServiceServiceDescriptor           = v1.File_api_v1_game_proto.Services().ByName("GameService")
+	gameServiceJoinMethodDescriptor        = gameServiceServiceDescriptor.Methods().ByName("Join")
+	gameServiceLeaveMethodDescriptor       = gameServiceServiceDescriptor.Methods().ByName("Leave")
+	gameServiceHistoryMethodDescriptor     = gameServiceServiceDescriptor.Methods().ByName("History")
+	gameServiceFirstActionMethodDescriptor = gameServiceServiceDescriptor.Methods().ByName("FirstAction")
+	gameServiceActionMethodDescriptor      = gameServiceServiceDescriptor.Methods().ByName("Action")
+	gameServiceWaitMethodDescriptor        = gameServiceServiceDescriptor.Methods().ByName("Wait")
+	helloServiceServiceDescriptor          = v1.File_api_v1_game_proto.Services().ByName("HelloService")
+	helloServiceSayMethodDescriptor        = helloServiceServiceDescriptor.Methods().ByName("Say")
 )
 
 // GameServiceClient is a client for the api.v1.GameService service.
@@ -69,6 +72,8 @@ type GameServiceClient interface {
 	Leave(context.Context, *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error)
 	// 行動履歴を取得する
 	History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error)
+	// 初回の行動する
+	FirstAction(context.Context, *connect.Request[v1.FirstActionRequest]) (*connect.Response[v1.FirstActionResponse], error)
 	// 行動する
 	Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error)
 	// 相手の行動を待機する
@@ -103,6 +108,12 @@ func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(gameServiceHistoryMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		firstAction: connect.NewClient[v1.FirstActionRequest, v1.FirstActionResponse](
+			httpClient,
+			baseURL+GameServiceFirstActionProcedure,
+			connect.WithSchema(gameServiceFirstActionMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		action: connect.NewClient[v1.ActionRequest, v1.ActionResponse](
 			httpClient,
 			baseURL+GameServiceActionProcedure,
@@ -120,11 +131,12 @@ func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // gameServiceClient implements GameServiceClient.
 type gameServiceClient struct {
-	join    *connect.Client[v1.JoinRequest, v1.JoinResponse]
-	leave   *connect.Client[v1.LeaveRequest, v1.LeaveResponse]
-	history *connect.Client[v1.HistoryRequest, v1.HistoryResponse]
-	action  *connect.Client[v1.ActionRequest, v1.ActionResponse]
-	wait    *connect.Client[v1.WaitRequest, v1.WaitResponse]
+	join        *connect.Client[v1.JoinRequest, v1.JoinResponse]
+	leave       *connect.Client[v1.LeaveRequest, v1.LeaveResponse]
+	history     *connect.Client[v1.HistoryRequest, v1.HistoryResponse]
+	firstAction *connect.Client[v1.FirstActionRequest, v1.FirstActionResponse]
+	action      *connect.Client[v1.ActionRequest, v1.ActionResponse]
+	wait        *connect.Client[v1.WaitRequest, v1.WaitResponse]
 }
 
 // Join calls api.v1.GameService.Join.
@@ -140,6 +152,11 @@ func (c *gameServiceClient) Leave(ctx context.Context, req *connect.Request[v1.L
 // History calls api.v1.GameService.History.
 func (c *gameServiceClient) History(ctx context.Context, req *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error) {
 	return c.history.CallUnary(ctx, req)
+}
+
+// FirstAction calls api.v1.GameService.FirstAction.
+func (c *gameServiceClient) FirstAction(ctx context.Context, req *connect.Request[v1.FirstActionRequest]) (*connect.Response[v1.FirstActionResponse], error) {
+	return c.firstAction.CallUnary(ctx, req)
 }
 
 // Action calls api.v1.GameService.Action.
@@ -160,6 +177,8 @@ type GameServiceHandler interface {
 	Leave(context.Context, *connect.Request[v1.LeaveRequest]) (*connect.Response[v1.LeaveResponse], error)
 	// 行動履歴を取得する
 	History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error)
+	// 初回の行動する
+	FirstAction(context.Context, *connect.Request[v1.FirstActionRequest]) (*connect.Response[v1.FirstActionResponse], error)
 	// 行動する
 	Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error)
 	// 相手の行動を待機する
@@ -190,6 +209,12 @@ func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(gameServiceHistoryMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	gameServiceFirstActionHandler := connect.NewUnaryHandler(
+		GameServiceFirstActionProcedure,
+		svc.FirstAction,
+		connect.WithSchema(gameServiceFirstActionMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	gameServiceActionHandler := connect.NewUnaryHandler(
 		GameServiceActionProcedure,
 		svc.Action,
@@ -210,6 +235,8 @@ func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption
 			gameServiceLeaveHandler.ServeHTTP(w, r)
 		case GameServiceHistoryProcedure:
 			gameServiceHistoryHandler.ServeHTTP(w, r)
+		case GameServiceFirstActionProcedure:
+			gameServiceFirstActionHandler.ServeHTTP(w, r)
 		case GameServiceActionProcedure:
 			gameServiceActionHandler.ServeHTTP(w, r)
 		case GameServiceWaitProcedure:
@@ -233,6 +260,10 @@ func (UnimplementedGameServiceHandler) Leave(context.Context, *connect.Request[v
 
 func (UnimplementedGameServiceHandler) History(context.Context, *connect.Request[v1.HistoryRequest]) (*connect.Response[v1.HistoryResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.History is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) FirstAction(context.Context, *connect.Request[v1.FirstActionRequest]) (*connect.Response[v1.FirstActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.GameService.FirstAction is not implemented"))
 }
 
 func (UnimplementedGameServiceHandler) Action(context.Context, *connect.Request[v1.ActionRequest]) (*connect.Response[v1.ActionResponse], error) {
