@@ -13,3 +13,7 @@ client:
 
 deploy:
 	gcloud builds submit --region=${LOCATION} --tag ${LOCATION}-docker.pkg.dev/${PROJECT_ID}/submarine-game/${IMAGE_NAME}:${TAG}
+
+login:
+	gcloud auth login
+
