@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ActionRequest, ActionResponse, HistoryRequest, HistoryResponse, JoinRequest, JoinResponse, LeaveRequest, LeaveResponse, SayRequest, SayResponse, WaitRequest, WaitResponse } from "./game_pb.js";
+import { ActionRequest, ActionResponse, FirstActionRequest, FirstActionResponse, HistoryRequest, HistoryResponse, JoinRequest, JoinResponse, LeaveRequest, LeaveResponse, SayRequest, SayResponse, WaitRequest, WaitResponse } from "./game_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -43,6 +43,17 @@ export const GameService = {
       name: "History",
       I: HistoryRequest,
       O: HistoryResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * 初回の行動する
+     *
+     * @generated from rpc api.v1.GameService.FirstAction
+     */
+    firstAction: {
+      name: "FirstAction",
+      I: FirstActionRequest,
+      O: FirstActionResponse,
       kind: MethodKind.Unary,
     },
     /**
