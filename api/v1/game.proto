@@ -58,7 +58,7 @@ message HistoryResponse {
 message FirstActionRequest {
   string game_id = 1;
   string user_id = 2;
-  repeated uint32 camp = 3; // 初回行動場所
+  uint32 camp = 3; // 初回行動場所
   repeated uint32 mine_camps = 4; // 機雷敷設場所
 }
 message FirstActionResponse {}
@@ -94,8 +94,8 @@ enum ActionType {
   ACTION_TYPE_MOVE = 1; // 移動
   ACTION_TYPE_BOMB = 2; // ボム
   ACTION_TYPE_LEAVE = 3; // 中断
-  ACTION_TYPE_PLACE = 4; // 配置
   ACTION_TYPE_MINE = 5; // 制御水雷
+  ACTION_TYPE_FIRST = 55; // 初回行動
 }
 
 enum CampStatus {

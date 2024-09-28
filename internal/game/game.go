@@ -49,6 +49,10 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 		resp.MyTurn = false
 		resp.Timeout = 0
 	}
+	if len(g.histories) < 2 && latestMyHistory == nil {
+		// 初回行動
+		resp.MyTurn = true
+	}
 
 	// description
 	switch {
@@ -60,9 +64,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 		}
 	case resp.MyTurn:
 		if latestMyHistory == nil {
-			resp.Description = "📍行動を開始する海域を決定しよう。"
+			resp.Description = "📍行動を開始する海域を決定して、機雷を敷設しよう。"
 		} else {
-			resp.Description = "🪖行動か、魚雷か。"
+			resp.Description = "🪖行動か、魚雷か、機雷か。"
 		}
 	default:
 		resp.Description = "👀敵の行動を待機中.."
@@ -87,7 +91,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 				Type:   hist.t,
 			}
 			switch respHistory.Type {
-			case apiv1.ActionType_ACTION_TYPE_PLACE:
+			case apiv1.ActionType_ACTION_TYPE_FIRST:
 				respHistory.Description = fmt.Sprintf("📍作戦開始海域を'%d'に決定。", hist.camp)
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
@@ -115,7 +119,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 			}
 
 			switch respHistory.Type {
-			case apiv1.ActionType_ACTION_TYPE_PLACE:
+			case apiv1.ActionType_ACTION_TYPE_FIRST:
 				respHistory.Description = "📍作戦開始海域を'?'に決定。"
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
@@ -161,6 +165,55 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	return resp
 }
 
+func (g *Game) FirstAction(me string, place uint32, mines []uint32) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.Winner != "" {
+		return ErrGameIsOver
+	}
+	if g.clock.isActionTimeout() {
+		// timeoutよりも500milsec大きいときにタイムアウト判定
+		g.leave(me)
+		return ErrTimeout
+	}
+	if place >= campSize {
+		return ErrOutOfCampSize
+	}
+	if len(mines) != 2 {
+		return fmt.Errorf("%w: mines must have 2 length", ErrInvalidAction)
+	}
+	if mines[0] >= campSize || mines[1] >= campSize {
+		return ErrOutOfCampSize
+	}
+	var latestHistory = g.getLatestHistory(me)
+	var latestPlaceHistory = g.getLatestPlaceHistory(me)
+
+	// check enable action or not
+	var enableCamps = g.getCampStatus(latestPlaceHistory, latestHistory)
+	// valid place
+	row, col := place/lineSize, place%lineSize
+	enableStatus := enableCamps[row].Camps[col].Status
+	if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
+		return fmt.Errorf("%w: %s", ErrInvalidAction, apiv1.ActionType_ACTION_TYPE_FIRST)
+	}
+	// valid mines place
+	for _, camp := range mines {
+		row, col := camp/lineSize, camp%lineSize
+		enableStatus := enableCamps[row].Camps[col].Status
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MINE) {
+			return fmt.Errorf("%w: %s", ErrInvalidAction, apiv1.ActionType_ACTION_TYPE_FIRST)
+		}
+	}
+
+	g.appendHistory(history{
+		user:  me,
+		camp:  place,
+		t:     apiv1.ActionType_ACTION_TYPE_FIRST,
+		mines: mines,
+	})
+	return nil
+}
+
 func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -203,10 +256,8 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
-	case apiv1.ActionType_ACTION_TYPE_PLACE:
-		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
-			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
-		}
+	case apiv1.ActionType_ACTION_TYPE_FIRST:
+		return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 
 	case apiv1.ActionType_ACTION_TYPE_UNSPECIFIED:
 		return fmt.Errorf("%w: %s", ErrInvalidAction, action)
@@ -374,7 +425,7 @@ func (g *Game) getLatestPlaceHistory(user string) *history {
 		if g.histories[i].user != user {
 			continue
 		}
-		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_FIRST {
 			return &g.histories[i]
 		}
 	}
@@ -387,7 +438,7 @@ func (g *Game) getPrevPlaceHistory(user string, trun int32) *history {
 		if g.histories[i].user != user {
 			continue
 		}
-		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_FIRST {
 			return &g.histories[i]
 		}
 	}

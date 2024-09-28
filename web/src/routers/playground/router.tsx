@@ -90,7 +90,7 @@ function Home() {
         <div>
           {history.myTurn && enableStatus.includes(CampStatus.PLACE) && (
             <label>
-              <input type="radio" name="action" value={ActionType.PLACE} />
+              <input type="radio" name="action" value={ActionType.FIRST} />
               {"配置"}
             </label>
           )}
@@ -171,8 +171,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
           actionType = ActionType.MOVE;
         } else if (strActionType === "2") {
           actionType = ActionType.BOMB;
-        } else if (strActionType === "4") {
-          actionType = ActionType.PLACE;
+        } else if (strActionType === "55") {
+          actionType = ActionType.FIRST;
         }
         let camp = 99999;
         const strCamp = formData.get("camp")?.toString();

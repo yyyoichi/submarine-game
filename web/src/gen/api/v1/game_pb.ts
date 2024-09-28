@@ -37,18 +37,18 @@ export enum ActionType {
   LEAVE = 3,
 
   /**
-   * 配置
-   *
-   * @generated from enum value: ACTION_TYPE_PLACE = 4;
-   */
-  PLACE = 4,
-
-  /**
    * 制御水雷
    *
    * @generated from enum value: ACTION_TYPE_MINE = 5;
    */
   MINE = 5,
+
+  /**
+   * 初回行動
+   *
+   * @generated from enum value: ACTION_TYPE_FIRST = 55;
+   */
+  FIRST = 55,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ActionType)
 proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
@@ -56,8 +56,8 @@ proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
   { no: 1, name: "ACTION_TYPE_MOVE" },
   { no: 2, name: "ACTION_TYPE_BOMB" },
   { no: 3, name: "ACTION_TYPE_LEAVE" },
-  { no: 4, name: "ACTION_TYPE_PLACE" },
   { no: 5, name: "ACTION_TYPE_MINE" },
+  { no: 55, name: "ACTION_TYPE_FIRST" },
 ]);
 
 /**
@@ -489,9 +489,9 @@ export class FirstActionRequest extends Message<FirstActionRequest> {
   /**
    * 初回行動場所
    *
-   * @generated from field: repeated uint32 camp = 3;
+   * @generated from field: uint32 camp = 3;
    */
-  camp: number[] = [];
+  camp = 0;
 
   /**
    * 機雷敷設場所
@@ -510,7 +510,7 @@ export class FirstActionRequest extends Message<FirstActionRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
+    { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 4, name: "mine_camps", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
   ]);
 
