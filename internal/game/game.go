@@ -211,6 +211,7 @@ func (g *Game) FirstAction(me string, place uint32, mines []uint32) error {
 		t:     apiv1.ActionType_ACTION_TYPE_FIRST,
 		mines: mines,
 	})
+	g.mines[me] = mines
 	return nil
 }
 
