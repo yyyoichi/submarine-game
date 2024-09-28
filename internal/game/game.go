@@ -11,10 +11,10 @@ import (
 )
 
 type Game struct {
-	Id        string
-	Users     [2]string
-	Island    [2]uint32
-	createdAt time.Time
+	Id     string
+	Users  [2]string
+	Island [2]uint32
+	clock  clock
 
 	mu        sync.RWMutex
 	NextUser  string
@@ -43,7 +43,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 		MyTurn:    me == g.NextUser,
 		Winner:    g.Winner,
 		Histories: make([]*apiv1.History, 0, len(g.histories)),
-		Timeout:   g.getTimeout().UnixMilli(),
+		Timeout:   g.clock.getActionTimeout().UnixMilli(),
 	}
 	if resp.Winner != "" {
 		resp.MyTurn = false
@@ -171,7 +171,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != me {
 		return ErrIsnotYourTurn
 	}
-	if g.isTimeout() {
+	if g.clock.isActionTimeout() {
 		// timeoutよりも500milsec大きいときにタイムアウト判定
 		g.leave(me)
 		return ErrTimeout
@@ -229,7 +229,6 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 		t:      action,
 		impact: unknownImpact,
 		mines:  make([]uint32, len(g.mines[me])),
-		at:     time.Now(),
 	}
 	_ = copy(hist.mines, g.mines[me])
 
@@ -246,7 +245,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if hist.impact == meichu {
 		g.Winner = me
 	}
-	g.histories = append(g.histories, hist)
+	g.appendHistory(hist)
 	return nil
 }
 
@@ -257,14 +256,20 @@ func (g *Game) Leave(me string) {
 }
 
 func (g *Game) leave(user string) {
-	g.histories = append(g.histories, history{
+	g.appendHistory(history{
 		user: user,
 		camp: 0,
 		t:    apiv1.ActionType_ACTION_TYPE_LEAVE,
-		at:   time.Now(),
 	})
 	enemy := g.getEnemy(user)
 	g.Winner = enemy
+}
+
+func (g *Game) appendHistory(h history) {
+	now := time.Now()
+	h.at = now
+	g.clock.latestAt = &now
+	g.histories = append(g.histories, h)
 }
 
 // 最新の配置場所[latestHistory]と最新の行動内容から、海域情報を返す。
@@ -412,18 +417,6 @@ func (g *Game) changeTurn(user string) {
 	} else {
 		g.NextUser = g.Users[0]
 	}
-}
-
-func (g *Game) isTimeout() bool {
-	return g.getTimeout().Add(time.Duration(500) * time.Millisecond).Before(time.Now())
-}
-
-func (g *Game) getTimeout() time.Time {
-	timeout := time.Duration(32) * time.Second
-	if len(g.histories) == 0 {
-		return g.createdAt.Add(timeout)
-	}
-	return g.histories[len(g.histories)-1].at.Add(timeout)
 }
 
 func (h history) mask() history {
