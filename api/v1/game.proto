@@ -11,6 +11,8 @@ service GameService {
   rpc Leave(LeaveRequest) returns (LeaveResponse) {}
   // 行動履歴を取得する
   rpc History(HistoryRequest) returns (HistoryResponse) {}
+  // 初回の行動する
+  rpc FirstAction(FirstActionRequest) returns (FirstActionResponse) {}
   // 行動する
   rpc Action(ActionRequest) returns (ActionResponse) {}
   // 相手の行動を待機する
@@ -53,14 +55,13 @@ message HistoryResponse {
   string description = 6; // 説明
 }
 
-message History {
-  string user_id = 1; // 行動ユーザ
-  int32 turn = 2; // 行動順
-  uint32 camp = 3; // 行動場所
-  ActionType type = 4; // 行動内容
-  string description = 5; // 行動内容説明
-  string impact = 6; // 相手攻撃の影響 
+message FirstActionRequest {
+  string game_id = 1;
+  string user_id = 2;
+  uint32 camp = 3; // 初回行動場所
+  repeated uint32 mine_camps = 4; // 機雷敷設場所
 }
+message FirstActionResponse {}
 
 message ActionRequest {
   string game_id = 1;
@@ -79,12 +80,22 @@ message WaitResponse {
   bool done = 1; // 相手の行動終了
 }
 
+message History {
+  string user_id = 1; // 行動ユーザ
+  int32 turn = 2; // 行動順
+  uint32 camp = 3; // 行動場所
+  ActionType type = 4; // 行動内容
+  string description = 5; // 行動内容説明
+  string impact = 6; // 相手攻撃の影響 
+}
+
 enum ActionType {
- ACTION_TYPE_UNSPECIFIED = 0;
- ACTION_TYPE_MOVE = 1; // 移動
- ACTION_TYPE_BOMB = 2; // ボム
- ACTION_TYPE_LEAVE = 3; // 中断
- ACTION_TYPE_PLACE = 4; // 配置
+  ACTION_TYPE_UNSPECIFIED = 0;
+  ACTION_TYPE_MOVE = 1; // 移動
+  ACTION_TYPE_BOMB = 2; // ボム
+  ACTION_TYPE_LEAVE = 3; // 中断
+  ACTION_TYPE_MINE = 5; // 制御水雷
+  ACTION_TYPE_FIRST = 55; // 初回行動
 }
 
 enum CampStatus {
@@ -94,6 +105,7 @@ enum CampStatus {
   CAMP_STATUS_ISLAND = 3; // 島
   CAMP_STATUS_PLACE = 4; // 配置可能
   CAMP_STATUS_SUBMARINE = 5; // 位置
+  CAMP_STATUS_MINE = 6; // 制御水雷敷設場所
 }
 
 

@@ -81,6 +81,17 @@ func (h *Handler) History(ctx context.Context, req *connect.Request[apiv1.Histor
 	return connect.NewResponse(resp), nil
 }
 
+func (h *Handler) FirstAction(ctx context.Context, req *connect.Request[apiv1.FirstActionRequest]) (*connect.Response[apiv1.FirstActionResponse], error) {
+	gm, err := h.pg.Use(req.Msg.GameId)
+	if err != nil {
+		return nil, err
+	}
+	if err := gm.FirstAction(req.Msg.UserId, req.Msg.Camp, req.Msg.MineCamps); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.FirstActionResponse{}), nil
+}
+
 // 行動する
 func (h *Handler) Action(ctx context.Context, req *connect.Request[apiv1.ActionRequest]) (*connect.Response[apiv1.ActionResponse], error) {
 	gm, err := h.pg.Use(req.Msg.GameId)

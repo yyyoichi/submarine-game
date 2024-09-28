@@ -37,11 +37,18 @@ export enum ActionType {
   LEAVE = 3,
 
   /**
-   * 配置
+   * 制御水雷
    *
-   * @generated from enum value: ACTION_TYPE_PLACE = 4;
+   * @generated from enum value: ACTION_TYPE_MINE = 5;
    */
-  PLACE = 4,
+  MINE = 5,
+
+  /**
+   * 初回行動
+   *
+   * @generated from enum value: ACTION_TYPE_FIRST = 55;
+   */
+  FIRST = 55,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ActionType)
 proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
@@ -49,7 +56,8 @@ proto3.util.setEnumType(ActionType, "api.v1.ActionType", [
   { no: 1, name: "ACTION_TYPE_MOVE" },
   { no: 2, name: "ACTION_TYPE_BOMB" },
   { no: 3, name: "ACTION_TYPE_LEAVE" },
-  { no: 4, name: "ACTION_TYPE_PLACE" },
+  { no: 5, name: "ACTION_TYPE_MINE" },
+  { no: 55, name: "ACTION_TYPE_FIRST" },
 ]);
 
 /**
@@ -95,6 +103,13 @@ export enum CampStatus {
    * @generated from enum value: CAMP_STATUS_SUBMARINE = 5;
    */
   SUBMARINE = 5,
+
+  /**
+   * 制御水雷敷設場所
+   *
+   * @generated from enum value: CAMP_STATUS_MINE = 6;
+   */
+  MINE = 6,
 }
 // Retrieve enum metadata with: proto3.getEnumType(CampStatus)
 proto3.util.setEnumType(CampStatus, "api.v1.CampStatus", [
@@ -104,6 +119,7 @@ proto3.util.setEnumType(CampStatus, "api.v1.CampStatus", [
   { no: 3, name: "CAMP_STATUS_ISLAND" },
   { no: 4, name: "CAMP_STATUS_PLACE" },
   { no: 5, name: "CAMP_STATUS_SUBMARINE" },
+  { no: 6, name: "CAMP_STATUS_MINE" },
 ]);
 
 /**
@@ -457,81 +473,92 @@ export class HistoryResponse_Line extends Message<HistoryResponse_Line> {
 }
 
 /**
- * @generated from message api.v1.History
+ * @generated from message api.v1.FirstActionRequest
  */
-export class History extends Message<History> {
+export class FirstActionRequest extends Message<FirstActionRequest> {
   /**
-   * 行動ユーザ
-   *
-   * @generated from field: string user_id = 1;
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string user_id = 2;
    */
   userId = "";
 
   /**
-   * 行動順
-   *
-   * @generated from field: int32 turn = 2;
-   */
-  turn = 0;
-
-  /**
-   * 行動場所
+   * 初回行動場所
    *
    * @generated from field: uint32 camp = 3;
    */
   camp = 0;
 
   /**
-   * 行動内容
+   * 機雷敷設場所
    *
-   * @generated from field: api.v1.ActionType type = 4;
+   * @generated from field: repeated uint32 mine_camps = 4;
    */
-  type = ActionType.UNSPECIFIED;
+  mineCamps: number[] = [];
 
-  /**
-   * 行動内容説明
-   *
-   * @generated from field: string description = 5;
-   */
-  description = "";
-
-  /**
-   * 相手攻撃の影響 
-   *
-   * @generated from field: string impact = 6;
-   */
-  impact = "";
-
-  constructor(data?: PartialMessage<History>) {
+  constructor(data?: PartialMessage<FirstActionRequest>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v1.History";
+  static readonly typeName = "api.v1.FirstActionRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
-    { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
-    { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "impact", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "mine_camps", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): History {
-    return new History().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FirstActionRequest {
+    return new FirstActionRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): History {
-    return new History().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FirstActionRequest {
+    return new FirstActionRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): History {
-    return new History().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FirstActionRequest {
+    return new FirstActionRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: History | PlainMessage<History> | undefined, b: History | PlainMessage<History> | undefined): boolean {
-    return proto3.util.equals(History, a, b);
+  static equals(a: FirstActionRequest | PlainMessage<FirstActionRequest> | undefined, b: FirstActionRequest | PlainMessage<FirstActionRequest> | undefined): boolean {
+    return proto3.util.equals(FirstActionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.FirstActionResponse
+ */
+export class FirstActionResponse extends Message<FirstActionResponse> {
+  constructor(data?: PartialMessage<FirstActionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.FirstActionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FirstActionResponse {
+    return new FirstActionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FirstActionResponse {
+    return new FirstActionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FirstActionResponse {
+    return new FirstActionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FirstActionResponse | PlainMessage<FirstActionResponse> | undefined, b: FirstActionResponse | PlainMessage<FirstActionResponse> | undefined): boolean {
+    return proto3.util.equals(FirstActionResponse, a, b);
   }
 }
 
@@ -704,6 +731,85 @@ export class WaitResponse extends Message<WaitResponse> {
 
   static equals(a: WaitResponse | PlainMessage<WaitResponse> | undefined, b: WaitResponse | PlainMessage<WaitResponse> | undefined): boolean {
     return proto3.util.equals(WaitResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.History
+ */
+export class History extends Message<History> {
+  /**
+   * 行動ユーザ
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * 行動順
+   *
+   * @generated from field: int32 turn = 2;
+   */
+  turn = 0;
+
+  /**
+   * 行動場所
+   *
+   * @generated from field: uint32 camp = 3;
+   */
+  camp = 0;
+
+  /**
+   * 行動内容
+   *
+   * @generated from field: api.v1.ActionType type = 4;
+   */
+  type = ActionType.UNSPECIFIED;
+
+  /**
+   * 行動内容説明
+   *
+   * @generated from field: string description = 5;
+   */
+  description = "";
+
+  /**
+   * 相手攻撃の影響 
+   *
+   * @generated from field: string impact = 6;
+   */
+  impact = "";
+
+  constructor(data?: PartialMessage<History>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.History";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "camp", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
+    { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "impact", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): History {
+    return new History().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): History {
+    return new History().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): History {
+    return new History().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: History | PlainMessage<History> | undefined, b: History | PlainMessage<History> | undefined): boolean {
+    return proto3.util.equals(History, a, b);
   }
 }
 

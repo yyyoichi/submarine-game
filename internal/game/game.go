@@ -11,15 +11,16 @@ import (
 )
 
 type Game struct {
-	Id        string
-	Users     [2]string
-	Island    [2]uint32
-	createdAt time.Time
+	Id     string
+	Users  [2]string
+	Island [2]uint32
+	clock  clock
 
 	mu        sync.RWMutex
 	NextUser  string
 	Winner    string
 	histories []history
+	mines     map[string][]uint32 // 残機雷
 }
 
 type history struct {
@@ -27,6 +28,7 @@ type history struct {
 	camp   uint32
 	t      apiv1.ActionType
 	impact bombImpactType // t がbombのときの結果
+	mines  []uint32       // 残機雷
 	at     time.Time
 }
 
@@ -37,15 +39,19 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	var latestMyHistory = g.getLatestHistory(me)
 	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 	var resp = &apiv1.HistoryResponse{
-		Camps:     g.getCampStatus(latestPlaceHistory),
+		Camps:     g.getCampStatus(latestPlaceHistory, latestMyHistory),
 		MyTurn:    me == g.NextUser,
 		Winner:    g.Winner,
 		Histories: make([]*apiv1.History, 0, len(g.histories)),
-		Timeout:   g.getTimeout().UnixMilli(),
+		Timeout:   g.clock.getActionTimeout().UnixMilli(),
 	}
 	if resp.Winner != "" {
 		resp.MyTurn = false
 		resp.Timeout = 0
+	}
+	if len(g.histories) < 2 && latestMyHistory == nil {
+		// 初回行動
+		resp.MyTurn = true
 	}
 
 	// description
@@ -58,9 +64,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 		}
 	case resp.MyTurn:
 		if latestMyHistory == nil {
-			resp.Description = "📍行動を開始する海域を決定しよう。"
+			resp.Description = "📍行動を開始する海域を決定して、機雷を敷設しよう。"
 		} else {
-			resp.Description = "🪖行動か、魚雷か。"
+			resp.Description = "🪖行動か、魚雷か、機雷か。"
 		}
 	default:
 		resp.Description = "👀敵の行動を待機中.."
@@ -85,7 +91,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 				Type:   hist.t,
 			}
 			switch respHistory.Type {
-			case apiv1.ActionType_ACTION_TYPE_PLACE:
+			case apiv1.ActionType_ACTION_TYPE_FIRST:
 				respHistory.Description = fmt.Sprintf("📍作戦開始海域を'%d'に決定。", hist.camp)
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
@@ -96,6 +102,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
+
+			case apiv1.ActionType_ACTION_TYPE_MINE:
+				respHistory.Description = fmt.Sprintf("海域'%d'の機雷作動！", hist.camp)
 
 			}
 
@@ -110,7 +119,7 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 			}
 
 			switch respHistory.Type {
-			case apiv1.ActionType_ACTION_TYPE_PLACE:
+			case apiv1.ActionType_ACTION_TYPE_FIRST:
 				respHistory.Description = "📍作戦開始海域を'?'に決定。"
 
 			case apiv1.ActionType_ACTION_TYPE_MOVE:
@@ -133,6 +142,9 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 
 			case apiv1.ActionType_ACTION_TYPE_BOMB:
 				respHistory.Description = fmt.Sprintf("💣海域'%d'に魚雷発射！", hist.camp)
+
+			case apiv1.ActionType_ACTION_TYPE_MINE:
+				respHistory.Description = fmt.Sprintf("💣海域'%d'の機雷作動！", hist.camp)
 			}
 
 		}
@@ -153,9 +165,59 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	return resp
 }
 
+func (g *Game) FirstAction(me string, place uint32, mines []uint32) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.Winner != "" {
+		return ErrGameIsOver
+	}
+	if g.clock.isActionTimeout() {
+		// timeoutよりも500milsec大きいときにタイムアウト判定
+		g.leave(me)
+		return ErrTimeout
+	}
+	if place >= campSize {
+		return ErrOutOfCampSize
+	}
+	if len(mines) != 2 {
+		return fmt.Errorf("%w: mines must have 2 length", ErrInvalidAction)
+	}
+	if mines[0] >= campSize || mines[1] >= campSize {
+		return ErrOutOfCampSize
+	}
+	var latestHistory = g.getLatestHistory(me)
+	var latestPlaceHistory = g.getLatestPlaceHistory(me)
+
+	// check enable action or not
+	var enableCamps = g.getCampStatus(latestPlaceHistory, latestHistory)
+	// valid place
+	row, col := place/lineSize, place%lineSize
+	enableStatus := enableCamps[row].Camps[col].Status
+	if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
+		return fmt.Errorf("%w: %s", ErrInvalidAction, apiv1.ActionType_ACTION_TYPE_FIRST)
+	}
+	// valid mines place
+	for _, camp := range mines {
+		row, col := camp/lineSize, camp%lineSize
+		enableStatus := enableCamps[row].Camps[col].Status
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MINE) {
+			return fmt.Errorf("%w: %s", ErrInvalidAction, apiv1.ActionType_ACTION_TYPE_FIRST)
+		}
+	}
+
+	g.appendHistory(history{
+		user:  me,
+		camp:  place,
+		t:     apiv1.ActionType_ACTION_TYPE_FIRST,
+		mines: mines,
+	})
+	g.mines[me] = mines
+	return nil
+}
+
 func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	if g.Winner != "" {
 		return ErrGameIsOver
@@ -163,7 +225,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if g.NextUser != me {
 		return ErrIsnotYourTurn
 	}
-	if g.isTimeout() {
+	if g.clock.isActionTimeout() {
 		// timeoutよりも500milsec大きいときにタイムアウト判定
 		g.leave(me)
 		return ErrTimeout
@@ -172,10 +234,11 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 		return ErrOutOfCampSize
 	}
 
+	var latestHistory = g.getLatestHistory(me)
 	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 
 	// check enable action or not
-	var enableCamps = g.getCampStatus(latestPlaceHistory)
+	var enableCamps = g.getCampStatus(latestPlaceHistory, latestHistory)
 	row, col := camp/lineSize, camp%lineSize
 	enableStatus := enableCamps[row].Camps[col].Status
 	switch action {
@@ -189,10 +252,13 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
 
-	case apiv1.ActionType_ACTION_TYPE_PLACE:
-		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_PLACE) {
+	case apiv1.ActionType_ACTION_TYPE_MINE:
+		if !slices.Contains(enableStatus, apiv1.CampStatus_CAMP_STATUS_MINE) {
 			return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 		}
+
+	case apiv1.ActionType_ACTION_TYPE_FIRST:
+		return fmt.Errorf("%w: %s", ErrInvalidAction, action)
 
 	case apiv1.ActionType_ACTION_TYPE_UNSPECIFIED:
 		return fmt.Errorf("%w: %s", ErrInvalidAction, action)
@@ -202,17 +268,26 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	// end validation
 
 	defer g.changeTurn(me)
+	if action == apiv1.ActionType_ACTION_TYPE_MINE {
+		// 機雷作動分を削除
+		g.mines[me] = slices.DeleteFunc(g.mines[me], func(c uint32) bool {
+			return c == camp
+		})
+	}
 
 	hist := history{
 		user:   me,
 		camp:   camp,
 		t:      action,
 		impact: unknownImpact,
-		at:     time.Now(),
+		mines:  make([]uint32, len(g.mines[me])),
 	}
+	_ = copy(hist.mines, g.mines[me])
 
 	// impact
-	if action == apiv1.ActionType_ACTION_TYPE_BOMB {
+	switch action {
+	// 魚雷と機雷のときは命中判定をする。
+	case apiv1.ActionType_ACTION_TYPE_BOMB, apiv1.ActionType_ACTION_TYPE_MINE:
 		enemy := g.getEnemy(me)
 		ehist := g.getLatestPlaceHistory(enemy)
 		if ehist != nil { // nilは実装上あり得ない
@@ -222,7 +297,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if hist.impact == meichu {
 		g.Winner = me
 	}
-	g.histories = append(g.histories, hist)
+	g.appendHistory(hist)
 	return nil
 }
 
@@ -233,18 +308,24 @@ func (g *Game) Leave(me string) {
 }
 
 func (g *Game) leave(user string) {
-	g.histories = append(g.histories, history{
+	g.appendHistory(history{
 		user: user,
 		camp: 0,
 		t:    apiv1.ActionType_ACTION_TYPE_LEAVE,
-		at:   time.Now(),
 	})
 	enemy := g.getEnemy(user)
 	g.Winner = enemy
 }
 
-// [latestHistory]の最近の履歴から、海域情報を返す。
-func (g *Game) getCampStatus(latestPlace *history) []*apiv1.HistoryResponse_Line {
+func (g *Game) appendHistory(h history) {
+	now := time.Now()
+	h.at = now
+	g.clock.latestAt = &now
+	g.histories = append(g.histories, h)
+}
+
+// 最新の配置場所[latestHistory]と最新の行動内容から、海域情報を返す。
+func (g *Game) getCampStatus(latestPlace *history, latestHist *history) []*apiv1.HistoryResponse_Line {
 	if latestPlace == nil {
 		return g.getInitCampStatus()
 	}
@@ -269,15 +350,23 @@ func (g *Game) getCampStatus(latestPlace *history) []*apiv1.HistoryResponse_Line
 			}
 			continue
 		}
+
+		var status = make([]apiv1.CampStatus, 0, 3)
+
+		// 機雷敷設場所
+		if slices.Contains(latestHist.mines, c) {
+			status = append(status, apiv1.CampStatus_CAMP_STATUS_MINE)
+		}
+
 		if latestPlace.camp == c {
 			// 自身
+			status = append(status, apiv1.CampStatus_CAMP_STATUS_SUBMARINE)
 			resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
-				Status: []apiv1.CampStatus{apiv1.CampStatus_CAMP_STATUS_SUBMARINE},
+				Status: status,
 				Camp:   c,
 			}
 			continue
 		}
-		var status = make([]apiv1.CampStatus, 0, 2)
 		if slices.Contains(moveEnable, c) {
 			status = append(status, apiv1.CampStatus_CAMP_STATUS_MOVE)
 		}
@@ -310,7 +399,7 @@ func (g *Game) getInitCampStatus() []*apiv1.HistoryResponse_Line {
 			}
 		} else {
 			status = []apiv1.CampStatus{
-				apiv1.CampStatus_CAMP_STATUS_PLACE,
+				apiv1.CampStatus_CAMP_STATUS_PLACE, apiv1.CampStatus_CAMP_STATUS_MINE,
 			}
 		}
 		resp[row].Camps[col] = &apiv1.HistoryResponse_Camp{
@@ -337,7 +426,7 @@ func (g *Game) getLatestPlaceHistory(user string) *history {
 		if g.histories[i].user != user {
 			continue
 		}
-		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_FIRST {
 			return &g.histories[i]
 		}
 	}
@@ -350,7 +439,7 @@ func (g *Game) getPrevPlaceHistory(user string, trun int32) *history {
 		if g.histories[i].user != user {
 			continue
 		}
-		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_PLACE {
+		if g.histories[i].t == apiv1.ActionType_ACTION_TYPE_MOVE || g.histories[i].t == apiv1.ActionType_ACTION_TYPE_FIRST {
 			return &g.histories[i]
 		}
 	}
@@ -380,18 +469,6 @@ func (g *Game) changeTurn(user string) {
 	} else {
 		g.NextUser = g.Users[0]
 	}
-}
-
-func (g *Game) isTimeout() bool {
-	return g.getTimeout().Add(time.Duration(500) * time.Millisecond).Before(time.Now())
-}
-
-func (g *Game) getTimeout() time.Time {
-	timeout := time.Duration(32) * time.Second
-	if len(g.histories) == 0 {
-		return g.createdAt.Add(timeout)
-	}
-	return g.histories[len(g.histories)-1].at.Add(timeout)
 }
 
 func (h history) mask() history {

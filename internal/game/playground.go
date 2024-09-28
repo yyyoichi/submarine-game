@@ -29,13 +29,19 @@ func (pg *Playground) NewGame(users [2]string) *Game {
 	island1 := rand.Int31n(campSize)
 	island2 := rand.Int31n(campSize)
 	g := &Game{
-		Id:        uuid.NewString(),
-		Users:     users,
-		Island:    [2]uint32{uint32(island1), uint32(island2)},
-		createdAt: time.Now(),
+		Id:     uuid.NewString(),
+		Users:  users,
+		Island: [2]uint32{uint32(island1), uint32(island2)},
+		clock: clock{
+			createdAt: time.Now(),
+		},
 
 		mu:       sync.RWMutex{},
 		NextUser: users[1],
+		mines: map[string][]uint32{
+			users[0]: {},
+			users[1]: {},
+		},
 	}
 	pg.gameById[g.Id] = g
 	pg.gameByUser[users[0]] = g
@@ -69,7 +75,7 @@ func (pg *Playground) DeleteRunner(ctx context.Context) {
 func (pg *Playground) deleteTimeoutGame() {
 	// 開始後1時間経過のゲームは削除する。
 	for id, g := range pg.gameById {
-		hours := time.Since(g.createdAt).Hours()
+		hours := time.Since(g.clock.createdAt).Hours()
 		if hours > 1 {
 			user1 := g.Users[0]
 			user2 := g.Users[1]
