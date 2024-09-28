@@ -1,6 +1,6 @@
 module github.com/yyyoichi/submarine-game
 
-go 1.23.0
+go 1.23.1
 
 require (
 	connectrpc.com/connect v1.17.0
