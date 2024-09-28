@@ -35,5 +35,6 @@
   "containerEnv": {
     "TZ": "Asia/Tokyo",
     "PORT": "8080"
-  }
+  },
+  "forwardPorts": [8085]
 }
