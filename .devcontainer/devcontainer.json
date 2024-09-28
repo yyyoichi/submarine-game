@@ -8,7 +8,12 @@
       "type": "volume",
       "source": "submarine-game-node_modules",
       "target": "/workspaces/submarine-game/web/node_modules"
-    }
+    },
+    {
+			"type": "bind",
+			"source": "${localEnv:HOME}/.ssh",
+			"target": "/root/.ssh"
+		}
   ],
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
@@ -30,6 +35,5 @@
   "containerEnv": {
     "TZ": "Asia/Tokyo",
     "PORT": "8080"
-  },
-  "remoteUser": "root"
+  }
 }
