@@ -27,7 +27,7 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":8080"
+		port = "8080"
 	}
 
 	rpc := http.NewServeMux()
@@ -39,7 +39,7 @@ func main() {
 	mux.HandleFunc("/", notFoundHandler)
 	mux.Handle("/rpc/", http.StripPrefix("/rpc", rpc))
 
-	if err := http.ListenAndServe(port, h2c.NewHandler(mux, &http2.Server{})); err != nil {
+	if err := http.ListenAndServe(":"+port, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		log.Panic(err)
 	}
 }

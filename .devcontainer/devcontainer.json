@@ -29,7 +29,7 @@
   },
   "containerEnv": {
     "TZ": "Asia/Tokyo",
-    "PORT": ":8080"
+    "PORT": "8080"
   },
   "remoteUser": "root"
 }
