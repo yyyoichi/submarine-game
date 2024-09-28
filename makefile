@@ -12,7 +12,8 @@ client:
 	echo "🪖 Running Client"
 
 deploy:
-	gcloud builds submit --region=${LOCATION} --tag ${LOCATION}-docker.pkg.dev/${PROJECT_ID}/submarine-game/${IMAGE_NAME}:${TAG}
+	gcloud builds submit --region=${LOCATION} --tag ${LOCATION}-docker.pkg.dev/${PROJECT_ID}/submarine-game/${IMAGE_NAME}:${TAG} \
+	--project ${PROJECT_ID}
 
 login:
 	gcloud auth login
