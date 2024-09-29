@@ -29,7 +29,7 @@ function Home() {
   useEffect(leaveEffect, []);
   return (
     <Container p={0}>
-      <Heading as="h1" size="3xl">
+      <Heading as="h1" size="3xl" fontFamily={"Train One"} fontStyle={"system-ui"}>
         🪖潜水艦ゲーム
       </Heading>
       <VStack py={8}>
@@ -57,7 +57,7 @@ function Home() {
         px={1}
         pb={3}
       >
-        <Heading as="h2" size="xl">
+        <Heading as="h2" size="xl" fontFamily={"Train One"} fontStyle={"system-ui"}>
           {"遊び方"}
         </Heading>
         <Box>
@@ -70,7 +70,7 @@ function Home() {
         </Box>
         <Box>
           <UnorderedList spacing={1}>
-            <Heading as={"h3"} size="md">
+            <Heading as={"h3"} size="md" fontFamily={"Train One"} fontStyle={"system-ui"}>
               {"基本ルール"}
             </Heading>
             <Text py={1}>
@@ -97,7 +97,7 @@ function Home() {
         </Box>
         <Box>
           <UnorderedList spacing={1}>
-            <Heading as={"h3"} size="md">
+            <Heading as={"h3"} size="md" fontFamily={"Train One"} fontStyle={"system-ui"}>
               勝敗の分かれ目
             </Heading>
             <Text py={1}>

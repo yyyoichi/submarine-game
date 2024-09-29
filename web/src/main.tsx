@@ -26,9 +26,6 @@ const router = createBrowserRouter([
 ]);
 
 const theme = extendTheme({
-  fonts: {
-    heading: `'Train One', system-ui`,
-  },
   colors: {
     dark: {
       500: "#03111e",
