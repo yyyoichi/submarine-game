@@ -12,25 +12,19 @@ import type { HistoryResponse } from "../../../gen/api/v1/game_pb";
 
 export function HistoryComponent() {
   const history = useLoaderData() as HistoryResponse;
-  if(history.histories.length < 2) {
-    return<></>
+  const histories = history.histories.sort((a, b) => a.turn - b.turn);
+  const histProps: { me: string; enemy: string }[] = [];
+  for (let i = 0; i < Math.round(histories.length / 2); i++) {
+    histProps.push({ me: "", enemy: "" });
   }
-
-  const histories = history.histories
-    .sort((a, b) => a.turn - b.turn);
-  console.log(histories)
-  const histProps:{me: string; enemy: string}[] = [];
-  for(let i = 0; i < Math.round(histories.length/2); i ++) {
-    histProps.push({me: "", enemy: ""})
-  }
-  console.log(histProps)
-  for(const h of histories) {
-    const i = Math.floor((h.turn-1)/2);
-    console.log(i)
+  console.log(histProps);
+  for (const h of histories) {
+    const i = Math.floor((h.turn - 1) / 2);
+    console.log(i);
     if (h.userId !== "") {
-      histProps[i].me = `${h.description}${h.impact && `> ${h.impact}`}`
+      histProps[i].me = `${h.description}${h.impact && `> ${h.impact}`}`;
     } else {
-      histProps[i].enemy = h.description
+      histProps[i].enemy = h.description;
     }
   }
   return (
@@ -43,11 +37,15 @@ export function HistoryComponent() {
           </Tr>
         </Thead>
         <Tbody fontSize={"md"}>
-          {histProps.map(line => (
-          <Tr key={line.me}>
-            <Td py={".5rem"} px={1}>{line.me}</Td>
-            <Td py={".5rem"} px={1}>{line.enemy}</Td>
-          </Tr>
+          {histProps.map((line) => (
+            <Tr key={line.me}>
+              <Td py={".5rem"} px={1}>
+                {line.me}
+              </Td>
+              <Td py={".5rem"} px={1}>
+                {line.enemy}
+              </Td>
+            </Tr>
           ))}
         </Tbody>
       </Table>
