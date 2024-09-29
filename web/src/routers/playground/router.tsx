@@ -19,7 +19,7 @@ import {
 import { ConnectError } from "@connectrpc/connect";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { HistoryComponent } from "./history";
+import { HistoryComponent } from "./history/history";
 import { StartingComponent } from "./start/start";
 import {
   Container,
@@ -97,6 +97,7 @@ function Home() {
           </TabPanel>
           <TabPanel>
             <Fade in={!waitFirstAction}>
+              <HistoryComponent />
               <GameComponent />
             </Fade>
           </TabPanel>
@@ -174,7 +175,6 @@ function Home() {
           </div>
         )}
       </Form>
-      <HistoryComponent />
     </Container>
   );
 }
