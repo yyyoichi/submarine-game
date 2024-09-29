@@ -1,4 +1,8 @@
-import { Flex, Square, type SquareProps } from "@chakra-ui/react";
+import {
+  Flex,
+  Square,
+  type SquareProps,
+} from "@chakra-ui/react";
 import { CampStatus } from "../../../gen/api/v1/game_pb";
 import {
   IconBomb,
@@ -8,14 +12,26 @@ import {
   IconMyLocation,
 } from "./icon";
 
-// Chakra UIのBoxコンポーネントをmotion対応にする
-
 type CellProps = {
   camp: number;
   status: CampStatus[];
-};
+  bg?: string;
+} & Pick<SquareProps, "onClick">;
 
 export function Cell(props: CellProps) {
+  const CellWrap = (sps: SquareProps) => {
+    const p: SquareProps = {
+      aspectRatio: 1,
+      bg: "dark.500",
+      position: "relative",
+      pt: 1,
+      bgColor: props.bg,
+      onClick: props.onClick,
+      ...sps,
+    };
+    return <Square {...p}>{sps.children}</Square>;
+  };
+
   if (props.status.includes(CampStatus.SUBMARINE)) {
     return (
       <CellWrap>
@@ -42,20 +58,11 @@ export function Cell(props: CellProps) {
               return <IconBomb key={s} fill={"orange.500"} />;
             case CampStatus.MINE:
               return <IconMine key={s} fill={"red.500"} />;
+            case CampStatus.PLACE:
+              return <IconMyLocation key={s} fill={"white.500"} />;
           }
         })}
       </Flex>
     </CellWrap>
   );
-}
-
-function CellWrap(props: SquareProps) {
-  const p: SquareProps = {
-    aspectRatio: 1,
-    bg: "dark.500",
-    position: "relative",
-    pt: 1,
-    ...props,
-  };
-  return <Square {...p}>{props.children}</Square>;
 }

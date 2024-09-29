@@ -29,17 +29,20 @@ function Home() {
   const formRef = useRef<HTMLFormElement>(null);
   const submit = useSubmit();
   useEffect(() => {
+    if (history.winner !== "") {
+      return;
+    }
     if (formRef.current && !history.myTurn) {
       submit(formRef.current, { method: "PATCH" });
     }
-  }, [history.myTurn, submit]);
+  }, [history.myTurn, history.winner, submit]);
 
   const [timeLeft, setTimeLeft] = useState(
     Number(history.timeout) - Date.now(),
   );
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!history.myTurn) {
+      if (!history.myTurn || history.winner !== "") {
         return;
       }
       const currentTime = Number(history.timeout) - Date.now();
@@ -49,7 +52,7 @@ function Home() {
     }, 1000); // 毎秒更新
 
     return () => clearInterval(interval);
-  }, [history.timeout, history.myTurn, submit]);
+  }, [history.timeout, history.myTurn, history.winner, submit]);
 
   const [clickCamp, setClickCamp] = useState<number | null>();
   let enableStatus: CampStatus[] = [];
