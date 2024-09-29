@@ -21,7 +21,17 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { HistoryComponent } from "./history";
 import { StartingComponent } from "./start/start";
-import { Container } from "@chakra-ui/react";
+import {
+  Container,
+  Fade,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  VisuallyHidden,
+} from "@chakra-ui/react";
+import { GameComponent } from "./game/game";
 
 function Home() {
   const history = useLoaderData() as HistoryResponse;
@@ -68,9 +78,31 @@ function Home() {
       }
     }
   }
+  const waitFirstAction = history.histories.length < 2;
   return (
     <Container p={0}>
-      <StartingComponent />
+      <Tabs index={waitFirstAction ? 0 : 1}>
+        <VisuallyHidden>
+          <TabList>
+            <Tab />
+            <Tab />
+          </TabList>
+        </VisuallyHidden>
+
+        <TabPanels>
+          <TabPanel>
+            <Fade in={waitFirstAction}>
+              <StartingComponent />
+            </Fade>
+          </TabPanel>
+          <TabPanel>
+            <Fade in={!waitFirstAction}>
+              <GameComponent />
+            </Fade>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+
       <h2>{history.description}</h2>
       {history.myTurn && <div>敗走まで残り{Math.floor(timeLeft / 1000)}秒</div>}
       <Form method="POST" ref={formRef}>

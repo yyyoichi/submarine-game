@@ -1,8 +1,4 @@
-import {
-  Flex,
-  Square,
-  type SquareProps,
-} from "@chakra-ui/react";
+import { Flex, Square, type SquareProps } from "@chakra-ui/react";
 import { CampStatus } from "../../../gen/api/v1/game_pb";
 import {
   IconBomb,
