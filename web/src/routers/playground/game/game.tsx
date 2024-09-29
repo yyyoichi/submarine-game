@@ -4,7 +4,7 @@ import {
   CampStatus,
   type HistoryResponse,
 } from "../../../gen/api/v1/game_pb";
-import { useState, type ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { Board } from "../components/borad";
 import {
   VStack,
@@ -23,9 +23,14 @@ import {
 import { IconBomb, IconMove } from "../components/icon";
 
 export function GameComponent() {
+  const formRef = useRef<HTMLFormElement>(null);
   const history = useLoaderData() as HistoryResponse;
   const [isLoading, setIsLoading] = useState(false);
   const [clickCamp, setClickCamp] = useState<number | null>(null);
+  useEffect(() => {
+    setIsLoading(history.histories.length < 0);
+    setClickCamp(null);
+  }, [history.histories.length]);
   const [actionTypeSelection, setActionTypeSelection] = useState<
     ActionType.MOVE | ActionType.BOMB | ActionType.MINE | null
   >(null);
@@ -66,9 +71,14 @@ export function GameComponent() {
       }
     }
   }
-  console.log(enableActionType);
   return (
-    <Form>
+    <Form
+      method="POST"
+      onSubmit={() => {
+        setIsLoading(true);
+      }}
+      ref={formRef}
+    >
       <input type="hidden" name="type" value="action" />
       <input type="hidden" name="place" value={clickCamp || ""} />
       <VStack py={2}>
@@ -81,16 +91,19 @@ export function GameComponent() {
         <input
           type="radio"
           name="act"
+          value={ActionType.MOVE}
           checked={actionTypeSelection === ActionType.MOVE}
         />
         <input
           type="radio"
           name="act"
+          value={ActionType.BOMB}
           checked={actionTypeSelection === ActionType.BOMB}
         />
         <input
           type="radio"
           name="act"
+          value={ActionType.MINE}
           checked={actionTypeSelection === ActionType.MINE}
         />
       </Box>
@@ -98,6 +111,7 @@ export function GameComponent() {
         isOpen={clickCamp !== null}
         onClose={() => setClickCamp(null)}
         motionPreset="slideInBottom"
+        portalProps={{ appendToParentPortal: true, containerRef: formRef }}
       >
         <ModalOverlay />
         <ModalContent mx={6} px={5} bg={"dark.500"}>
@@ -175,11 +189,8 @@ export function GameComponent() {
             <Button
               size={"lg"}
               isLoading={isLoading}
-              type="submit"
+              type={"submit"}
               isDisabled={!actionTypeSelection}
-              onClick={() => {
-                setIsLoading(true);
-              }}
             >
               決定
             </Button>

@@ -64,7 +64,12 @@ export function StartingComponent() {
   }
 
   return (
-    <Form action="PSOT">
+    <Form
+      method="POST"
+      onSubmit={() => {
+        setIsLoading(true);
+      }}
+    >
       <input type="hidden" name="type" value="first" />
       <input type="hidden" name="place" value={startPlace || ""} />
       <input type="hidden" name="mines" value={startMines.join(",")} />
@@ -108,9 +113,6 @@ export function StartingComponent() {
                     isLoading={isLoading}
                     type="submit"
                     isDisabled={!startPlace || startMines.length !== 2}
-                    onClick={() => {
-                      setIsLoading(true);
-                    }}
                   >
                     作戦開始
                   </Button>

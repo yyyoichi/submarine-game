@@ -8,15 +8,12 @@ import { getGameClient } from "../../api/connect";
 import {
   ActionRequest,
   ActionType,
-  CampStatus,
   HistoryRequest,
-  type HistoryResponse_Camp,
   type HistoryResponse,
   WaitRequest,
   FirstActionRequest,
 } from "../../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
-import type React from "react";
 import { useEffect, useRef } from "react";
 import { HistoryComponent } from "./history/history";
 import { StartingComponent } from "./start/start";
@@ -44,10 +41,13 @@ function Home() {
     if (gameIsOver) {
       return;
     }
-    if (formRef.current && !history.myTurn) {
+    if (!formRef.current) {
+      return;
+    }
+    if (waitFirstAction || !history.myTurn) {
       submit(formRef.current, { method: "PATCH" });
     }
-  }, [gameIsOver, history.myTurn, submit]);
+  }, [gameIsOver, waitFirstAction, history.myTurn, submit]);
 
   return (
     <Container p={0}>
@@ -85,27 +85,6 @@ function Home() {
   );
 }
 
-function CampInput({
-  camp,
-  ...props
-}: { camp: HistoryResponse_Camp } & React.ComponentProps<"input">) {
-  if (camp.status.length === 0) {
-    return <>🌊{camp.camp}</>;
-  }
-  if (camp.status.includes(CampStatus.ISLAND)) {
-    return <>🏝️{camp.camp}</>;
-  }
-  if (camp.status.includes(CampStatus.SUBMARINE)) {
-    return <>📍{camp.camp}</>;
-  }
-  return (
-    <label>
-      <input {...props} />
-      {camp.camp}
-    </label>
-  );
-}
-
 export async function loader({ params }: LoaderFunctionArgs) {
   const { gameId, userId } = params;
   const client = getGameClient();
@@ -126,77 +105,58 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
   const { gameId, userId } = params;
+
   try {
     switch (request.method) {
       case "POST": {
-        let actionType = ActionType.UNSPECIFIED;
-        const strActionType = formData.get("action")?.toString();
-        if (strActionType === "1") {
-          actionType = ActionType.MOVE;
-        } else if (strActionType === "2") {
-          actionType = ActionType.BOMB;
-        } else if (strActionType === "5") {
-          actionType = ActionType.MINE;
-        } else if (strActionType === "55") {
-          actionType = ActionType.FIRST;
-        }
-        const clinet = getGameClient();
-        if (actionType === ActionType.FIRST) {
-          let camp = 99999;
-          const strCamp = formData.get("place")?.toString();
-          try {
-            camp = Number(strCamp);
-          } catch (e) {
-            console.error(e);
+        switch (formData.get("type")?.toString()) {
+          case "first": {
+            const place = formData.get("place")?.toString();
+            const [mine1, mine2] = formData
+              .get("mines")
+              ?.toString()
+              .split(",") || ["0", "0"];
+            const req = new FirstActionRequest({
+              gameId,
+              userId,
+              camp: Number(place),
+              mineCamps: [Number(mine1), Number(mine2)],
+            });
+            const clinet = getGameClient();
+            await clinet.firstAction(req, { signal: request.signal });
+            break;
           }
-          const mines: number[] = [];
-          const strMines = formData.getAll("camp");
-          for (const m of strMines) {
-            let c: number;
-            try {
-              c = Number(m);
-            } catch (e) {
-              console.error(e);
-              continue;
+          case "action": {
+            const place = formData.get("place")?.toString();
+            let actionType = ActionType.UNSPECIFIED;
+            const strActionType = formData.get("act")?.toString();
+            console.log(strActionType);
+            if (strActionType === "1") {
+              actionType = ActionType.MOVE;
+            } else if (strActionType === "2") {
+              actionType = ActionType.BOMB;
+            } else if (strActionType === "5") {
+              actionType = ActionType.MINE;
             }
-            mines.push(c);
+            const req = new ActionRequest({
+              type: actionType,
+              gameId,
+              userId,
+              camp: Number(place),
+            });
+            const clinet = getGameClient();
+            await clinet.action(req, { signal: request.signal });
+            break;
           }
-          console.log(mines);
-
-          const req = new FirstActionRequest({
-            gameId,
-            userId,
-            camp,
-            mineCamps: mines,
-          });
-          await clinet.firstAction(req, { signal: request.signal });
-          break;
         }
-        let camp = 99999;
-        const strCamp = formData.get("camp")?.toString();
-        try {
-          camp = Number(strCamp);
-        } catch (e) {
-          console.error(e);
-        }
-        const req = new ActionRequest({
-          type: actionType,
-          gameId,
-          userId,
-          camp: camp,
-        });
-        // console.log(req);
-        await clinet.action(req, { signal: request.signal });
         break;
       }
-
       case "PATCH": {
         const clinet = getGameClient();
         const req = new WaitRequest({
           gameId,
           userId,
         });
-        // console.log(req);
         for await (const _ of clinet.wait(req, { signal: request.signal })) {
         }
         break;
@@ -210,7 +170,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           userId,
           camp: 0,
         });
-        // console.log(req);
         await clinet.action(req, { signal: request.signal });
         break;
       }

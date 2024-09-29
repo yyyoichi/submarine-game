@@ -17,10 +17,8 @@ export function HistoryComponent() {
   for (let i = 0; i < Math.round(histories.length / 2); i++) {
     histProps.push({ me: "", enemy: "" });
   }
-  console.log(histProps);
   for (const h of histories) {
     const i = Math.floor((h.turn - 1) / 2);
-    console.log(i);
     if (h.userId !== "") {
       histProps[i].me = `${h.description}${h.impact && `> ${h.impact}`}`;
     } else {

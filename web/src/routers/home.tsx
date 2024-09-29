@@ -147,7 +147,6 @@ export async function action() {
     const client = getGameClient();
     const stream = client.join(new JoinRequest());
     for await (const resp of stream) {
-      console.log(resp);
       if (resp.gameId === "") {
         continue;
       }
