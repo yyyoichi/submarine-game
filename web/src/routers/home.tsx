@@ -65,7 +65,7 @@ function Home() {
             「潜水艦ゲーム」は、2人で通信対戦する戦略ボードゲームです。
           </Text>
           <Text>
-            6x6のボード上で、潜水艦を操作して相手の潜水艦を魚雷で撃沈することを目指します。"
+            6x6のボード上で、潜水艦を操作して相手の潜水艦を魚雷で撃沈することを目指します。
           </Text>
         </Box>
         <Box>
@@ -83,7 +83,7 @@ function Home() {
             </ListItem>
             <ListItem>
               <Highlight query="魚雷攻撃" styles={highlightStyle}>
-                魚雷攻撃:同じ位置にとどまり、隣接する上下左右斜めのマスに魚雷を撃ちます。
+                魚雷攻撃: 同じ位置にとどまり、隣接する上下左右斜めのマスに魚雷を撃ちます。
               </Highlight>
             </ListItem>
             <ListItem>
@@ -105,13 +105,13 @@ function Home() {
             <ListItem>
               <Highlight query="面舵一杯！" styles={highlightStyle}>
                 面舵一杯！:
-                自分の魚雷攻撃の上下左右斜めの範囲に相手が潜行しています。
+                魚雷・機雷攻撃の上下左右斜めの範囲に相手が潜行しています。
               </Highlight>
             </ListItem>
             <ListItem>
               <Highlight query="ヨーソロー！" styles={highlightStyle}>
                 ヨーソロー！:
-                少なくとも自分の魚雷攻撃の上下左右斜めの範囲に相手は潜行していません。
+                少なくとも魚雷・機雷攻撃の上下左右斜めの範囲に相手は潜行していません。
               </Highlight>
             </ListItem>
           </UnorderedList>
