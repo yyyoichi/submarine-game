@@ -35,13 +35,15 @@ export function StartingComponent() {
         status: camp.status.filter(
           (x) => x === CampStatus.PLACE || x === CampStatus.ISLAND,
         ),
-        onClick: () => {
-          setStartPlace(camp.camp);
-          // NOTE ほんとはアニメーションで対処したい
-          setTimeout(() => {
-            setTabIndex(1);
-          }, 100);
-        },
+        onClick: camp.status.includes(CampStatus.PLACE)
+          ? () => {
+              setStartPlace(camp.camp);
+              // NOTE ほんとはアニメーションで対処したい
+              setTimeout(() => {
+                setTabIndex(1);
+              }, 100);
+            }
+          : undefined,
         bg: startPlace === camp.camp ? "blue.500" : undefined,
       };
       minesBoardProps.camps[i][j] = {
@@ -49,11 +51,13 @@ export function StartingComponent() {
         status: camp.status.filter(
           (x) => x === CampStatus.MINE || x === CampStatus.ISLAND,
         ),
-        onClick: () => {
-          setStartMines((pv) => {
-            return [camp.camp, ...pv].splice(0, 2);
-          });
-        },
+        onClick: camp.status.includes(CampStatus.MINE)
+          ? () => {
+              setStartMines((pv) => {
+                return [camp.camp, ...pv].splice(0, 2);
+              });
+            }
+          : undefined,
         bg: startMines.includes(camp.camp) ? "orange.500" : undefined,
       };
     }
