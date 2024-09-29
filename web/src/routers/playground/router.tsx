@@ -20,6 +20,8 @@ import { ConnectError } from "@connectrpc/connect";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { HistoryComponent } from "./history";
+import { StartingComponent } from "./start/start";
+import { Container } from "@chakra-ui/react";
 
 function Home() {
   const history = useLoaderData() as HistoryResponse;
@@ -64,7 +66,8 @@ function Home() {
     }
   }
   return (
-    <>
+    <Container p={0}>
+      <StartingComponent />
       <h2>{history.description}</h2>
       {history.myTurn && <div>敗走まで残り{Math.floor(timeLeft / 1000)}秒</div>}
       <Form method="POST" ref={formRef}>
@@ -137,7 +140,7 @@ function Home() {
         )}
       </Form>
       <HistoryComponent />
-    </>
+    </Container>
   );
 }
 

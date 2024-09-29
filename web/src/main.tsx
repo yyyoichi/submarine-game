@@ -41,10 +41,13 @@ const theme = extendTheme({
       500: "#dcdbc2",
     },
     orange: {
-      500: "#a96d38",
+      500: "#ce7b31",
     },
     red: {
-      500: "#77310e",
+      500: "#d15416",
+    },
+    green: {
+      500: "#42b063",
     },
   },
   styles: {

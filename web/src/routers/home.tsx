@@ -83,7 +83,8 @@ function Home() {
             </ListItem>
             <ListItem>
               <Highlight query="魚雷攻撃" styles={highlightStyle}>
-                魚雷攻撃: 同じ位置にとどまり、隣接する上下左右斜めのマスに魚雷を撃ちます。
+                魚雷攻撃:
+                同じ位置にとどまり、隣接する上下左右斜めのマスに魚雷を撃ちます。
               </Highlight>
             </ListItem>
             <ListItem>
