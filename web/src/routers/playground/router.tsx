@@ -33,7 +33,6 @@ import { ProgressBar } from "./progress";
 function Home() {
   const history = useLoaderData() as HistoryResponse;
   const doneFirstAction = history.histories.length > 0;
-  const gameIsOver = history.winner !== "";
 
   const submit = useSubmit();
   useEffect(() => {
@@ -44,14 +43,8 @@ function Home() {
   }, [history.myTurn, submit]);
 
   return (
-    <Container p={0}>
-      {gameIsOver ? (
-        <>
-          <HistoryComponent />
-          <GameComponent />
-        </>
-      ) : (
-        <Tabs index={doneFirstAction ? 1 : 0}>
+    <Container p={0} minH={"100vh"} maxH={"100vh"}>
+        <Tabs index={doneFirstAction ? 1 : 0} p={0}>
           <VisuallyHidden>
             <TabList>
               <Tab />
@@ -65,18 +58,17 @@ function Home() {
                 <StartingComponent />
               </Fade>
             </TabPanel>
-            <TabPanel>
+            <TabPanel p={0}>
               <Fade in={doneFirstAction}>
-                <HistoryComponent />
+                <GameComponent />
                 <ProgressBar
                   callback={() => submit(null, { method: "DELETE" })}
                 />
-                <GameComponent />
+                <HistoryComponent />
               </Fade>
             </TabPanel>
           </TabPanels>
         </Tabs>
-      )}
     </Container>
   );
 }
