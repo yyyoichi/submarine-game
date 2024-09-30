@@ -20,13 +20,13 @@ export function HistoryComponent() {
   for (const h of histories) {
     const i = Math.floor((h.turn - 1) / 2);
     if (h.userId !== "") {
-      histProps[i].me = `${h.description}${h.impact && `\n\t ${h.impact}`}`;
+      histProps[i].me = `${h.description}${h.impact && `\n > ${h.impact}`}`;
     } else {
       histProps[i].enemy = h.description;
     }
   }
   return (
-    <TableContainer>
+    <TableContainer maxH={"100%"} overflowY={"auto"}>
       <Table variant="simple">
         <Thead>
           <Tr>
@@ -38,10 +38,10 @@ export function HistoryComponent() {
           {histProps.map((line, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <Tr key={i}>
-              <Td py={".5rem"} px={1} whiteSpace={"collapse"}>
+              <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
                 {line.me}
               </Td>
-              <Td py={".5rem"} px={1}>
+              <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
                 {line.enemy}
               </Td>
             </Tr>

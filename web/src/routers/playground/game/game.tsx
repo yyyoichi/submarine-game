@@ -73,134 +73,136 @@ export function GameComponent() {
     }
   }
   return (
-    <Form
-      method="POST"
-      onSubmit={() => {
-        setIsLoading(true);
-      }}
-      ref={formRef}
-    >
-      <input type="hidden" name="type" value="action" />
-      <input type="hidden" name="place" value={clickCamp || ""} />
-      <VStack py={2}>
-        <Text fontSize={"x-large"} fontWeight={"bold"} my={2}>
-          {history.description}
-        </Text>
-        <Board {...boardProps} />
-      </VStack>
-      <Box visibility={"hidden"}>
-        <input
-          type="radio"
-          name="act"
-          value={ActionType.MOVE}
-          checked={actionTypeSelection === ActionType.MOVE}
-          readOnly
-        />
-        <input
-          type="radio"
-          name="act"
-          value={ActionType.BOMB}
-          checked={actionTypeSelection === ActionType.BOMB}
-          readOnly
-        />
-        <input
-          type="radio"
-          name="act"
-          value={ActionType.MINE}
-          checked={actionTypeSelection === ActionType.MINE}
-          readOnly
-        />
-      </Box>
-      <Modal
-        isOpen={clickCamp !== null}
-        onClose={() => setClickCamp(null)}
-        motionPreset="slideInBottom"
-        portalProps={{ appendToParentPortal: true, containerRef: formRef }}
+    <Box mt={"auto"}>
+      <Form
+        method="POST"
+        onSubmit={() => {
+          setIsLoading(true);
+        }}
+        ref={formRef}
       >
-        <ModalOverlay />
-        <ModalContent mx={6} px={5} bg={"dark.500"}>
-          <ModalHeader>{`海域${clickCamp}`}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Flex gap={5} flexDirection={"column"}>
-              {enableActionType.includes(ActionType.MOVE) && (
-                <Button
-                  borderColor={"green.500"}
-                  leftIcon={<IconMove fill={"green.500"} />}
-                  bg={"dark.500"}
-                  borderWidth={"2px 4px 3px 2px"}
-                  fontSize={"large"}
-                  color={
-                    actionTypeSelection === ActionType.MOVE
-                      ? undefined
-                      : "gray.700"
-                  }
-                  onClick={() => setActionTypeSelection(ActionType.MOVE)}
-                >
-                  行動
-                </Button>
-              )}
-              {enableActionType.includes(ActionType.BOMB) && (
-                <Button
-                  borderColor={"orange.500"}
-                  leftIcon={<IconMove fill={"orange.500"} />}
-                  bg={"dark.500"}
-                  borderWidth={"2px 4px 3px 2px"}
-                  fontSize={"large"}
-                  color={
-                    actionTypeSelection === ActionType.BOMB
-                      ? undefined
-                      : "gray.700"
-                  }
-                  onClick={() => setActionTypeSelection(ActionType.BOMB)}
-                >
-                  魚雷発射
-                </Button>
-              )}
-              {enableActionType.includes(ActionType.MINE) && (
-                <Button
-                  borderColor={"red.500"}
-                  leftIcon={<IconBomb fill={"red.500"} />}
-                  bg={"dark.500"}
-                  borderWidth={"2px 4px 3px 2px"}
-                  fontSize={"large"}
-                  color={
-                    actionTypeSelection === ActionType.MINE
-                      ? undefined
-                      : "gray.700"
-                  }
-                  isDisabled={!enableActionType.includes(ActionType.MINE)}
-                  onClick={() => setActionTypeSelection(ActionType.MINE)}
-                >
-                  機雷発動
-                </Button>
-              )}
-            </Flex>
-          </ModalBody>
+        <input type="hidden" name="type" value="action" />
+        <input type="hidden" name="place" value={clickCamp || ""} />
+        <VStack py={2}>
+          <Text fontSize={"x-large"} fontWeight={"bold"} my={2}>
+            {history.description}
+          </Text>
+          <Board {...boardProps} />
+        </VStack>
+        <Box visibility={"hidden"}>
+          <input
+            type="radio"
+            name="act"
+            value={ActionType.MOVE}
+            checked={actionTypeSelection === ActionType.MOVE}
+            readOnly
+          />
+          <input
+            type="radio"
+            name="act"
+            value={ActionType.BOMB}
+            checked={actionTypeSelection === ActionType.BOMB}
+            readOnly
+          />
+          <input
+            type="radio"
+            name="act"
+            value={ActionType.MINE}
+            checked={actionTypeSelection === ActionType.MINE}
+            readOnly
+          />
+        </Box>
+        <Modal
+          isOpen={clickCamp !== null}
+          onClose={() => setClickCamp(null)}
+          motionPreset="slideInBottom"
+          portalProps={{ appendToParentPortal: true, containerRef: formRef }}
+        >
+          <ModalOverlay />
+          <ModalContent mx={6} px={5} bg={"dark.500"}>
+            <ModalHeader>{`海域${clickCamp}`}</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Flex gap={5} flexDirection={"column"}>
+                {enableActionType.includes(ActionType.MOVE) && (
+                  <Button
+                    borderColor={"green.500"}
+                    leftIcon={<IconMove fill={"green.500"} />}
+                    bg={"dark.500"}
+                    borderWidth={"2px 4px 3px 2px"}
+                    fontSize={"large"}
+                    color={
+                      actionTypeSelection === ActionType.MOVE
+                        ? undefined
+                        : "gray.700"
+                    }
+                    onClick={() => setActionTypeSelection(ActionType.MOVE)}
+                  >
+                    行動
+                  </Button>
+                )}
+                {enableActionType.includes(ActionType.BOMB) && (
+                  <Button
+                    borderColor={"orange.500"}
+                    leftIcon={<IconMove fill={"orange.500"} />}
+                    bg={"dark.500"}
+                    borderWidth={"2px 4px 3px 2px"}
+                    fontSize={"large"}
+                    color={
+                      actionTypeSelection === ActionType.BOMB
+                        ? undefined
+                        : "gray.700"
+                    }
+                    onClick={() => setActionTypeSelection(ActionType.BOMB)}
+                  >
+                    魚雷発射
+                  </Button>
+                )}
+                {enableActionType.includes(ActionType.MINE) && (
+                  <Button
+                    borderColor={"red.500"}
+                    leftIcon={<IconBomb fill={"red.500"} />}
+                    bg={"dark.500"}
+                    borderWidth={"2px 4px 3px 2px"}
+                    fontSize={"large"}
+                    color={
+                      actionTypeSelection === ActionType.MINE
+                        ? undefined
+                        : "gray.700"
+                    }
+                    isDisabled={!enableActionType.includes(ActionType.MINE)}
+                    onClick={() => setActionTypeSelection(ActionType.MINE)}
+                  >
+                    機雷発動
+                  </Button>
+                )}
+              </Flex>
+            </ModalBody>
 
-          <ModalFooter gap={2}>
-            <Button
-              size={"lg"}
-              bg={"dark.500"}
-              color={"white.500"}
-              isLoading={isLoading}
-              onClick={() => {
-                setClickCamp(null);
-              }}
-            >
-              キャンセル
-            </Button>
-            <Button
-              size={"lg"}
-              isLoading={isLoading}
-              type={"submit"}
-              isDisabled={!actionTypeSelection}
-            >
-              決定
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Form>
+            <ModalFooter gap={2}>
+              <Button
+                size={"lg"}
+                bg={"dark.500"}
+                color={"white.500"}
+                isLoading={isLoading}
+                onClick={() => {
+                  setClickCamp(null);
+                }}
+              >
+                キャンセル
+              </Button>
+              <Button
+                size={"lg"}
+                isLoading={isLoading}
+                type={"submit"}
+                isDisabled={!actionTypeSelection}
+              >
+                決定
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </Form>
+    </Box>
   );
 }

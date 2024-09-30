@@ -20,6 +20,7 @@ import { StartingComponent } from "./start/start";
 import {
   Container,
   Fade,
+  Flex,
   Tab,
   TabList,
   TabPanel,
@@ -43,32 +44,40 @@ function Home() {
   }, [history.myTurn, submit]);
 
   return (
-    <Container p={0} minH={"100vh"} maxH={"100vh"}>
-        <Tabs index={doneFirstAction ? 1 : 0} p={0}>
-          <VisuallyHidden>
-            <TabList>
-              <Tab />
-              <Tab />
-            </TabList>
-          </VisuallyHidden>
+    <Container>
+      <Tabs index={doneFirstAction ? 1 : 0} p={0}>
+        <VisuallyHidden>
+          <TabList>
+            <Tab />
+            <Tab />
+          </TabList>
+        </VisuallyHidden>
 
-          <TabPanels>
-            <TabPanel>
-              <Fade in={!doneFirstAction}>
-                <StartingComponent />
-              </Fade>
-            </TabPanel>
-            <TabPanel p={0}>
-              <Fade in={doneFirstAction}>
+        <TabPanels>
+          <TabPanel>
+            <Fade in={!doneFirstAction}>
+              <StartingComponent />
+            </Fade>
+          </TabPanel>
+          <TabPanel p={0}>
+            <Fade in={doneFirstAction}>
+              <Flex
+                direction={"column"}
+                p={0}
+                py={2}
+                minH={"100vh"}
+                maxH={"100vh"}
+              >
+                <HistoryComponent />
                 <GameComponent />
                 <ProgressBar
                   callback={() => submit(null, { method: "DELETE" })}
                 />
-                <HistoryComponent />
-              </Fade>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+              </Flex>
+            </Fade>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Container>
   );
 }
