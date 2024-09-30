@@ -46,6 +46,7 @@ export function GameComponent() {
         !camp.status.includes(CampStatus.ISLAND) &&
         !camp.status.includes(CampStatus.SUBMARINE) &&
         history.winner === "" &&
+        history.myTurn &&
         camp.status.length;
       boardProps.camps[i][j] = {
         camp: camp.camp ?? 0,
