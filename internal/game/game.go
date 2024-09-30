@@ -17,7 +17,7 @@ type Game struct {
 	clock  clock
 
 	mu        sync.RWMutex
-	NextUser  string
+	NextUser  *string
 	Winner    string
 	histories []history
 	mines     map[string][]uint32 // 残機雷
@@ -40,18 +40,17 @@ func (g *Game) GetHistory(me string) *apiv1.HistoryResponse {
 	var latestPlaceHistory = g.getLatestPlaceHistory(me)
 	var resp = &apiv1.HistoryResponse{
 		Camps:     g.getCampStatus(latestPlaceHistory, latestMyHistory),
-		MyTurn:    me == g.NextUser,
+		MyTurn:    false,
 		Winner:    g.Winner,
 		Histories: make([]*apiv1.History, 0, len(g.histories)),
 		Timeout:   g.clock.getActionTimeout().UnixMilli(),
 	}
+	if g.NextUser == nil || *g.NextUser == me {
+		resp.MyTurn = true
+	}
 	if resp.Winner != "" {
 		resp.MyTurn = false
 		resp.Timeout = 0
-	}
-	if len(g.histories) < 2 && latestMyHistory == nil {
-		// 初回行動
-		resp.MyTurn = true
 	}
 
 	// description
@@ -205,6 +204,7 @@ func (g *Game) FirstAction(me string, place uint32, mines []uint32) error {
 		}
 	}
 
+	g.changeTurn(me)
 	g.appendHistory(history{
 		user:  me,
 		camp:  place,
@@ -222,7 +222,7 @@ func (g *Game) Action(me string, camp uint32, action apiv1.ActionType) error {
 	if g.Winner != "" {
 		return ErrGameIsOver
 	}
-	if g.NextUser != me {
+	if g.NextUser == nil || *g.NextUser != me {
 		return ErrIsnotYourTurn
 	}
 	if g.clock.isActionTimeout() {
@@ -308,6 +308,9 @@ func (g *Game) Leave(me string) {
 }
 
 func (g *Game) leave(user string) {
+	if g.Winner != "" {
+		return
+	}
 	g.appendHistory(history{
 		user: user,
 		camp: 0,
@@ -465,9 +468,9 @@ func (g *Game) getEnemy(me string) string {
 
 func (g *Game) changeTurn(user string) {
 	if g.Users[0] == user {
-		g.NextUser = g.Users[1]
+		g.NextUser = &g.Users[1]
 	} else {
-		g.NextUser = g.Users[0]
+		g.NextUser = &g.Users[0]
 	}
 }
 
