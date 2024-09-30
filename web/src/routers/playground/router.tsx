@@ -14,7 +14,7 @@ import {
   FirstActionRequest,
 } from "../../gen/api/v1/game_pb";
 import { ConnectError } from "@connectrpc/connect";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { HistoryComponent } from "./history/history";
 import { StartingComponent } from "./start/start";
 import {
@@ -32,33 +32,26 @@ import { ProgressBar } from "./progress";
 
 function Home() {
   const history = useLoaderData() as HistoryResponse;
-  const waitFirstAction = history.histories.length < 2;
+  const doneFirstAction = history.histories.length > 0;
   const gameIsOver = history.winner !== "";
 
-  const formRef = useRef<HTMLFormElement>(null);
   const submit = useSubmit();
   useEffect(() => {
-    if (gameIsOver) {
+    if (history.myTurn) {
       return;
     }
-    if (!formRef.current) {
-      return;
-    }
-    if (waitFirstAction || !history.myTurn) {
-      submit(formRef.current, { method: "PATCH" });
-    }
-  }, [gameIsOver, waitFirstAction, history.myTurn, submit]);
+    submit(null, { method: "PATCH" });
+  }, [history.myTurn, submit]);
 
   return (
     <Container p={0}>
-      <ProgressBar callback={() => submit(null, { method: "DELETE" })} />
       {gameIsOver ? (
         <>
           <HistoryComponent />
           <GameComponent />
         </>
       ) : (
-        <Tabs index={waitFirstAction ? 0 : 1}>
+        <Tabs index={doneFirstAction ? 1 : 0}>
           <VisuallyHidden>
             <TabList>
               <Tab />
@@ -68,13 +61,16 @@ function Home() {
 
           <TabPanels>
             <TabPanel>
-              <Fade in={waitFirstAction}>
+              <Fade in={!doneFirstAction}>
                 <StartingComponent />
               </Fade>
             </TabPanel>
             <TabPanel>
-              <Fade in={!waitFirstAction}>
+              <Fade in={doneFirstAction}>
                 <HistoryComponent />
+                <ProgressBar
+                  callback={() => submit(null, { method: "DELETE" })}
+                />
                 <GameComponent />
               </Fade>
             </TabPanel>
@@ -130,7 +126,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const place = formData.get("place")?.toString();
             let actionType = ActionType.UNSPECIFIED;
             const strActionType = formData.get("act")?.toString();
-            console.log(strActionType);
             if (strActionType === "1") {
               actionType = ActionType.MOVE;
             } else if (strActionType === "2") {

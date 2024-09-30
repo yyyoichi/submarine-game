@@ -93,18 +93,21 @@ export function GameComponent() {
           name="act"
           value={ActionType.MOVE}
           checked={actionTypeSelection === ActionType.MOVE}
+          readOnly
         />
         <input
           type="radio"
           name="act"
           value={ActionType.BOMB}
           checked={actionTypeSelection === ActionType.BOMB}
+          readOnly
         />
         <input
           type="radio"
           name="act"
           value={ActionType.MINE}
           checked={actionTypeSelection === ActionType.MINE}
+          readOnly
         />
       </Box>
       <Modal

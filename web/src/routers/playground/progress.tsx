@@ -8,31 +8,22 @@ type ProgressBarProps = {
 };
 export function ProgressBar(props: ProgressBarProps) {
   const history = useLoaderData() as HistoryResponse;
-  const waitFirstAction = history.histories.length < 2;
-  const defaultLeft = Number(history.timeout) - Date.now();
-  const [timeLeft, setTimeLeft] = useState(defaultLeft);
+  const [timeLeft, setTimeLeft] = useState(
+    Number(history.timeout) - Date.now(),
+  );
   useEffect(() => {
     const interval = setInterval(() => {
       if (history.winner !== "") {
-        return;
-      }
-      if (!waitFirstAction && !history.myTurn) {
         return;
       }
       const currentTime = Number(history.timeout) - Date.now();
       setTimeLeft(currentTime);
       if (currentTime > 0) return;
       props.callback();
-    }, 1000); // 毎秒更新
+    }, 100); // 毎秒更新
 
     return () => clearInterval(interval);
-  }, [
-    history.timeout,
-    history.myTurn,
-    history.winner,
-    waitFirstAction,
-    props.callback,
-  ]);
+  }, [history.timeout, history.winner, props.callback]);
 
   return (
     <Progress

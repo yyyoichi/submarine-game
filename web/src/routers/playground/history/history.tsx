@@ -35,8 +35,9 @@ export function HistoryComponent() {
           </Tr>
         </Thead>
         <Tbody fontSize={"md"}>
-          {histProps.map((line) => (
-            <Tr key={line.me}>
+          {histProps.map((line, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            <Tr key={i}>
               <Td py={".5rem"} px={1}>
                 {line.me}
               </Td>
