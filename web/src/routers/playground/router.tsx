@@ -54,7 +54,7 @@ function Home() {
         </VisuallyHidden>
 
         <TabPanels>
-          <TabPanel>
+          <TabPanel p={0}>
             <Fade in={!doneFirstAction}>
               <StartingComponent />
             </Fade>

@@ -96,7 +96,7 @@ export function StartingComponent() {
               </Text>
             </Tab>
           </TabList>
-          <TabPanels p={1}>
+          <TabPanels p={0}>
             <TabPanel p={0} transitionDelay={""}>
               <Fade in={tabIndex === 0} delay={{ exit: 0.1 }}>
                 <Text py={3}>行動開始する海域を選択</Text>
