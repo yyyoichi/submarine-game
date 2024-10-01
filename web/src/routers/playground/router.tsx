@@ -65,8 +65,8 @@ function Home() {
                 direction={"column"}
                 p={0}
                 py={2}
-                minH={"100vh"}
-                maxH={"100vh"}
+                minH={"100svh"}
+                maxH={"100svh"}
               >
                 <HistoryComponent />
                 <GameComponent />
