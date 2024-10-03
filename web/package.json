@@ -8,8 +8,8 @@
     "build": "vite build",
     "build:prod": "vite build --config vite.config.prod.ts",
     "preview": "vite preview",
-    "lint": "npx biome lint --write ./src",
-    "format": "npx biome format --write ./src"
+    "lint": "npx biome lint --write --config-path=../ ./src",
+    "format": "npx biome format --write --config-path=../ ./src"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",

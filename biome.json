@@ -5,13 +5,14 @@
   },
   "formatter": {
     "indentStyle": "space",
-    "ignore": ["./package.json", "package-lock.json", "./src/gen/*"]
+    "indentWidth": 2,
+    "ignore": ["**/gen/*"]
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true
     },
-    "ignore": ["./package.json", "package-lock.json", "./src/gen/*"]
+    "ignore": ["**/gen/*"]
   }
 }
