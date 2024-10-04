@@ -22,7 +22,7 @@ func (rss RelativeSectors) Trun(d Direction) RelativeSectors {
 		}
 	case West:
 		f = func(i [2]int8) [2]int8 {
-			return [2]int8{i[1], i[0] * 1}
+			return [2]int8{i[1], i[0] * -1}
 		}
 	}
 	var resp = make([][2]int8, len(rss))
