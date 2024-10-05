@@ -1,6 +1,9 @@
 package core
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 type Action struct {
 	GameId   string
@@ -15,8 +18,21 @@ type Action struct {
 	ActionResult ActionResult
 	// 残機雷位置
 	Mines []Sector
-	// 行動時刻
-	Timestamp time.Time
+	// NOTE badgerのReverseイテレーションができないので応急処置
+	// MaxInt64から現在時刻を引いた行動時刻
+	ReverseUnixNano int64
+	Timestamp       time.Time
+}
+
+func (a *Action) SetTimestamp() {
+	a.Timestamp = time.Now()
+	// 最大値から引いて反転
+	a.ReverseUnixNano = math.MaxInt64 - a.Timestamp.UnixNano()
+}
+
+func (a *Action) RestoreTime() {
+	nano := math.MaxInt64 - a.ReverseUnixNano
+	a.Timestamp = time.Unix(0, nano)
 }
 
 // 行動タイプ

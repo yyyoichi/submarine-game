@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+	"fmt"
 	"iter"
 
 	"github.com/dgraph-io/badger/v4"
@@ -38,6 +40,9 @@ func (s *Store) Get(models models) error {
 			}
 			item, err := txn.Get(key)
 			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					return fmt.Errorf("%w: key[%s]: %w", ErrKeyNotFound, key, err)
+				}
 				return err
 			}
 			err = item.Value(models.setValue)
@@ -57,16 +62,17 @@ func (s *Store) Query(models models, options ...QueryOption) error {
 	}
 	var itScan iter.Seq2[*badger.Item, error] = func(yield func(*badger.Item, error) bool) {
 		err := s.View(func(txn *badger.Txn) error {
-			opts := badger.DefaultIteratorOptions
-			opts.PrefetchValues = opt.prefetchValues
-			opts.Reverse = opt.reverse
-			it := txn.NewIterator(opts)
-			defer it.Close()
 			for prefix, err := range models.prefixKeys() {
 				if err != nil {
 					return err
 				}
-				for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				opts := badger.DefaultIteratorOptions
+				opts.PrefetchValues = opt.prefetchValues
+				opts.Reverse = opt.reverse
+				opts.Prefix = prefix
+				it := txn.NewIterator(opts)
+				defer it.Close()
+				for it.Rewind(); it.Valid(); it.Next() {
 					item := it.Item()
 					if ok := yield(item, nil); !ok {
 						return nil
