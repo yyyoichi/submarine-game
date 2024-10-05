@@ -48,10 +48,11 @@ func (s *BattleService) deleteGame(gameId string) error {
 
 // 行動を記録する
 func (s *BattleService) appendAction(action core.Action) error {
-	action.SetTimestamp()
+	model := actionModel{Action: action}
+	model.Action.Timestamp = model.ReverseUnixNano.setTimestamp()
 
 	var models store.Models[actionModel]
-	models.Append(actionModel{Action: action})
+	models.Append(model)
 	return s.Store.Set(&models, store.WithTTL(time.Duration(time.Minute*30)))
 }
 
@@ -74,7 +75,7 @@ func (s *BattleService) getLatestAction(gameId string) (*actionModel, error) {
 		return nil, nil
 	}
 	v := values[0]
-	v.RestoreTime()
+	v.Timestamp = v.ReverseUnixNano.restore()
 	return &v, nil
 }
 
@@ -100,6 +101,6 @@ func (s *BattleService) getPrevAction(gameId, playerId string) (*actionModel, er
 		return nil, nil
 	}
 	v := values[0]
-	v.RestoreTime()
+	v.Timestamp = v.ReverseUnixNano.restore()
 	return &v, nil
 }

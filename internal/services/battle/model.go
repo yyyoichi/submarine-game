@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"math"
+	"time"
 
 	"github.com/yyyoichi/submarine-game/internal/core"
 )
@@ -55,6 +57,7 @@ func (m gameModel) ParseKey(k []byte) (dist gameModel, err error) {
 // implements sotre.model
 type actionModel struct {
 	core.Action
+	ReverseUnixNano reverseUnixNano
 }
 
 func newActionModel(gameId string) actionModel {
@@ -122,10 +125,23 @@ func (m actionModel) ParseKey(k []byte) (dist actionModel, err error) {
 			dist.GameId = sc.Text()
 		case 2:
 			reverse := binary.BigEndian.Uint64(sc.Bytes())
-			dist.ReverseUnixNano = int64(reverse)
+			dist.ReverseUnixNano = reverseUnixNano(int64(reverse))
 		case 3:
 			dist.PlayerId = sc.Text()
 		}
 	}
 	return
+}
+
+// NOTE badgerのReverseイテレーションができないので応急処置
+// MaxInt64から現在時刻を引いた行動時刻
+type reverseUnixNano int64
+
+func (u *reverseUnixNano) setTimestamp() time.Time {
+	now := time.Now()
+	*u = reverseUnixNano(math.MaxInt64 - now.UnixNano())
+	return now
+}
+func (u *reverseUnixNano) restore() time.Time {
+	return time.Unix(0, int64(math.MaxInt64-*u))
 }
