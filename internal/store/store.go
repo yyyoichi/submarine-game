@@ -50,11 +50,16 @@ func (s *Store) Get(models models) error {
 	return err
 }
 
-func (s *Store) Query(models models) error {
+func (s *Store) Query(models models, options ...QueryOption) error {
+	var opt QueryOptionos
+	for _, o := range options {
+		_ = o(&opt)
+	}
 	var itScan iter.Seq2[*badger.Item, error] = func(yield func(*badger.Item, error) bool) {
 		err := s.View(func(txn *badger.Txn) error {
 			opts := badger.DefaultIteratorOptions
-			opts.PrefetchValues = false
+			opts.PrefetchValues = opt.prefetchValues
+			opts.Reverse = opt.reverse
 			it := txn.NewIterator(opts)
 			defer it.Close()
 			for prefix, err := range models.prefixKeys() {
@@ -77,7 +82,11 @@ func (s *Store) Query(models models) error {
 	return models.setValues(itScan)
 }
 
-func (s *Store) Set(models models) error {
+func (s *Store) Set(models models, options ...SetOption) error {
+	var opt SetOptions
+	for _, o := range options {
+		_ = o(&opt)
+	}
 	ks, vs, err := models.values()
 	if err != nil {
 		return err
@@ -85,7 +94,11 @@ func (s *Store) Set(models models) error {
 	err = s.Update(func(txn *badger.Txn) error {
 		for i := range ks {
 			k, v := ks[i], vs[i]
-			err := txn.Set(k, v)
+			entry := badger.NewEntry(k, v)
+			if opt.ttl != nil {
+				entry.WithTTL(*opt.ttl)
+			}
+			err := txn.SetEntry(entry)
 			if err != nil {
 				return err
 			}
