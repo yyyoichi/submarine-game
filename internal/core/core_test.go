@@ -60,7 +60,7 @@ func TestCore(t *testing.T) {
 			{5, []Sector{10}},
 		}
 		for _, tt := range test {
-			act := src.Sectors(tt.at, rss)
+			act := src.EnableSectors(tt.at, rss)
 			assert.Equal(t, tt.exp, act)
 		}
 
@@ -73,5 +73,42 @@ func TestCore(t *testing.T) {
 			{30, 31, 32, 33, 34, 35},
 			{36, 37, 38, 39, 40, 41},
 		}, src.Lines())
+	})
+
+	t.Run("SectorStatus", func(t *testing.T) {
+		game := Game{
+			OceanMap: OceanMap{
+				H: 4,
+				W: 4,
+			},
+			Submarines: map[string]Submarine{"playerA": {
+				Movable:           RelativeSectors{{0, -1}, {0, 1}}, // 上下だけ
+				TorpedoTargetable: RelativeSectors{{-1, 0}, {1, 0}}, // 左右だけ
+			}},
+			Islands: []Sector{11, 12},
+		}
+		prev := Action{
+			At:    10,
+			Mines: []Sector{4, 6},
+		}
+		test := []struct {
+			ats []Sector
+			exp map[Sector][]SectorStatus
+		}{
+			{[]Sector{}, map[Sector][]SectorStatus{
+				0: {}, 1: {}, 2: {}, 3: {},
+				4: {CanTriggerMine}, 5: {}, 6: {CanMove, CanTriggerMine}, 7: {},
+				8: {}, 9: {CanFireTorpedo}, 10: {SelfOccupied}, 11: {IslandSector},
+				12: {IslandSector}, 13: {}, 14: {CanMove}, 15: {},
+			}},
+			{[]Sector{6}, map[Sector][]SectorStatus{
+				6: {CanMove, CanTriggerMine},
+			}},
+		}
+		for _, tt := range test {
+			act := game.SectorStatus("playerA", prev, tt.ats...)
+			assert.Equal(t, tt.exp, act)
+		}
+
 	})
 }

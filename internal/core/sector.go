@@ -31,3 +31,14 @@ func (rss RelativeSectors) Trun(d Direction) RelativeSectors {
 	}
 	return RelativeSectors(resp)
 }
+
+// 海域の状態
+type SectorStatus int8
+
+const (
+	SelfOccupied   SectorStatus = 1
+	CanMove        SectorStatus = 2
+	CanFireTorpedo SectorStatus = 3
+	CanTriggerMine SectorStatus = 4
+	IslandSector   SectorStatus = 99
+)

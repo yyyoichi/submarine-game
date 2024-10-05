@@ -16,7 +16,7 @@ type OceanMap struct {
 }
 
 // atからの相対位置rssを絶対位置で返す。
-func (om OceanMap) Sectors(at Sector, rss RelativeSectors) []Sector {
+func (om OceanMap) EnableSectors(at Sector, rss RelativeSectors) []Sector {
 	var resp = make([]Sector, 0, len(rss))
 	atX, atY := int8(at)%om.W, int8(at)/om.W
 	for _, s := range rss {
@@ -29,6 +29,14 @@ func (om OceanMap) Sectors(at Sector, rss RelativeSectors) []Sector {
 			continue
 		}
 		resp = append(resp, Sector(om.W*y+x))
+	}
+	return resp
+}
+
+func (om OceanMap) Sectors() []Sector {
+	var resp = make([]Sector, om.H*om.W)
+	for i := range resp {
+		resp[i] = Sector(i)
 	}
 	return resp
 }
