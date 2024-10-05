@@ -56,6 +56,37 @@ func (s *BattleService) appendAction(action core.Action) error {
 	return s.Store.Set(&models, store.WithTTL(time.Duration(time.Minute*30)))
 }
 
+// 各プレイヤーの最後の行動を取得する
+func (s *BattleService) getPrevActions(gameId string) (map[string]*actionModel, error) {
+	var got = make(map[string]struct{}, 2)
+
+	var models store.Models[actionModel]
+	models.Append(newActionModel(gameId))
+	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
+		_, found := got[am.PlayerId]
+		if !found {
+			got[am.PlayerId] = struct{}{}
+			is = true
+		}
+		end = len(got) == 2
+		return
+	}
+	err := s.Store.Query(&models, store.WithReverse(false), store.WithPrefetchValues(false))
+	if err != nil {
+		if errors.Is(err, store.ErrKeyNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var resp = make(map[string]*actionModel, 2)
+	for _, v := range models.GetValues() {
+		v.Timestamp = v.ReverseUnixNano.restore()
+		resp[v.PlayerId] = &v
+	}
+	return resp, nil
+}
+
 // ゲームの最後の行動を取得する
 func (s *BattleService) getLatestAction(gameId string) (*actionModel, error) {
 	var models store.Models[actionModel]
