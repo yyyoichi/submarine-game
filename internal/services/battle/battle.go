@@ -73,6 +73,85 @@ func (s *BattleService) DeploySubmarineAndMines(ctx context.Context, input *Depl
 	return nil
 }
 
+func (s *BattleService) Move(ctx context.Context, input *MoveInput) error {
+	s.init()
+
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+	at := core.Sector(input.At)
+
+	me, _, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
+		Game:            game.Game,
+		PlayerId:        input.PlayerId,
+		ExpSectorStatus: core.CanMove,
+		At:              at,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot get valid actions: %w", err)
+	}
+	action := core.Action{
+		GameId:   input.GameId,
+		PlayerId: input.PlayerId,
+		At:       at,
+		T:        core.MoveAction,
+		To:       at,
+		Mines:    me.Mines[:],
+	}
+	err = s.appendAction(action)
+	if err != nil {
+		return fmt.Errorf("cannot append action: %w", err)
+	}
+	return nil
+}
+
+// 初回行動以降の味方/敵の前回行動を取得する。
+// input.Atへのinput.EnableStatusの許可を期待する。
+func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPrevActionsInput) (*core.Action, *core.Action, error) {
+	// プレイヤーIdは存在しているか
+	_, found := input.Game.Submarines[input.PlayerId]
+	if !found {
+		// ゲームが存在しないことにする
+		return nil, nil, fmt.Errorf("%w: player[%s] is not found", ErrGameNotFound, input.PlayerId)
+	}
+
+	// 初回行動済みか
+	prevs, err := s.getPrevActions(input.Game.GameId)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot get prevs actions: %w", err)
+	}
+	if len(prevs) < 2 {
+		return nil, nil, fmt.Errorf("%w: cannot move, prev action is no initialize", ErrInvalidActionType)
+	}
+	prev, found := prevs[input.PlayerId]
+	if !found {
+		return nil, nil, fmt.Errorf("%w: cannot move, prev action is none", ErrInvalidActionType)
+	}
+	enemy, found := prevs[input.Game.Enemy(input.PlayerId)]
+	if !found {
+		return nil, nil, fmt.Errorf("%w: cannot move, prev action is none", ErrInvalidActionType)
+	}
+
+	// 自分のが最近行動している
+	if enemy.Timestamp.UnixNano() < prev.Timestamp.UnixNano() {
+		return nil, nil, fmt.Errorf("%w: exp player < enemy", ErrNotInTurn)
+	}
+	// タイムアウト
+	if s.timeoutDuration < enemy.Since() {
+		return nil, nil, fmt.Errorf("%w: too much time has passed since the last enemy action", ErrTimeout)
+	}
+
+	// セクターの利用可能ステータスの確認
+	enables := input.Game.SectorStatus(input.PlayerId, prev.Action, input.At)
+	status, found := enables[input.At]
+	if !found || !slices.Contains(status, input.ExpSectorStatus) {
+		return nil, nil, fmt.Errorf("%w: ", ErrInvalidActionType)
+	}
+	return &prev.Action, &enemy.Action, nil
+}
+
 // 新しいゲームをセットする
 func (s *BattleService) setGame(game core.Game) error {
 	game.Timestamp = time.Now()

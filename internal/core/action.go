@@ -20,6 +20,10 @@ type Action struct {
 	Timestamp time.Time
 }
 
+func (a Action) Since() time.Duration {
+	return time.Since(a.Timestamp)
+}
+
 // 行動タイプ
 type ActionType int8
 

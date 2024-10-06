@@ -50,6 +50,13 @@ func (g Game) SectorStatus(playerId string, prev Action, ats ...Sector) map[Sect
 	return resp
 }
 
+func (g Game) Enemy(playerId string) string {
+	if g.PlayerIds[0] == playerId {
+		return g.PlayerIds[1]
+	}
+	return g.PlayerIds[0]
+}
+
 func (g Game) Since() time.Duration {
 	return time.Since(g.Timestamp)
 }

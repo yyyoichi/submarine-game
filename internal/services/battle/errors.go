@@ -8,4 +8,5 @@ var (
 	ErrInvalidActionType = errors.New("invalid action type")
 	ErrTimeout           = errors.New("timeout")
 	ErrInvalidSector     = errors.New("invalid sector")
+	ErrNotInTurn         = errors.New("not in turn")
 )
