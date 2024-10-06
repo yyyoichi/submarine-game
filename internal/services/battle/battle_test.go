@@ -1,13 +1,128 @@
 package battle
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/yyyoichi/submarine-game/internal/core"
 	"github.com/yyyoichi/submarine-game/internal/store"
 )
+
+func TestBattleService(t *testing.T) {
+	ctx := context.Background()
+	store, err := store.New()
+	require.NoError(t, err)
+
+	t.Run("DeploySubmarineAndMines", func(t *testing.T) {
+		t.Parallel()
+
+		type input = DeploySubmarineAndMinesInput
+		var (
+			scope          = "DeploySubmarineAndMines"
+			defaultIslands = []core.Sector{30, 40}
+			newGame        = func(id string) core.Game {
+				game := core.Game{
+					GameId:    scope + id,
+					PlayerIds: [2]string{"1", "2"},
+					Submarines: map[string]core.Submarine{
+						"1": core.DefaultSubmarine,
+						"2": core.DefaultSubmarine,
+					},
+					OceanMap: core.DefaultOceanMap,
+					Islands:  defaultIslands,
+				}
+				return game
+			}
+			newInput = func(id string, added *input) *input {
+				input := &input{
+					GameId:   scope + id,
+					PlayerId: "1",
+					At:       10,
+					Mines:    []int8{1, 2},
+				}
+				if added == nil {
+					return input
+				}
+				if added.PlayerId != "" {
+					input.PlayerId = added.PlayerId
+				}
+				if added.At != 0 {
+					input.At = added.At
+				}
+				if len(added.Mines) != 0 {
+					input.Mines = added.Mines
+				}
+				return input
+			}
+		)
+
+		test := []struct {
+			preProcess func(b *BattleService)
+			input      *input
+			exp        error
+		}{
+			{func(b *BattleService) {
+				b.setGame(newGame("1"))
+			}, newInput("1", nil),
+				nil},
+
+			{func(b *BattleService) {
+				// empty
+
+			}, newInput("2", nil),
+				ErrGameNotFound},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("3"))
+			}, newInput("3", &input{PlayerId: "99"}),
+				ErrGameNotFound},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("4"))
+				b.timeoutDuration = time.Nanosecond * 1
+				time.Sleep(time.Nanosecond * 2)
+			}, newInput("4", nil),
+				ErrTimeout},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("5"))
+			}, newInput("5", &input{Mines: []int8{1, 2, 3}}),
+				ErrInvalidMineCount},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("6"))
+				b.appendAction(core.Action{
+					GameId:   scope + "6",
+					PlayerId: "1",
+				})
+			}, newInput("6", nil),
+				ErrInvalidActionType},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("7"))
+			}, newInput("7", &input{At: int8(defaultIslands[0])}),
+				ErrInvalidSector},
+
+			{func(b *BattleService) {
+				b.setGame(newGame("8"))
+			}, newInput("8", &input{Mines: []int8{1, int8(defaultIslands[0])}}),
+				ErrInvalidSector},
+		}
+		for _, tt := range test {
+			battle := BattleService{Store: store}
+			tt.preProcess(&battle)
+			err := battle.DeploySubmarineAndMines(ctx, tt.input)
+			if tt.exp == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, tt.exp)
+			}
+		}
+	})
+}
 
 func TestRepository(t *testing.T) {
 	t.Run("Game", func(t *testing.T) {

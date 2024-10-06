@@ -1,8 +1,10 @@
 package battle
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/yyyoichi/submarine-game/internal/core"
@@ -10,7 +12,65 @@ import (
 )
 
 type BattleService struct {
-	Store *store.Store
+	Store           *store.Store
+	timeoutDuration time.Duration
+}
+
+func (s *BattleService) DeploySubmarineAndMines(ctx context.Context, input *DeploySubmarineAndMinesInput) error {
+	s.init()
+
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+
+	// プレイヤーIdは存在しているか
+	submarine, found := game.Submarines[input.PlayerId]
+	if !found {
+		// ゲームが存在しないことにする
+		return fmt.Errorf("%w: player[%s] is not found", ErrGameNotFound, input.PlayerId)
+	}
+	// タイムアウトしていないか
+	if game.Since() > s.timeoutDuration {
+		return fmt.Errorf("cannot deploy submarine: %w", ErrTimeout)
+	}
+
+	// 機雷の数は正しいか
+	if submarine.MineCount < uint8(len(input.Mines)) {
+		return fmt.Errorf("%w: %v", ErrInvalidMineCount, input.Mines)
+	}
+	// 初回行動か
+	prev, err := s.getPrevAction(input.GameId, input.PlayerId)
+	if err != nil {
+		return fmt.Errorf("cannot get player[%s] prev action of game[%s]", input.PlayerId, input.GameId)
+	}
+	if prev != nil {
+		return fmt.Errorf("%w: already deploye", ErrInvalidActionType)
+	}
+
+	action := core.Action{
+		GameId:   input.GameId,
+		PlayerId: input.PlayerId,
+		At:       core.Sector(input.At),
+		Mines:    make([]core.Sector, len(input.Mines)),
+	}
+	// 位置は正しいか
+	if slices.Contains(game.Islands, action.At) {
+		return fmt.Errorf("%w: deployment sector[%v] is island", ErrInvalidSector, action.At)
+	}
+	for i, m := range input.Mines {
+		action.Mines[i] = core.Sector(m)
+		if slices.Contains(game.Islands, action.Mines[i]) {
+			return fmt.Errorf("%w: mine sector[%v] is island", ErrInvalidSector, action.Mines[i])
+		}
+	}
+
+	err = s.appendAction(action)
+	if err != nil {
+		return fmt.Errorf("cannot append action: %w", err)
+	}
+	return nil
 }
 
 // 新しいゲームをセットする
@@ -134,4 +194,10 @@ func (s *BattleService) getPrevAction(gameId, playerId string) (*actionModel, er
 	v := values[0]
 	v.Timestamp = v.ReverseUnixNano.restore()
 	return &v, nil
+}
+
+func (s *BattleService) init() {
+	if s.timeoutDuration == 0 {
+		s.timeoutDuration = time.Duration(time.Second*30 + time.Millisecond*500)
+	}
 }

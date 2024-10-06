@@ -49,3 +49,7 @@ func (g Game) SectorStatus(playerId string, prev Action, ats ...Sector) map[Sect
 	}
 	return resp
 }
+
+func (g Game) Since() time.Duration {
+	return time.Since(g.Timestamp)
+}
