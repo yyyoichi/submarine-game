@@ -355,6 +355,29 @@ func (s *BattleService) getPrevAction(gameId, playerId string) (*actionModel, er
 	return &v, nil
 }
 
+// 新しい順に行動を全件取得する。
+func (s *BattleService) getAllAction(gameId string) ([]actionModel, error) {
+	var models store.Models[actionModel]
+	models.Append(newActionModel(gameId))
+	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
+		return true, false
+	}
+	err := s.Store.Query(&models)
+	if err != nil {
+		if errors.Is(err, store.ErrKeyNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	values := models.GetValues()
+	var resp = make([]actionModel, len(values))
+	for i, v := range values {
+		resp[i] = v
+		resp[i].Timestamp = v.ReverseUnixNano.restore()
+	}
+	return resp, nil
+}
+
 func (s *BattleService) init() {
 	if s.timeoutDuration == 0 {
 		s.timeoutDuration = time.Duration(time.Second*30 + time.Millisecond*500)

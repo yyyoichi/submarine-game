@@ -425,6 +425,13 @@ func TestRepository(t *testing.T) {
 		testEqualAction(t, want1, prevs["1"].Action)
 		testEqualAction(t, want2, prevs["2"].Action)
 
+		// 新しい順
+		actions, err := battle.getAllAction("a")
+		assert.NoError(t, err)
+		assert.Len(t, actions, 2)
+		testEqualAction(t, want2, actions[0].Action)
+		testEqualAction(t, want1, actions[1].Action)
+
 		want3 := core.Action{
 			GameId:       "a",
 			PlayerId:     "1",
@@ -449,6 +456,14 @@ func TestRepository(t *testing.T) {
 		assert.Nil(t, err)
 		testEqualAction(t, want3, prevs["1"].Action)
 		testEqualAction(t, want2, prevs["2"].Action)
+
+		// 新しい順
+		actions, err = battle.getAllAction("a")
+		assert.NoError(t, err)
+		assert.Len(t, actions, 3)
+		testEqualAction(t, want3, actions[0].Action)
+		testEqualAction(t, want2, actions[1].Action)
+		testEqualAction(t, want1, actions[2].Action)
 	})
 }
 
