@@ -73,7 +73,7 @@ func (s *BattleService) DeploySubmarineAndMines(ctx context.Context, input *Depl
 	return nil
 }
 
-func (s *BattleService) Move(ctx context.Context, input *MoveInput) error {
+func (s *BattleService) Move(ctx context.Context, input *ActionInput) error {
 	s.init()
 
 	// 存在するゲームか
@@ -99,6 +99,78 @@ func (s *BattleService) Move(ctx context.Context, input *MoveInput) error {
 		T:        core.MoveAction,
 		To:       at,
 		Mines:    me.Mines[:],
+	}
+	err = s.appendAction(action)
+	if err != nil {
+		return fmt.Errorf("cannot append action: %w", err)
+	}
+	return nil
+}
+
+func (s *BattleService) FireTorpedo(ctx context.Context, input *ActionInput) error {
+	s.init()
+
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+	at := core.Sector(input.At)
+
+	me, enemy, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
+		Game:            game.Game,
+		PlayerId:        input.PlayerId,
+		ExpSectorStatus: core.CanFireTorpedo,
+		At:              at,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot get valid actions: %w", err)
+	}
+	action := core.Action{
+		GameId:       input.GameId,
+		PlayerId:     input.PlayerId,
+		At:           me.At,
+		T:            core.TorpedoFireAction,
+		ActionResult: game.ActionResult(enemy.At, at),
+		To:           at,
+		Mines:        me.Mines[:],
+	}
+	err = s.appendAction(action)
+	if err != nil {
+		return fmt.Errorf("cannot append action: %w", err)
+	}
+	return nil
+}
+
+func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) error {
+	s.init()
+
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+	at := core.Sector(input.At)
+
+	me, enemy, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
+		Game:            game.Game,
+		PlayerId:        input.PlayerId,
+		ExpSectorStatus: core.CanTriggerMine,
+		At:              at,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot get valid actions: %w", err)
+	}
+	action := core.Action{
+		GameId:       input.GameId,
+		PlayerId:     input.PlayerId,
+		At:           me.At,
+		T:            core.MineTriggerAction,
+		ActionResult: game.ActionResult(enemy.At, at),
+		To:           at,
+		Mines: slices.DeleteFunc(me.Mines, func(s core.Sector) bool {
+			return s == at
+		}),
 	}
 	err = s.appendAction(action)
 	if err != nil {

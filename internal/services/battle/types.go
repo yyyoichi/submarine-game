@@ -9,7 +9,7 @@ type DeploySubmarineAndMinesInput struct {
 	Mines    []int8
 }
 
-type MoveInput struct {
+type ActionInput struct {
 	GameId   string
 	PlayerId string
 	At       int8

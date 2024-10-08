@@ -2,6 +2,7 @@ package battle
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -225,6 +226,92 @@ func TestBattleService(t *testing.T) {
 			} else {
 				assert.ErrorIs(t, err, tt.exp)
 			}
+		}
+	})
+
+	t.Run("Actions", func(t *testing.T) {
+		ctx = context.Background()
+
+		battle := BattleService{Store: store}
+		// 行動はいつも13に対して行われ、常に現在位置7に対して
+		// 魚雷機雷行動可能。
+		// 魚雷機雷攻撃の場合、相手は常に14にいるため面舵一杯となる。
+		test := []struct {
+			id  string
+			fn  func(context.Context, *ActionInput) error
+			exp core.Action
+		}{
+			{"1", battle.Move, core.Action{
+				GameId:   "Action1",
+				PlayerId: "1",
+				At:       13,
+				T:        core.MoveAction,
+				To:       13,
+				Mines:    []core.Sector{1, 13},
+			}},
+			{"2", battle.FireTorpedo, core.Action{
+				GameId:       "Action2",
+				PlayerId:     "1",
+				At:           7,
+				T:            core.TorpedoFireAction,
+				ActionResult: core.HardToStarboard,
+				To:           13,
+				Mines:        []core.Sector{1, 13},
+			}},
+			{"3", battle.TriggerMine, core.Action{
+				GameId:       "Action3",
+				PlayerId:     "1",
+				At:           7,
+				T:            core.MineTriggerAction,
+				ActionResult: core.HardToStarboard,
+				To:           13,
+				Mines:        []core.Sector{1},
+			}},
+		}
+		for _, tt := range test {
+			game := core.Game{
+				GameId:    fmt.Sprintf("Action%s", tt.id),
+				PlayerIds: [2]string{"1", "2"},
+				Submarines: map[string]core.Submarine{
+					"1": core.DefaultSubmarine,
+					"2": core.DefaultSubmarine,
+				},
+				OceanMap: core.DefaultOceanMap,
+				Islands:  []core.Sector{0, 1},
+			}
+			battle.setGame(game)
+			battle.appendAction(core.Action{
+				GameId:   game.GameId,
+				PlayerId: "1",
+				At:       core.Sector(7),       // !
+				Mines:    []core.Sector{1, 13}, // !
+			})
+			battle.appendAction(core.Action{
+				GameId:   game.GameId,
+				PlayerId: "2",
+				At:       core.Sector(14), // !
+				Mines:    []core.Sector{2, 3},
+			})
+			input := ActionInput{
+				GameId:   game.GameId,
+				PlayerId: "1",
+				At:       13,
+			}
+
+			err := tt.fn(ctx, &input)
+			assert.NoError(t, err)
+
+			latest, err := battle.getLatestAction(game.GameId)
+			assert.NoError(t, err)
+			// timestamp以外同一であることを確認する
+			assert.Equal(t, tt.exp.GameId, latest.Action.GameId)
+			assert.Equal(t, tt.exp.PlayerId, latest.Action.PlayerId)
+			assert.Equal(t, tt.exp.ActionResult, latest.Action.ActionResult)
+			assert.Equal(t, tt.exp.At, latest.Action.At)
+			assert.Equal(t, tt.exp.To, latest.Action.To)
+			assert.Equal(t, tt.exp.T, latest.Action.T)
+			assert.Equal(t, tt.exp.Mines, latest.Action.Mines)
+
 		}
 	})
 
