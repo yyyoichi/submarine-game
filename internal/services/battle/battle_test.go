@@ -122,6 +122,112 @@ func TestBattleService(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("GetValidPrevActions", func(t *testing.T) {
+		t.Parallel()
+
+		type input = GetValidPrevActionsInput
+		var (
+			scope   = "GetValidPrevActions"
+			newGame = func(id string) core.Game {
+				game := core.Game{
+					GameId:    scope + id,
+					PlayerIds: [2]string{"1", "2"},
+					Submarines: map[string]core.Submarine{
+						"1": core.DefaultSubmarine,
+						"2": core.DefaultSubmarine,
+					},
+					OceanMap: core.DefaultOceanMap,
+					Islands:  []core.Sector{30, 40},
+				}
+				return game
+			}
+			newAction = func(gameId, playerId string) core.Action {
+				act := core.Action{
+					GameId:    scope + gameId,
+					PlayerId:  playerId,
+					At:        core.Sector(1),
+					T:         core.MoveAction,
+					Timestamp: time.Now(),
+				}
+				return act
+			}
+			newInput = func(gameId, playerId string, at int8) *input {
+				return &input{
+					Game:            newGame(gameId),
+					PlayerId:        playerId,
+					ExpSectorStatus: core.CanMove,
+					At:              core.Sector(at),
+				}
+			}
+		)
+
+		test := []struct {
+			preProcess func(b *BattleService)
+			input      *input
+			exp        error
+		}{
+			{func(b *BattleService) {
+				b.setGame(newGame("1"))
+				b.appendAction(newAction("1", "1"))
+				b.appendAction(newAction("1", "2"))
+			}, newInput("1", "1", 0),
+				nil},
+			// プレイヤーが存在していない
+			{func(b *BattleService) {
+				b.setGame(newGame("2"))
+				b.appendAction(newAction("2", "1"))
+				b.appendAction(newAction("2", "2"))
+			}, newInput("2", "3", 0),
+				ErrGameNotFound},
+			// プレイヤーが初回行動していない
+			{func(b *BattleService) {
+				b.setGame(newGame("3"))
+				b.appendAction(newAction("3", "2"))
+			}, newInput("3", "1", 0),
+				ErrInvalidActionType},
+			// 相手が初回行動していない
+			{func(b *BattleService) {
+				b.setGame(newGame("4"))
+				b.appendAction(newAction("4", "1"))
+			}, newInput("4", "1", 0),
+				ErrInvalidActionType},
+			// 順番でない
+			{func(b *BattleService) {
+				b.setGame(newGame("5"))
+				b.appendAction(newAction("5", "1"))
+				b.appendAction(newAction("5", "2"))
+			}, newInput("5", "2", 0),
+				ErrNotInTurn},
+			// タイムアウト
+			{func(b *BattleService) {
+				b.setGame(newGame("6"))
+				b.appendAction(newAction("6", "1"))
+				b.appendAction(newAction("6", "2"))
+				b.timeoutDuration = time.Nanosecond * 1
+				time.Sleep(time.Nanosecond * 2)
+			}, newInput("6", "1", 0),
+				ErrTimeout},
+			// 動ける場所でない
+			{func(b *BattleService) {
+				b.setGame(newGame("7"))
+				b.appendAction(newAction("7", "1"))
+				b.appendAction(newAction("7", "2"))
+			}, newInput("7", "1", 3),
+				ErrInvalidActionType},
+		}
+		for _, tt := range test {
+			battle := BattleService{Store: store}
+			tt.preProcess(&battle)
+			_, _, err := battle.GetValidPrevActions(ctx, tt.input)
+			if tt.exp == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, tt.exp)
+			}
+		}
+	})
+
 }
 
 func TestRepository(t *testing.T) {

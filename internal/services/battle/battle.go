@@ -110,6 +110,8 @@ func (s *BattleService) Move(ctx context.Context, input *MoveInput) error {
 // 初回行動以降の味方/敵の前回行動を取得する。
 // input.Atへのinput.EnableStatusの許可を期待する。
 func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPrevActionsInput) (*core.Action, *core.Action, error) {
+	s.init()
+
 	// プレイヤーIdは存在しているか
 	_, found := input.Game.Submarines[input.PlayerId]
 	if !found {
@@ -142,6 +144,8 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 	if s.timeoutDuration < enemy.Since() {
 		return nil, nil, fmt.Errorf("%w: too much time has passed since the last enemy action", ErrTimeout)
 	}
+
+	// TODO ゲーム終了判定
 
 	// セクターの利用可能ステータスの確認
 	enables := input.Game.SectorStatus(input.PlayerId, prev.Action, input.At)
