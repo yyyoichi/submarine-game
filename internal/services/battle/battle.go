@@ -180,7 +180,111 @@ func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) err
 }
 
 func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetLogsOutput, error) {
-	return nil, nil
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return nil, fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+
+	actions, err := s.getAllAction(input.GameId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get all actions of game[%s]", input.GameId)
+	}
+	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
+		// 行動がないか、あっても一つで相手の行動のみの場合
+		return &GetLogsOutput{
+			RequireAction:       true,
+			RequireDeployAction: true,
+			TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
+			Timeout:             game.Timestamp.Add(s.timeoutDuration),
+		}, nil
+	}
+	latest := actions[0]
+	var resp = GetLogsOutput{
+		NumTurn:             (len(actions) - 1) / 2,
+		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
+		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
+	}
+
+	// ゲーム終了判定
+	if latest.ActionResult == core.Hit {
+		resp.Winner = latest.PlayerId
+		if latest.T == core.TorpedoFireAction {
+			resp.GameOverReason = core.TorpedoHit
+		}
+		if latest.T == core.MineTriggerAction {
+			resp.GameOverReason = core.MineHit
+		}
+	}
+	if time.Now().After(resp.Timeout) {
+		resp.Winner = latest.PlayerId
+		resp.GameOverReason = core.Timeout
+	}
+
+	// 行動要求
+	if resp.Winner != "" {
+		// ゲーム終了の場合行動要求無し
+		resp.RequireAction = false
+	} else {
+		// ゲーム継続中
+		// 最後に行動したプレイヤーでないときは行動を要求
+		resp.RequireAction = latest.PlayerId != input.PlayerId
+	}
+
+	// 行動ログ
+	resp.Actions = make([]LogAction, len(actions))
+	for i, action := range actions {
+		resp.Actions[i] = LogAction{
+			PlayerId:     action.PlayerId,
+			T:            action.T,
+			ActionResult: action.ActionResult,
+			Turn:         (i - 1) / 2,
+			At:           action.At,
+			To:           action.To,
+		}
+		if resp.Winner == "" && action.PlayerId != input.PlayerId {
+			// 決着ついておらず、相手の行動の場合、行動位置をマスクする。
+			resp.Actions[i].At = -1
+			if action.T == core.MoveAction {
+				resp.Actions[i].To = -1
+			}
+		}
+	}
+
+	if resp.Winner == "" {
+		// 行動可能なタイプを列挙。
+		// 念のため現状から取得する。
+		var prev core.Action
+		if latest.PlayerId == input.PlayerId {
+			prev = latest.Action
+		} else {
+			// latestのlenが1のとき必ずinput.PlayerIdは一致するため
+			// この場合、lne = 2以上を保証
+			prev = actions[len(actions)-2].Action
+		}
+		sectors := game.SectorStatus(input.PlayerId, prev)
+		actionTypeMap := make(map[core.ActionType]struct{}, 3)
+		for sector, ss := range sectors {
+			acts := make([]core.ActionType, 0, len(ss))
+			for _, s := range ss {
+				var actionType core.ActionType
+				switch s {
+				case core.CanMove:
+					actionType = core.MoveAction
+				case core.CanFireTorpedo:
+					actionType = core.TorpedoFireAction
+				case core.CanTriggerMine:
+					actionType = core.MineTriggerAction
+				}
+				acts = append(acts, actionType)
+				actionTypeMap[actionType] = struct{}{}
+			}
+			resp.SectorActionsMap[sector] = acts
+		}
+	}
+
+	// 最新の行動が自分である場合
+	return &resp, nil
 }
 
 // 初回行動以降の味方/敵の前回行動を取得する。
