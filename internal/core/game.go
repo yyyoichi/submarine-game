@@ -77,3 +77,12 @@ func (g Game) Enemy(playerId string) string {
 func (g Game) Since() time.Duration {
 	return time.Since(g.Timestamp)
 }
+
+type GameOverReason int8
+
+const (
+	Ongoing    GameOverReason = 0  // まだゲーム中
+	TorpedoHit GameOverReason = 1  // 魚雷が命中
+	MineHit    GameOverReason = 2  // 機雷が命中
+	Timeout    GameOverReason = 10 // 時間切れ
+)

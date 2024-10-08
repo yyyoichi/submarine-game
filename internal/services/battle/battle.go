@@ -179,6 +179,10 @@ func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) err
 	return nil
 }
 
+func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetLogsOutput, error) {
+	return nil, nil
+}
+
 // 初回行動以降の味方/敵の前回行動を取得する。
 // input.Atへのinput.EnableStatusの許可を期待する。
 func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPrevActionsInput) (*core.Action, *core.Action, error) {
