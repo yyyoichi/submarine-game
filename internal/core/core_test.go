@@ -111,4 +111,22 @@ func TestCore(t *testing.T) {
 		}
 
 	})
+
+	t.Run("ActionResult", func(t *testing.T) {
+		src := Game{
+			OceanMap: DefaultOceanMap,
+		}
+		test := []struct {
+			at, to Sector
+			exp    ActionResult
+		}{
+			{0, 1, HardToStarboard},
+			{0, 2, FullSpeedAhead},
+			{0, 0, Hit},
+		}
+		for _, tt := range test {
+			act := src.ActionResult(tt.at, tt.to)
+			assert.Equal(t, tt.exp, act)
+		}
+	})
 }

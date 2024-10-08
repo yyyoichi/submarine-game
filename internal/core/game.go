@@ -50,6 +50,23 @@ func (g Game) SectorStatus(playerId string, prev Action, ats ...Sector) map[Sect
 	return resp
 }
 
+// atの位置にいるときのtoに対する攻撃結果
+func (g Game) ActionResult(at Sector, to Sector) ActionResult {
+	if at == to {
+		return Hit
+	}
+	sectors := g.OceanMap.EnableSectors(at, [][2]int8{
+		{-1, -1}, {00, -1}, {01, -1},
+		{-1, 00} /**    */, {01, 00},
+		{-1, 01}, {00, 01}, {01, 01},
+	})
+	if slices.Contains(sectors, to) {
+		// atの周囲にtoが含まれる
+		return HardToStarboard
+	}
+	return FullSpeedAhead
+}
+
 func (g Game) Enemy(playerId string) string {
 	if g.PlayerIds[0] == playerId {
 		return g.PlayerIds[1]
