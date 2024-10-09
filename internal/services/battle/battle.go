@@ -464,7 +464,6 @@ func (s *BattleService) getPrevActions(gameId string) (map[string]*actionModel, 
 
 	var resp = make(map[string]*actionModel, 2)
 	for _, v := range models.GetValues() {
-		v.Timestamp = v.ReverseUnixNano.restore()
 		resp[v.PlayerId] = &v
 	}
 	return resp, nil
@@ -488,9 +487,7 @@ func (s *BattleService) getLatestAction(gameId string) (*actionModel, error) {
 	if len(values) == 0 {
 		return nil, nil
 	}
-	v := values[0]
-	v.Timestamp = v.ReverseUnixNano.restore()
-	return &v, nil
+	return &values[0], nil
 }
 
 // playerIdの最後の行動を取得する
@@ -514,9 +511,7 @@ func (s *BattleService) getPrevAction(gameId, playerId string) (*actionModel, er
 	if len(values) == 0 {
 		return nil, nil
 	}
-	v := values[0]
-	v.Timestamp = v.ReverseUnixNano.restore()
-	return &v, nil
+	return &values[0], nil
 }
 
 // 新しい順に行動を全件取得する。
@@ -533,13 +528,7 @@ func (s *BattleService) getAllAction(gameId string) ([]actionModel, error) {
 		}
 		return nil, err
 	}
-	values := models.GetValues()
-	var resp = make([]actionModel, len(values))
-	for i, v := range values {
-		resp[i] = v
-		resp[i].Timestamp = v.ReverseUnixNano.restore()
-	}
-	return resp, nil
+	return models.GetValues(), nil
 }
 
 func (s *BattleService) init() {

@@ -3,6 +3,7 @@ package battle
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"io"
 	"math"
 	"time"
@@ -37,7 +38,7 @@ func (m gameModel) PrefixKey() ([]byte, error) {
 	return m.Key()
 }
 
-func (m gameModel) ParseKey(k []byte) (gameModel, error) {
+func (gameModel) ParseKey(k []byte) (gameModel, error) {
 	var dist gameModel
 
 	r := bytes.NewReader(k)
@@ -47,6 +48,11 @@ func (m gameModel) ParseKey(k []byte) (gameModel, error) {
 	}
 	dist.GameId, err = readUUID(r)
 	return dist, err
+}
+
+func (gameModel) Parse(v []byte) (dist gameModel, err error) {
+	err = json.Unmarshal(v, &dist)
+	return
 }
 
 // implements sotre.model
@@ -122,6 +128,15 @@ func (m actionModel) ParseKey(k []byte) (actionModel, error) {
 	}
 
 	return dist, nil
+}
+
+func (m actionModel) Parse(v []byte) (dist actionModel, err error) {
+	err = json.Unmarshal(v, &dist)
+	if err != nil {
+		return
+	}
+	dist.Timestamp = dist.ReverseUnixNano.restore()
+	return
 }
 
 // NOTE badgerのReverseイテレーションができないので応急処置

@@ -24,6 +24,8 @@ type (
 		PrefixKey() ([]byte, error)
 		// キーパーサ
 		ParseKey([]byte) (T, error)
+		// バリューパーサ
+		Parse([]byte) (T, error)
 	}
 )
 
@@ -55,7 +57,7 @@ func (m *Models[T]) keys() iter.Seq2[[]byte, error] {
 
 func (m *Models[T]) setValue(v []byte) error {
 	var dist T
-	err := json.Unmarshal(v, &dist)
+	dist, err := dist.Parse(v)
 	if err != nil {
 		return err
 	}
