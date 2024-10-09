@@ -67,6 +67,22 @@ func (g Game) ActionResult(at Sector, to Sector) ActionResult {
 	return FullSpeedAhead
 }
 
+func (g Game) Direction(from, to Sector) Direction {
+	if ss := g.OceanMap.EnableSectors(from, [][2]int8{{00, -1}}); slices.Contains(ss, to) {
+		return North
+	}
+	if ss := g.OceanMap.EnableSectors(from, [][2]int8{{-1, 00}}); slices.Contains(ss, to) {
+		return West
+	}
+	if ss := g.OceanMap.EnableSectors(from, [][2]int8{{01, 00}}); slices.Contains(ss, to) {
+		return East
+	}
+	if ss := g.OceanMap.EnableSectors(from, [][2]int8{{00, 01}}); slices.Contains(ss, to) {
+		return South
+	}
+	return UnknownDirection
+}
+
 func (g Game) Enemy(playerId string) string {
 	if g.PlayerIds[0] == playerId {
 		return g.PlayerIds[1]

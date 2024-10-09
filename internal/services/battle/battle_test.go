@@ -346,7 +346,9 @@ func TestBattleService(t *testing.T) {
 				act := core.Action{
 					GameId:    scope + gameId,
 					PlayerId:  playerId,
-					At:        core.Sector(1),
+					At:        1,
+					From:      0,
+					To:        1,
 					T:         core.MoveAction,
 					Timestamp: time.Now(),
 				}
@@ -377,7 +379,7 @@ func TestBattleService(t *testing.T) {
 				RequireDeployAction: false,
 				NumTurn:             1,
 				Actions: []LogAction{
-					{PlayerId: "2", Turn: 1, At: -1, T: core.MoveAction, To: -1},
+					{PlayerId: "2", Turn: 1, At: -1, T: core.MoveAction, To: -1, Direction: core.East},
 					{}, {}, {},
 				},
 			}},
@@ -392,7 +394,7 @@ func TestBattleService(t *testing.T) {
 				RequireDeployAction: false,
 				NumTurn:             1,
 				Actions: []LogAction{
-					{PlayerId: "1", Turn: 1, At: 1, T: core.MoveAction, To: 0},
+					{PlayerId: "1", Turn: 1, At: 1, T: core.MoveAction, To: 1, Direction: core.East},
 					{}, {},
 				},
 			}},
@@ -428,7 +430,7 @@ func TestBattleService(t *testing.T) {
 				},
 				Actions: []LogAction{
 					// 相手の行動でも開示
-					{PlayerId: "1", Turn: 0, At: 1, T: core.MoveAction, To: 0},
+					{PlayerId: "1", Turn: 0, At: 1, T: core.MoveAction, To: 1, Direction: core.East},
 					{},
 				},
 			}},
@@ -454,6 +456,7 @@ func TestBattleService(t *testing.T) {
 				assert.Equal(t, tt.expOutput.Actions[0].At, output.Actions[0].At)
 				assert.Equal(t, tt.expOutput.Actions[0].To, output.Actions[0].To)
 				assert.Equal(t, tt.expOutput.Actions[0].Turn, output.Actions[0].Turn)
+				assert.Equal(t, tt.expOutput.Actions[0].Direction, output.Actions[0].Direction)
 			}
 		}
 

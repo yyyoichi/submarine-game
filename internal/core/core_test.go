@@ -129,4 +129,24 @@ func TestCore(t *testing.T) {
 			assert.Equal(t, tt.exp, act)
 		}
 	})
+
+	t.Run("Direction", func(t *testing.T) {
+		src := Game{
+			OceanMap: DefaultOceanMap,
+		}
+		test := []struct {
+			from, to Sector
+			exp      Direction
+		}{
+			{7, 1, North},
+			{7, 6, West},
+			{7, 8, East},
+			{7, 13, South},
+			{7, 35, UnknownDirection},
+		}
+		for _, tt := range test {
+			act := src.Direction(tt.from, tt.to)
+			assert.Equal(t, tt.exp, act)
+		}
+	})
 }

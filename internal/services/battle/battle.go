@@ -234,14 +234,20 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 			ActionResult: action.ActionResult,
 			Turn:         (len(actions) - i - 1) / 2,
 			At:           action.At,
+			From:         action.From,
 			To:           action.To,
+			Direction:    core.UnknownDirection,
 		}
 		if resp.GameOver == nil && action.PlayerId != input.PlayerId {
 			// 決着ついておらず、相手の行動の場合、行動位置をマスクする。
 			resp.Actions[i].At = -1
 			if action.T == core.MoveAction {
 				resp.Actions[i].To = -1
+				resp.Actions[i].From = -1
 			}
+		}
+		if action.T == core.MoveAction {
+			resp.Actions[i].Direction = game.Direction(action.From, action.To)
 		}
 	}
 	if resp.GameOver != nil {

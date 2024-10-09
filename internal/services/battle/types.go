@@ -50,8 +50,12 @@ type LogAction struct {
 	At core.Sector
 	// 行動内容
 	T core.ActionType
+	// 行動開始位置
+	From core.Sector
 	// 行動対象位置
 	To core.Sector
+	// Moveしていた場合の方向
+	Direction core.Direction
 	// 行動結果
 	ActionResult core.ActionResult
 }

@@ -2,10 +2,11 @@ package core
 
 // 向方角
 var (
-	North Direction = 0
-	East  Direction = 1
-	South Direction = 2
-	West  Direction = 3
+	UnknownDirection Direction = -1
+	North            Direction = 0
+	East             Direction = 1
+	South            Direction = 2
+	West             Direction = 3
 )
 
 // 回転方向
