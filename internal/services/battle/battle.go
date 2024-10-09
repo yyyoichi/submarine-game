@@ -97,6 +97,7 @@ func (s *BattleService) Move(ctx context.Context, input *ActionInput) error {
 		PlayerId: input.PlayerId,
 		At:       at,
 		T:        core.MoveAction,
+		From:     me.At,
 		To:       at,
 		Mines:    me.Mines[:],
 	}
@@ -132,6 +133,7 @@ func (s *BattleService) FireTorpedo(ctx context.Context, input *ActionInput) err
 		At:           me.At,
 		T:            core.TorpedoFireAction,
 		ActionResult: game.ActionResult(enemy.At, at),
+		From:         me.At,
 		To:           at,
 		Mines:        me.Mines[:],
 	}
@@ -167,6 +169,7 @@ func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) err
 		At:           me.At,
 		T:            core.MineTriggerAction,
 		ActionResult: game.ActionResult(enemy.At, at),
+		From:         me.At,
 		To:           at,
 		Mines: slices.DeleteFunc(me.Mines, func(s core.Sector) bool {
 			return s == at

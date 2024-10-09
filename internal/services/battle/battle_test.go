@@ -147,7 +147,9 @@ func TestBattleService(t *testing.T) {
 				act := core.Action{
 					GameId:    scope + gameId,
 					PlayerId:  playerId,
-					At:        core.Sector(1),
+					At:        1,
+					From:      0,
+					To:        1,
 					T:         core.MoveAction,
 					Timestamp: time.Now(),
 				}
@@ -248,6 +250,7 @@ func TestBattleService(t *testing.T) {
 				PlayerId: "1",
 				At:       13,
 				T:        core.MoveAction,
+				From:     7,
 				To:       13,
 				Mines:    []core.Sector{1, 13},
 			}},
@@ -257,6 +260,7 @@ func TestBattleService(t *testing.T) {
 				At:           7,
 				T:            core.TorpedoFireAction,
 				ActionResult: core.HardToStarboard,
+				From:         7,
 				To:           13,
 				Mines:        []core.Sector{1, 13},
 			}},
@@ -265,6 +269,7 @@ func TestBattleService(t *testing.T) {
 				PlayerId:     "1",
 				At:           7,
 				T:            core.MineTriggerAction,
+				From:         7,
 				ActionResult: core.HardToStarboard,
 				To:           13,
 				Mines:        []core.Sector{1},
@@ -618,6 +623,7 @@ func TestRepository(t *testing.T) {
 			PlayerId:     "1",
 			At:           core.Sector(2),
 			T:            core.MineTriggerAction,
+			From:         want1.At,
 			To:           core.Sector(10),
 			ActionResult: core.FullSpeedAhead,
 			Mines:        []core.Sector{20},
@@ -665,6 +671,7 @@ func testEqualAction(t *testing.T, exp, act core.Action) {
 	assert.Equal(t, exp.At, act.At)
 	assert.Equal(t, exp.Mines, act.Mines)
 	assert.Equal(t, exp.T, act.T)
+	assert.Equal(t, exp.From, act.From)
 	assert.Equal(t, exp.To, act.To)
 	assert.Equal(t, exp.ActionResult, act.ActionResult)
 	assert.NotZero(t, act.Timestamp)

@@ -11,6 +11,8 @@ type Action struct {
 	At Sector
 	// 行動内容
 	T ActionType
+	// 行動開始位置
+	From Sector
 	// 行動対象位置
 	To Sector
 	// 行動結果
