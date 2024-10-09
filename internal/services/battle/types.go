@@ -67,3 +67,8 @@ type GetValidPrevActionsInput struct {
 	ExpSectorStatus core.SectorStatus
 	At              core.Sector
 }
+
+type WaitTurnInput struct {
+	GameId   string
+	PlayerId string
+}

@@ -277,6 +277,44 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	return &resp, nil
 }
 
+// 自分のターンまで待機する
+func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-chan struct{}, error) {
+	// 存在するゲームか
+	game, err := s.getGame(input.GameId)
+	if err != nil {
+		return nil, fmt.Errorf("%w: cannot get game[%s]: %w", ErrGameNotFound, input.GameId, err)
+	}
+	// プレイヤーIdは存在しているか
+	_, found := game.Submarines[input.PlayerId]
+	if !found {
+		// ゲームが存在しないことにする
+		return nil, fmt.Errorf("%w: player[%s] is not found", ErrGameNotFound, input.PlayerId)
+	}
+
+	ch := make(chan struct{})
+	go func() {
+		defer close(ch)
+		for {
+			latest, err := s.getLatestAction(input.GameId)
+			if err != nil {
+				continue
+			}
+			if gemeOver := s.gameOver(&latest.Action, game.Enemy(latest.PlayerId)); gemeOver != nil {
+				return
+			}
+			if latest.PlayerId != input.PlayerId {
+				return
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Duration(time.Millisecond * 500)):
+			}
+		}
+	}()
+	return ch, nil
+}
+
 // 初回行動以降の味方/敵の前回行動を取得する。
 // input.Atへのinput.EnableStatusの許可を期待する。
 func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPrevActionsInput) (*core.Action, *core.Action, error) {
