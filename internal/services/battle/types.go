@@ -29,18 +29,14 @@ type GetLogsOutput struct {
 	RequireAction bool
 	// 初回の行動要求
 	RequireDeployAction bool
-	// 利用可能な行動タイプ
-	RequireActionType []core.ActionType
 	// セクターごとに利用可能な行動タイプ
 	SectorActionsMap map[core.Sector][]core.ActionType
-	// 勝者
-	Winner string
-	// ゲーム終了理由
-	GameOverReason core.GameOverReason
-	Actions        []LogAction
+	// ゲーム終了
+	GameOver *GameOver
 
 	// ターン数
 	NumTurn int
+	Actions []LogAction
 	// 行動許容時間ミリ秒
 	TimeoutDurationMSec int64
 	// 行動期限
@@ -58,6 +54,11 @@ type LogAction struct {
 	To core.Sector
 	// 行動結果
 	ActionResult core.ActionResult
+}
+
+type GameOver struct {
+	Winner string
+	Reason core.GameOverReason
 }
 
 type GetValidPrevActionsInput struct {

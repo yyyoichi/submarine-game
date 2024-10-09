@@ -180,6 +180,8 @@ func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) err
 }
 
 func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetLogsOutput, error) {
+	s.init()
+
 	// 存在するゲームか
 	game, err := s.getGame(input.GameId)
 	if err != nil {
@@ -201,28 +203,17 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	}
 	latest := actions[0]
 	var resp = GetLogsOutput{
+		SectorActionsMap:    make(map[core.Sector][]core.ActionType),
 		NumTurn:             (len(actions) - 1) / 2,
 		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
 		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
 	}
 
 	// ゲーム終了判定
-	if latest.ActionResult == core.Hit {
-		resp.Winner = latest.PlayerId
-		if latest.T == core.TorpedoFireAction {
-			resp.GameOverReason = core.TorpedoHit
-		}
-		if latest.T == core.MineTriggerAction {
-			resp.GameOverReason = core.MineHit
-		}
-	}
-	if time.Now().After(resp.Timeout) {
-		resp.Winner = latest.PlayerId
-		resp.GameOverReason = core.Timeout
-	}
+	resp.GameOver = s.gameOver(&latest.Action, game.Enemy(latest.PlayerId))
 
 	// 行動要求
-	if resp.Winner != "" {
+	if resp.GameOver != nil {
 		// ゲーム終了の場合行動要求無し
 		resp.RequireAction = false
 	} else {
@@ -238,11 +229,11 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 			PlayerId:     action.PlayerId,
 			T:            action.T,
 			ActionResult: action.ActionResult,
-			Turn:         (i - 1) / 2,
+			Turn:         (len(actions) - i - 1) / 2,
 			At:           action.At,
 			To:           action.To,
 		}
-		if resp.Winner == "" && action.PlayerId != input.PlayerId {
+		if resp.GameOver == nil && action.PlayerId != input.PlayerId {
 			// 決着ついておらず、相手の行動の場合、行動位置をマスクする。
 			resp.Actions[i].At = -1
 			if action.T == core.MoveAction {
@@ -250,37 +241,36 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 			}
 		}
 	}
+	if resp.GameOver != nil {
+		// ゲーム終了
+		return &resp, nil
+	}
 
-	if resp.Winner == "" {
-		// 行動可能なタイプを列挙。
-		// 念のため現状から取得する。
-		var prev core.Action
-		if latest.PlayerId == input.PlayerId {
-			prev = latest.Action
-		} else {
-			// latestのlenが1のとき必ずinput.PlayerIdは一致するため
-			// この場合、lne = 2以上を保証
-			prev = actions[len(actions)-2].Action
-		}
-		sectors := game.SectorStatus(input.PlayerId, prev)
-		actionTypeMap := make(map[core.ActionType]struct{}, 3)
-		for sector, ss := range sectors {
-			acts := make([]core.ActionType, 0, len(ss))
-			for _, s := range ss {
-				var actionType core.ActionType
-				switch s {
-				case core.CanMove:
-					actionType = core.MoveAction
-				case core.CanFireTorpedo:
-					actionType = core.TorpedoFireAction
-				case core.CanTriggerMine:
-					actionType = core.MineTriggerAction
-				}
-				acts = append(acts, actionType)
-				actionTypeMap[actionType] = struct{}{}
+	// input.PlayerIdの前回行動
+	var prev core.Action
+	if latest.PlayerId == input.PlayerId {
+		prev = latest.Action
+	} else {
+		// latestのlenが1のとき必ずinput.PlayerIdは一致するため
+		// この場合、lne = 2以上を保証
+		prev = actions[len(actions)-2].Action
+	}
+	sectors := game.SectorStatus(input.PlayerId, prev)
+	for sector, ss := range sectors {
+		acts := make([]core.ActionType, 0, len(ss))
+		for _, s := range ss {
+			var actionType core.ActionType
+			switch s {
+			case core.CanMove:
+				actionType = core.MoveAction
+			case core.CanFireTorpedo:
+				actionType = core.TorpedoFireAction
+			case core.CanTriggerMine:
+				actionType = core.MineTriggerAction
 			}
-			resp.SectorActionsMap[sector] = acts
+			acts = append(acts, actionType)
 		}
+		resp.SectorActionsMap[sector] = acts
 	}
 
 	// 最新の行動が自分である場合
@@ -325,8 +315,6 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 		return nil, nil, fmt.Errorf("%w: too much time has passed since the last enemy action", ErrTimeout)
 	}
 
-	// TODO ゲーム終了判定
-
 	// セクターの利用可能ステータスの確認
 	enables := input.Game.SectorStatus(input.PlayerId, prev.Action, input.At)
 	status, found := enables[input.At]
@@ -334,6 +322,31 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 		return nil, nil, fmt.Errorf("%w: ", ErrInvalidActionType)
 	}
 	return &prev.Action, &enemy.Action, nil
+}
+
+func (s *BattleService) gameOver(latest *core.Action, enemyIdOfLatest string) *GameOver {
+	if latest == nil {
+		return nil
+	}
+	var resp GameOver
+	if latest.ActionResult == core.Hit {
+		resp.Winner = latest.PlayerId
+		if latest.T == core.TorpedoFireAction {
+			resp.Reason = core.TorpedoHit
+		}
+		if latest.T == core.MineTriggerAction {
+			resp.Reason = core.MineHit
+		}
+	}
+	if time.Now().After(latest.Timestamp.Add(s.timeoutDuration)) {
+		resp.Winner = enemyIdOfLatest
+		resp.Reason = core.Timeout
+	}
+
+	if resp.Winner == "" {
+		return nil
+	}
+	return &resp
 }
 
 // 新しいゲームをセットする

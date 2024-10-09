@@ -230,6 +230,8 @@ func TestBattleService(t *testing.T) {
 	})
 
 	t.Run("Actions", func(t *testing.T) {
+		t.Parallel()
+
 		ctx = context.Background()
 
 		battle := BattleService{Store: store}
@@ -312,6 +314,185 @@ func TestBattleService(t *testing.T) {
 			assert.Equal(t, tt.exp.T, latest.Action.T)
 			assert.Equal(t, tt.exp.Mines, latest.Action.Mines)
 
+		}
+	})
+
+	t.Run("GetLogs", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		type input = GetLogsInput
+		var (
+			scope   = "GetLogs"
+			newGame = func(id string) core.Game {
+				game := core.Game{
+					GameId:    scope + id,
+					PlayerIds: [2]string{"1", "2"},
+					Submarines: map[string]core.Submarine{
+						"1": core.DefaultSubmarine,
+						"2": core.DefaultSubmarine,
+					},
+					OceanMap: core.DefaultOceanMap,
+					Islands:  []core.Sector{30, 40},
+				}
+				return game
+			}
+			newAction = func(gameId, playerId string) core.Action {
+				act := core.Action{
+					GameId:    scope + gameId,
+					PlayerId:  playerId,
+					At:        core.Sector(1),
+					T:         core.MoveAction,
+					Timestamp: time.Now(),
+				}
+				return act
+			}
+			newInput = func(gameId, playerId string) *input {
+				return &input{
+					GameId:   scope + gameId,
+					PlayerId: playerId,
+				}
+			}
+		)
+		test := []struct {
+			preProcess func(b *BattleService)
+			input      *input
+			expErr     error
+			expOutput  *GetLogsOutput
+		}{
+			// 最後が相手
+			{func(b *BattleService) {
+				b.setGame(newGame("1"))
+				b.appendAction(newAction("1", "1"))
+				b.appendAction(newAction("1", "2"))
+				b.appendAction(newAction("1", "1"))
+				b.appendAction(newAction("1", "2"))
+			}, newInput("1", "1"), nil, &GetLogsOutput{
+				RequireAction:       true,
+				RequireDeployAction: false,
+				NumTurn:             1,
+				Actions: []LogAction{
+					{PlayerId: "2", Turn: 1, At: -1, T: core.MoveAction, To: -1},
+					{}, {}, {},
+				},
+			}},
+			// 最後が自分
+			{func(b *BattleService) {
+				b.setGame(newGame("2"))
+				b.appendAction(newAction("2", "1"))
+				b.appendAction(newAction("2", "2"))
+				b.appendAction(newAction("2", "1"))
+			}, newInput("2", "1"), nil, &GetLogsOutput{
+				RequireAction:       false,
+				RequireDeployAction: false,
+				NumTurn:             1,
+				Actions: []LogAction{
+					{PlayerId: "1", Turn: 1, At: 1, T: core.MoveAction, To: 0},
+					{}, {},
+				},
+			}},
+			// 行動なし
+			{func(b *BattleService) {
+				b.setGame(newGame("3"))
+			}, newInput("3", "1"), nil, &GetLogsOutput{
+				RequireAction:       true,
+				RequireDeployAction: true,
+			}},
+			// 自分に行動なし
+			{func(b *BattleService) {
+				b.setGame(newGame("4"))
+				b.appendAction(newAction("4", "2"))
+			}, newInput("4", "1"), nil, &GetLogsOutput{
+				RequireAction:       true,
+				RequireDeployAction: true,
+			}},
+			// ゲーム終了
+			{func(b *BattleService) {
+				b.setGame(newGame("5"))
+				b.appendAction(newAction("5", "2"))
+				b.appendAction(newAction("5", "1"))
+				b.timeoutDuration = time.Duration(time.Nanosecond * 1)
+				time.Sleep(time.Duration(time.Nanosecond * 2))
+			}, newInput("5", "2"), nil, &GetLogsOutput{
+				RequireAction:       false,
+				RequireDeployAction: false,
+				NumTurn:             0,
+				GameOver: &GameOver{
+					Winner: "2",
+					Reason: core.Timeout,
+				},
+				Actions: []LogAction{
+					// 相手の行動でも開示
+					{PlayerId: "1", Turn: 0, At: 1, T: core.MoveAction, To: 0},
+					{},
+				},
+			}},
+		}
+		for _, tt := range test {
+			battle := BattleService{Store: store}
+			tt.preProcess(&battle)
+			output, err := battle.GetLogs(ctx, tt.input)
+			assert.Equal(t, tt.expErr, err)
+			if tt.expOutput == nil {
+				assert.Nil(t, output)
+			} else {
+				assert.Equal(t, tt.expOutput.RequireAction, output.RequireAction)
+				assert.Equal(t, tt.expOutput.RequireDeployAction, output.RequireDeployAction)
+				assert.Equal(t, tt.expOutput.NumTurn, output.NumTurn)
+				assert.Equal(t, tt.expOutput.GameOver, output.GameOver)
+				assert.Len(t, output.Actions, len(tt.expOutput.Actions))
+			}
+			if len(tt.expOutput.Actions) > 0 {
+				assert.Equal(t, tt.expOutput.Actions[0].PlayerId, output.Actions[0].PlayerId)
+				assert.Equal(t, tt.expOutput.Actions[0].T, output.Actions[0].T)
+				assert.Equal(t, tt.expOutput.Actions[0].ActionResult, output.Actions[0].ActionResult)
+				assert.Equal(t, tt.expOutput.Actions[0].At, output.Actions[0].At)
+				assert.Equal(t, tt.expOutput.Actions[0].To, output.Actions[0].To)
+				assert.Equal(t, tt.expOutput.Actions[0].Turn, output.Actions[0].Turn)
+			}
+		}
+
+	})
+
+	t.Run("gameOver", func(t *testing.T) {
+		t.Parallel()
+
+		test := []struct {
+			input *core.Action
+			exp   *GameOver
+		}{
+			{nil, nil},
+			{&core.Action{
+				PlayerId:     "a",
+				ActionResult: core.Hit,
+				T:            core.TorpedoFireAction,
+				Timestamp:    time.Now(),
+			}, &GameOver{Winner: "a", Reason: core.TorpedoHit}},
+			{&core.Action{
+				PlayerId:     "a",
+				ActionResult: core.Hit,
+				T:            core.MineTriggerAction,
+				Timestamp:    time.Now(),
+			}, &GameOver{Winner: "a", Reason: core.MineHit}},
+			{&core.Action{
+				PlayerId:     "a",
+				ActionResult: core.Hit,
+				T:            core.MineTriggerAction,
+				Timestamp:    time.Now().Add(-time.Duration(1 * time.Minute)),
+			}, &GameOver{
+				Winner: "b",
+				Reason: core.Timeout,
+			}},
+		}
+		for _, tt := range test {
+			battle := BattleService{}
+			battle.init()
+			act := battle.gameOver(tt.input, "b")
+			if tt.exp == nil {
+				assert.Nil(t, act)
+			} else {
+				assert.Equal(t, tt.exp, act)
+			}
 		}
 	})
 
