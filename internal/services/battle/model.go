@@ -1,9 +1,9 @@
 package battle
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
+	"io"
 	"math"
 	"time"
 
@@ -25,11 +25,8 @@ func (m gameModel) Key() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.WriteString("\n")
-	if err != nil {
-		return nil, err
-	}
-	_, err = buf.WriteString(m.GameId)
+
+	err = writeUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
@@ -40,18 +37,16 @@ func (m gameModel) PrefixKey() ([]byte, error) {
 	return m.Key()
 }
 
-func (m gameModel) ParseKey(k []byte) (dist gameModel, err error) {
-	sc := bufio.NewScanner(bytes.NewReader(k))
+func (m gameModel) ParseKey(k []byte) (gameModel, error) {
+	var dist gameModel
 
-	for i := 0; sc.Scan(); i++ {
-		switch i {
-		case 0:
-			_ = sc.Bytes()
-		case 1:
-			dist.GameId = sc.Text()
-		}
+	r := bytes.NewReader(k)
+	_, err := r.ReadByte()
+	if err != nil {
+		return dist, err
 	}
-	return
+	dist.GameId, err = readUUID(r)
+	return dist, err
 }
 
 // implements sotre.model
@@ -70,27 +65,18 @@ func (m actionModel) Key() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.WriteString("\n")
+
+	err = writeUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.WriteString(m.GameId)
+
+	err = writeInt64(&buf, int64(m.ReverseUnixNano))
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.WriteString("\n")
-	if err != nil {
-		return nil, err
-	}
-	err = binary.Write(&buf, binary.BigEndian, uint64(m.ReverseUnixNano))
-	if err != nil {
-		return nil, err
-	}
-	_, err = buf.WriteString("\n")
-	if err != nil {
-		return nil, err
-	}
-	_, err = buf.WriteString(m.PlayerId)
+
+	err = writeUUID(&buf, m.PlayerId)
 	if err != nil {
 		return nil, err
 	}
@@ -103,34 +89,39 @@ func (m actionModel) PrefixKey() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.WriteString("\n")
-	if err != nil {
-		return nil, err
-	}
-	_, err = buf.WriteString(m.GameId)
+	err = writeUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-func (m actionModel) ParseKey(k []byte) (dist actionModel, err error) {
-	sc := bufio.NewScanner(bytes.NewReader(k))
+func (m actionModel) ParseKey(k []byte) (actionModel, error) {
+	var dist actionModel
 
-	for i := 0; sc.Scan(); i++ {
-		switch i {
-		case 0:
-			_ = sc.Bytes()
-		case 1:
-			dist.GameId = sc.Text()
-		case 2:
-			reverse := binary.BigEndian.Uint64(sc.Bytes())
-			dist.ReverseUnixNano = reverseUnixNano(int64(reverse))
-		case 3:
-			dist.PlayerId = sc.Text()
-		}
+	r := bytes.NewReader(k)
+	_, err := r.ReadByte()
+	if err != nil {
+		return dist, err
 	}
-	return
+
+	dist.GameId, err = readUUID(r)
+	if err != nil {
+		return dist, err
+	}
+
+	reverse, err := readInt64(r)
+	if err != nil {
+		return dist, err
+	}
+	dist.ReverseUnixNano = reverseUnixNano(reverse)
+
+	dist.PlayerId, err = readUUID(r)
+	if err != nil {
+		return dist, err
+	}
+
+	return dist, nil
 }
 
 // NOTE badgerのReverseイテレーションができないので応急処置
@@ -144,4 +135,40 @@ func (u *reverseUnixNano) setTimestamp() time.Time {
 }
 func (u *reverseUnixNano) restore() time.Time {
 	return time.Unix(0, int64(math.MaxInt64-*u))
+}
+
+var lenUUID = 36
+
+func writeUUID(w io.Writer, s string) error {
+	var b = make([]byte, lenUUID)
+	if lenUUID < len(s) {
+		// 末尾から書き込み
+		_ = copy(b, []byte(s)[len(s)-lenUUID:])
+	} else {
+		_ = copy(b, []byte(s))
+	}
+	_, err := w.Write(b)
+	return err
+}
+
+func readUUID(r io.Reader) (string, error) {
+	var b = make([]byte, lenUUID)
+	_, err := r.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes.Trim(b, "\x00")), nil
+}
+
+func writeInt64(w io.Writer, i int64) error {
+	return binary.Write(w, binary.BigEndian, uint64(i))
+}
+
+func readInt64(r io.Reader) (int64, error) {
+	var b = make([]byte, 8)
+	_, err := r.Read(b)
+	if err != nil {
+		return 0, err
+	}
+	return int64(binary.BigEndian.Uint64(b)), nil
 }
