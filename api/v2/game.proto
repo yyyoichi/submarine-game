@@ -70,7 +70,7 @@ message LogsResponse {
   int32 num_turn = 5; // 経過ターン数
   int64 timeout = 6;// 行動期限
   int64 mill_second_per_turn = 7; // 行動可能時間
-  int64 board_width = 8; // ボードの横幅
+  int32 board_width = 8; // ボードの横幅
   repeated TurnAction action_logs = 9;
   repeated SectorStatus sectors = 10;
 }

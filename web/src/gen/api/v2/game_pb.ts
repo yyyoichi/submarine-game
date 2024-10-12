@@ -361,9 +361,9 @@ export class LogsResponse extends Message<LogsResponse> {
   /**
    * ボードの横幅
    *
-   * @generated from field: int64 board_width = 8;
+   * @generated from field: int32 board_width = 8;
    */
-  boardWidth = protoInt64.zero;
+  boardWidth = 0;
 
   /**
    * @generated from field: repeated api.v2.LogsResponse.TurnAction action_logs = 9;
@@ -390,7 +390,7 @@ export class LogsResponse extends Message<LogsResponse> {
     { no: 5, name: "num_turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 7, name: "mill_second_per_turn", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 8, name: "board_width", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 8, name: "board_width", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 9, name: "action_logs", kind: "message", T: LogsResponse_TurnAction, repeated: true },
     { no: 10, name: "sectors", kind: "message", T: LogsResponse_SectorStatus, repeated: true },
   ]);
