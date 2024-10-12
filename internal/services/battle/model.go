@@ -2,13 +2,12 @@ package battle
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
-	"io"
 	"math"
 	"time"
 
 	"github.com/yyyoichi/submarine-game/internal/core"
+	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 // implements sotre.model
@@ -27,7 +26,7 @@ func (m gameModel) Key() ([]byte, error) {
 		return nil, err
 	}
 
-	err = writeUUID(&buf, m.GameId)
+	err = store.WriteUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +45,7 @@ func (gameModel) ParseKey(k []byte) (gameModel, error) {
 	if err != nil {
 		return dist, err
 	}
-	dist.GameId, err = readUUID(r)
+	dist.GameId, err = store.ReadUUID(r)
 	return dist, err
 }
 
@@ -72,17 +71,17 @@ func (m actionModel) Key() ([]byte, error) {
 		return nil, err
 	}
 
-	err = writeUUID(&buf, m.GameId)
+	err = store.WriteUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = writeInt64(&buf, int64(m.ReverseUnixNano))
+	err = store.WriteInt64(&buf, int64(m.ReverseUnixNano))
 	if err != nil {
 		return nil, err
 	}
 
-	err = writeUUID(&buf, m.PlayerId)
+	err = store.WriteUUID(&buf, m.PlayerId)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +94,7 @@ func (m actionModel) PrefixKey() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = writeUUID(&buf, m.GameId)
+	err = store.WriteUUID(&buf, m.GameId)
 	if err != nil {
 		return nil, err
 	}
@@ -111,18 +110,18 @@ func (m actionModel) ParseKey(k []byte) (actionModel, error) {
 		return dist, err
 	}
 
-	dist.GameId, err = readUUID(r)
+	dist.GameId, err = store.ReadUUID(r)
 	if err != nil {
 		return dist, err
 	}
 
-	reverse, err := readInt64(r)
+	reverse, err := store.ReadInt64(r)
 	if err != nil {
 		return dist, err
 	}
 	dist.ReverseUnixNano = reverseUnixNano(reverse)
 
-	dist.PlayerId, err = readUUID(r)
+	dist.PlayerId, err = store.ReadUUID(r)
 	if err != nil {
 		return dist, err
 	}
@@ -150,40 +149,4 @@ func (u *reverseUnixNano) setTimestamp() time.Time {
 }
 func (u *reverseUnixNano) restore() time.Time {
 	return time.Unix(0, int64(math.MaxInt64-*u))
-}
-
-var lenUUID = 36
-
-func writeUUID(w io.Writer, s string) error {
-	var b = make([]byte, lenUUID)
-	if lenUUID < len(s) {
-		// 末尾から書き込み
-		_ = copy(b, []byte(s)[len(s)-lenUUID:])
-	} else {
-		_ = copy(b, []byte(s))
-	}
-	_, err := w.Write(b)
-	return err
-}
-
-func readUUID(r io.Reader) (string, error) {
-	var b = make([]byte, lenUUID)
-	_, err := r.Read(b)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes.Trim(b, "\x00")), nil
-}
-
-func writeInt64(w io.Writer, i int64) error {
-	return binary.Write(w, binary.BigEndian, uint64(i))
-}
-
-func readInt64(r io.Reader) (int64, error) {
-	var b = make([]byte, 8)
-	_, err := r.Read(b)
-	if err != nil {
-		return 0, err
-	}
-	return int64(binary.BigEndian.Uint64(b)), nil
 }
