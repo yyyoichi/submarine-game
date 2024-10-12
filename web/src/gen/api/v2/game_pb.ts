@@ -32,16 +32,16 @@ export enum ActionType {
   /**
    * 制御水雷
    *
-   * @generated from enum value: ACTION_TYPE_MINE_TRIGGER = 5;
+   * @generated from enum value: ACTION_TYPE_TRIGGER_MINE = 5;
    */
-  MINE_TRIGGER = 5,
+  TRIGGER_MINE = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ActionType)
 proto3.util.setEnumType(ActionType, "api.v2.ActionType", [
   { no: 0, name: "ACTION_TYPE_UNSPECIFIED" },
   { no: 1, name: "ACTION_TYPE_MOVE" },
   { no: 2, name: "ACTION_TYPE_FIIRE_TORPEDO" },
-  { no: 5, name: "ACTION_TYPE_MINE_TRIGGER" },
+  { no: 5, name: "ACTION_TYPE_TRIGGER_MINE" },
 ]);
 
 /**
