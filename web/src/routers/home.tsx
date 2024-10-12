@@ -1,8 +1,4 @@
-import { useEffect, useState } from "react";
-import { Form, redirect } from "react-router-dom";
-import { getGameClient, leaveEffect } from "../api/connect";
-import { JoinRequest } from "../gen/api/v1/game_pb";
-import { ConnectError } from "@connectrpc/connect";
+import { ArrowRightIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -16,7 +12,11 @@ import {
   UnorderedList,
   VStack,
 } from "@chakra-ui/react";
-import { ArrowRightIcon } from "@chakra-ui/icons";
+import { ConnectError } from "@connectrpc/connect";
+import { useState } from "react";
+import { Form, redirect } from "react-router-dom";
+import { matchingClient } from "../api/connect";
+import { JoinRequest, LeaveRequest } from "../gen/api/v2/game_pb";
 
 const highlightStyle: SystemStyleObject = {
   textDecoration: "underline",
@@ -26,7 +26,6 @@ const highlightStyle: SystemStyleObject = {
 
 function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  useEffect(leaveEffect, []);
   return (
     <Container p={0}>
       <Heading
@@ -143,14 +142,23 @@ function Home() {
 }
 
 export async function action() {
+  let playerId = "";
+  const leaveFromGame = async () => {
+    if (!playerId) {
+      return;
+    }
+    matchingClient.leave(new LeaveRequest());
+  };
+  window.addEventListener("beforeunload", leaveFromGame);
+
   try {
-    const client = getGameClient();
-    const stream = client.join(new JoinRequest());
+    const stream = matchingClient.join(new JoinRequest());
     for await (const resp of stream) {
+      playerId = resp.playerId;
       if (resp.gameId === "") {
         continue;
       }
-      return redirect(`/playground/${resp.gameId}/${resp.userId}`);
+      return redirect(`/playground/${resp.gameId}/${resp.playerId}`);
     }
   } catch (e) {
     if (e instanceof ConnectError) {
@@ -161,6 +169,8 @@ export async function action() {
     } else {
       console.error(e);
     }
+  } finally {
+    window.removeEventListener("beforeunload", leaveFromGame);
   }
   return null;
 }
