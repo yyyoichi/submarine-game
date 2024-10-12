@@ -208,7 +208,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	latest := actions[0]
 	var resp = GetLogsOutput{
 		SectorActionsMap:    make(map[core.Sector][]core.ActionType),
-		NumTurn:             (len(actions) - 1) / 2,
+		NumTurn:             (len(actions) + 1) / 2,
 		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
 		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
 	}

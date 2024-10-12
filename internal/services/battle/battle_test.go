@@ -377,7 +377,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("1", "1"), nil, &GetLogsOutput{
 				RequireAction:       true,
 				RequireDeployAction: false,
-				NumTurn:             1,
+				NumTurn:             2,
 				Actions: []LogAction{
 					{PlayerId: "2", Turn: 1, At: -1, T: core.MoveAction, To: -1, Direction: core.East},
 					{}, {}, {},
@@ -392,7 +392,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("2", "1"), nil, &GetLogsOutput{
 				RequireAction:       false,
 				RequireDeployAction: false,
-				NumTurn:             1,
+				NumTurn:             2,
 				Actions: []LogAction{
 					{PlayerId: "1", Turn: 1, At: 1, T: core.MoveAction, To: 1, Direction: core.East},
 					{}, {},
@@ -423,7 +423,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("5", "2"), nil, &GetLogsOutput{
 				RequireAction:       false,
 				RequireDeployAction: false,
-				NumTurn:             0,
+				NumTurn:             1,
 				GameOver: &GameOver{
 					Winner: "2",
 					Reason: core.Timeout,

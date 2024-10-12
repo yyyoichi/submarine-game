@@ -34,7 +34,9 @@ type GetLogsOutput struct {
 	// ゲーム終了
 	GameOver *GameOver
 
-	// ターン数
+	// ターン長
+	// ターンは0から始まり、先攻プレイヤが行動するたびにカウントアップする。
+	// ターン長はターン+1
 	NumTurn int
 	Actions []LogAction
 	// 行動許容時間ミリ秒
