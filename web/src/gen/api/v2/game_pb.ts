@@ -161,9 +161,9 @@ export class JoinResponse extends Message<JoinResponse> {
   gameId = "";
 
   /**
-   * @generated from field: string user_id = 2;
+   * @generated from field: string player_id = 2;
    */
-  userId = "";
+  playerId = "";
 
   constructor(data?: PartialMessage<JoinResponse>) {
     super();
@@ -174,7 +174,7 @@ export class JoinResponse extends Message<JoinResponse> {
   static readonly typeName = "api.v2.JoinResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinResponse {
@@ -199,9 +199,9 @@ export class JoinResponse extends Message<JoinResponse> {
  */
 export class LeaveRequest extends Message<LeaveRequest> {
   /**
-   * @generated from field: string user_id = 1;
+   * @generated from field: string player_id = 1;
    */
-  userId = "";
+  playerId = "";
 
   constructor(data?: PartialMessage<LeaveRequest>) {
     super();
@@ -211,7 +211,7 @@ export class LeaveRequest extends Message<LeaveRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v2.LeaveRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LeaveRequest {
@@ -272,9 +272,9 @@ export class LogsRequest extends Message<LogsRequest> {
   gameId = "";
 
   /**
-   * @generated from field: string user_id = 2;
+   * @generated from field: string player_id = 2;
    */
-  userId = "";
+  playerId = "";
 
   constructor(data?: PartialMessage<LogsRequest>) {
     super();
@@ -285,7 +285,7 @@ export class LogsRequest extends Message<LogsRequest> {
   static readonly typeName = "api.v2.LogsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LogsRequest {
@@ -609,9 +609,9 @@ export class DeployRequest extends Message<DeployRequest> {
   gameId = "";
 
   /**
-   * @generated from field: string user_id = 2;
+   * @generated from field: string player_id = 2;
    */
-  userId = "";
+  playerId = "";
 
   /**
    * 初回行動場所
@@ -636,7 +636,7 @@ export class DeployRequest extends Message<DeployRequest> {
   static readonly typeName = "api.v2.DeployRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "at", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 4, name: "mines", kind: "scalar", T: 13 /* ScalarType.UINT32 */, repeated: true },
   ]);
@@ -699,9 +699,9 @@ export class ActionRequest extends Message<ActionRequest> {
   gameId = "";
 
   /**
-   * @generated from field: string user_id = 2;
+   * @generated from field: string player_id = 2;
    */
-  userId = "";
+  playerId = "";
 
   /**
    * 行動場所
@@ -726,7 +726,7 @@ export class ActionRequest extends Message<ActionRequest> {
   static readonly typeName = "api.v2.ActionRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "at", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(ActionType) },
   ]);
@@ -789,9 +789,9 @@ export class WaitRequest extends Message<WaitRequest> {
   gameId = "";
 
   /**
-   * @generated from field: string user_id = 2;
+   * @generated from field: string player_id = 2;
    */
-  userId = "";
+  playerId = "";
 
   constructor(data?: PartialMessage<WaitRequest>) {
     super();
@@ -802,7 +802,7 @@ export class WaitRequest extends Message<WaitRequest> {
   static readonly typeName = "api.v2.WaitRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitRequest {

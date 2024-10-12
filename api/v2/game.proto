@@ -15,11 +15,11 @@ message JoinRequest {}
 
 message JoinResponse {
   string game_id = 1;
-  string user_id = 2;
+  string player_id = 2;
 }
 
 message LeaveRequest {
-  string user_id = 1;
+  string player_id = 1;
 }
 
 message LeaveResponse {}
@@ -39,7 +39,7 @@ service GameService {
 
 message LogsRequest {
   string game_id = 1;
-  string user_id = 2;
+  string player_id = 2;
 }
 
 message LogsResponse {
@@ -77,7 +77,7 @@ message LogsResponse {
 
 message DeployRequest {
   string game_id = 1;
-  string user_id = 2;
+  string player_id = 2;
   uint32 at = 3; // 初回行動場所
   repeated uint32 mines = 4; // 機雷敷設場所
 }
@@ -85,7 +85,7 @@ message DeployResponse {}
 
 message ActionRequest {
   string game_id = 1;
-  string user_id = 2;
+  string player_id = 2;
   uint32 at = 3; // 行動場所
   ActionType type = 4; // 行動内容
 }
@@ -93,7 +93,7 @@ message ActionResponse {}
 
 message WaitRequest {
   string game_id = 1;
-  string user_id = 2;
+  string player_id = 2;
 }
 
 message WaitResponse {}
