@@ -18,6 +18,16 @@ type MatchingService struct {
 	waitTickerDuration time.Duration
 }
 
+func (s *MatchingService) Leave(playerId string) error {
+	s.init()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.waitPlayer == playerId {
+		s.waitPlayer = ""
+	}
+	return nil
+}
+
 func (s *MatchingService) Join() (*JoinOutput, error) {
 	s.init()
 
