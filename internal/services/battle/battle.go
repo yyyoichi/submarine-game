@@ -12,8 +12,9 @@ import (
 )
 
 type BattleService struct {
-	Store           *store.Store
-	timeoutDuration time.Duration
+	Store              *store.Store
+	timeoutDuration    time.Duration
+	waitTickerDuration time.Duration
 }
 
 func (s *BattleService) DeploySubmarineAndMines(ctx context.Context, input *DeploySubmarineAndMinesInput) error {
@@ -288,6 +289,8 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 
 // 自分のターンまで待機する
 func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-chan struct{}, error) {
+	s.init()
+
 	// 存在するゲームか
 	game, err := s.getGame(input.GameId)
 	if err != nil {
@@ -303,6 +306,9 @@ func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-c
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
+		tick := time.NewTicker(s.waitTickerDuration)
+		defer tick.Stop()
+
 		for {
 			latest, err := s.getLatestAction(input.GameId)
 			if err != nil {
@@ -317,7 +323,7 @@ func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-c
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(time.Duration(time.Millisecond * 500)):
+			case <-tick.C:
 			}
 		}
 	}()
@@ -534,5 +540,8 @@ func (s *BattleService) getAllAction(gameId string) ([]actionModel, error) {
 func (s *BattleService) init() {
 	if s.timeoutDuration == 0 {
 		s.timeoutDuration = time.Duration(time.Second*30 + time.Millisecond*500)
+	}
+	if s.waitTickerDuration == 0 {
+		s.waitTickerDuration = time.Duration(time.Millisecond * 200)
 	}
 }

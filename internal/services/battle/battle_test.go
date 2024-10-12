@@ -504,6 +504,157 @@ func TestBattleService(t *testing.T) {
 		}
 	})
 
+	t.Run("PlayGame", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		noError := func(err error) {
+			assert.NoError(t, err)
+			if err != nil {
+				cancel(err)
+			}
+		}
+
+		var (
+			gameId  = "PlayGame"
+			playerA = "playerA"
+			playerB = "playerB"
+			battle  = BattleService{
+				Store:              store,
+				waitTickerDuration: time.Duration(time.Millisecond * 2),
+			}
+		)
+		battle.setGame(core.Game{
+			GameId:     gameId,
+			PlayerIds:  [2]string{playerA, playerB},
+			OceanMap:   core.DefaultOceanMap,
+			Islands:    []core.Sector{20, 35},
+			Submarines: map[string]core.Submarine{playerA: core.DefaultSubmarine, playerB: core.DefaultSubmarine},
+		})
+		wait := func(playerId string) {
+			waitInput := WaitTurnInput{
+				GameId:   gameId,
+				PlayerId: playerId,
+			}
+			done, err := battle.WaitTurn(ctx, &waitInput)
+			noError(err)
+			select {
+			case <-ctx.Done():
+			case <-done:
+			}
+		}
+
+		// PlayerAが先攻
+		err := battle.DeploySubmarineAndMines(ctx, &DeploySubmarineAndMinesInput{
+			GameId:   gameId,
+			PlayerId: playerA,
+			At:       10,
+			Mines:    []int8{13, 28},
+		})
+		noError(err)
+		go func() {
+			me := playerA
+			wait(me)
+			// 2
+			err = battle.TriggerMine(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       13,
+			})
+			noError(err)
+			wait(me)
+			// 3
+			err = battle.TriggerMine(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       28,
+			})
+			noError(err)
+			wait(me)
+			// 4
+			err = battle.Move(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       16,
+			})
+			noError(err)
+			wait(me)
+			// 5
+			err = battle.FireTorpedo(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       15,
+			})
+			noError(err)
+			wait(me)
+			// end
+			logs, err := battle.GetLogs(ctx, &GetLogsInput{
+				GameId:   gameId,
+				PlayerId: me,
+			})
+			assert.NoError(t, err)
+			assert.NotNil(t, logs.GameOver)
+			cancel(nil)
+		}()
+		go func() {
+			me := playerB
+			wait(me)
+			// 1
+			err := battle.DeploySubmarineAndMines(ctx, &DeploySubmarineAndMinesInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       27,
+				Mines:    []int8{5, 19},
+			})
+			noError(err)
+			wait(me)
+			// 2
+			err = battle.FireTorpedo(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       21,
+			})
+			noError(err)
+			wait(me)
+			// 3
+			err = battle.Move(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       21,
+			})
+			noError(err)
+			wait(me)
+			// 4
+			err = battle.Move(ctx, &ActionInput{
+				GameId:   gameId,
+				PlayerId: me,
+				At:       15,
+			})
+			noError(err)
+			wait(me)
+			// end
+			logs, err := battle.GetLogs(ctx, &GetLogsInput{
+				GameId:   gameId,
+				PlayerId: me,
+			})
+			assert.NoError(t, err)
+			assert.NotNil(t, logs.GameOver)
+			cancel(nil)
+		}()
+
+		<-ctx.Done()
+		err = context.Cause(ctx)
+		assert.ErrorIs(t, err, context.Canceled)
+		logs, err := battle.GetLogs(ctx, &GetLogsInput{
+			GameId:   gameId,
+			PlayerId: playerA,
+		})
+		assert.NoError(t, err)
+		assert.NotNil(t, logs.GameOver)
+		assert.Equal(t, playerA, logs.GameOver.Winner)
+		assert.Equal(t, core.TorpedoHit, logs.GameOver.Reason)
+	})
 }
 
 func TestRepository(t *testing.T) {
