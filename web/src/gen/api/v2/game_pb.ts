@@ -565,7 +565,12 @@ export class LogsResponse_SectorStatus extends Message<LogsResponse_SectorStatus
   island = false;
 
   /**
-   * @generated from field: repeated api.v2.ActionType enable_actions = 3;
+   * @generated from field: bool self_occupied = 3;
+   */
+  selfOccupied = false;
+
+  /**
+   * @generated from field: repeated api.v2.ActionType enable_actions = 4;
    */
   enableActions: ActionType[] = [];
 
@@ -579,7 +584,8 @@ export class LogsResponse_SectorStatus extends Message<LogsResponse_SectorStatus
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "sector", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 2, name: "island", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 3, name: "enable_actions", kind: "enum", T: proto3.getEnumType(ActionType), repeated: true },
+    { no: 3, name: "self_occupied", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "enable_actions", kind: "enum", T: proto3.getEnumType(ActionType), repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LogsResponse_SectorStatus {

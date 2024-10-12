@@ -61,7 +61,8 @@ message LogsResponse {
   message SectorStatus {
     int32 sector = 1;
     bool island = 2;
-    repeated ActionType enable_actions = 3;
+    bool self_occupied = 3;
+    repeated ActionType enable_actions = 4;
   }
   bool require_action = 1; // 行動必要かどうか
   bool require_deploy_action = 2; // 初回配置の行動が必要か
