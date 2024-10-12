@@ -1,17 +1,7 @@
-import { Form, useLoaderData } from "react-router-dom";
 import {
-  ActionType,
-  CampStatus,
-  type HistoryResponse,
-} from "../../../gen/api/v1/game_pb";
-import { useEffect, useRef, useState, type ComponentProps } from "react";
-import { Board } from "../components/borad";
-import {
-  VStack,
-  Text,
-  Flex,
   Box,
   Button,
+  Flex,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -19,8 +9,18 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
-import { IconBomb, IconMove } from "../components/icon";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
+import { Form, useLoaderData } from "react-router-dom";
+import {
+  ActionType,
+  CampStatus,
+  type HistoryResponse,
+} from "../../../gen/api/v1/game_pb";
+import { Board } from "../components/borad";
+import { IconMove, IconTorpedo } from "../components/icon";
 
 export function GameComponent() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -161,7 +161,7 @@ export function GameComponent() {
                 {enableActionType.includes(ActionType.MINE) && (
                   <Button
                     borderColor={"red.500"}
-                    leftIcon={<IconBomb fill={"red.500"} />}
+                    leftIcon={<IconTorpedo fill={"red.500"} />}
                     bg={"dark.500"}
                     borderWidth={"2px 4px 3px 2px"}
                     fontSize={"large"}

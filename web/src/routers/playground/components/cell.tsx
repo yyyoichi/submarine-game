@@ -1,11 +1,11 @@
 import { Flex, Square, type SquareProps } from "@chakra-ui/react";
 import { CampStatus } from "../../../gen/api/v1/game_pb";
 import {
-  IconBomb,
   IconLandscape,
   IconMine,
   IconMove,
   IconMyLocation,
+  IconTorpedo,
 } from "./icon";
 
 type CellProps = {
@@ -51,7 +51,7 @@ export function Cell(props: CellProps) {
             case CampStatus.MOVE:
               return <IconMove key={s} fill={"green.500"} />;
             case CampStatus.BOMB:
-              return <IconBomb key={s} fill={"orange.500"} />;
+              return <IconTorpedo key={s} fill={"orange.500"} />;
             case CampStatus.MINE:
               return <IconMine key={s} fill={"red.500"} />;
             case CampStatus.PLACE:
