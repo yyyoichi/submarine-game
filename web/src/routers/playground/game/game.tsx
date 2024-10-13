@@ -28,10 +28,10 @@ export function GameComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [clickSector, setClickSector] = useState<number | null>(null);
   useEffect(() => {
-    if (logs.actionLogs.length > 0) {
+    if (logs.timeout > 0) {
       setClickSector(null);
     }
-  }, [logs.actionLogs.length]);
+  }, [logs.timeout]);
   const [actionTypeSelection, setActionTypeSelection] =
     useState<ActionType | null>(null);
   const oceanMapProps: ComponentProps<typeof OceanMap> = {

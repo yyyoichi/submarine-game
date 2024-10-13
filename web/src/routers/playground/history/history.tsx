@@ -49,14 +49,15 @@ export function LogsComponent() {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <Tr key={i}>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {`海域${me?.to}: ${jpType(me?.type)}`}
+                {me && `海域${me?.at}: ${jpType(me?.type)}`}
               </Td>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {enemy?.turn === 0
-                  ? `海域?: ${enemy.type}`
-                  : enemy?.type === ActionType.MOVE
-                    ? `${jpDirection(enemy.direction)}方向: ${jpType(me?.type)}`
-                    : `海域${enemy?.at}: ${jpType(me?.type)}`}
+                {enemy &&
+                  (enemy.turn === 0
+                    ? `海域?: ${jpType(enemy.type)}`
+                    : enemy.type === ActionType.MOVE
+                      ? `${jpDirection(enemy.direction)}方向: ${jpType(enemy.type)}`
+                      : `海域${enemy?.at}: ${jpType(enemy.type)}`)}
               </Td>
             </Tr>
           ))}
