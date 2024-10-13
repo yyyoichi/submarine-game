@@ -412,6 +412,10 @@ func TestBattleService(t *testing.T) {
 			}, newInput("4", "1"), nil, &GetLogsOutput{
 				RequireAction:       true,
 				RequireDeployAction: true,
+				NumTurn:             1,
+				Actions: []LogAction{
+					{PlayerId: "2", Turn: 0, At: -1, To: -1, From: -1, T: core.MoveAction, Direction: core.East},
+				},
 			}},
 			// ゲーム終了
 			{func(b *BattleService) {

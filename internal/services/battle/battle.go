@@ -225,23 +225,14 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	if err != nil {
 		return nil, fmt.Errorf("cannot get all actions of game[%s]", input.GameId)
 	}
-	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
-		// 行動がないか、あっても一つで相手の行動のみの場合
-		return &GetLogsOutput{
-			Game:                game.Game,
-			RequireAction:       true,
-			RequireDeployAction: true,
-			TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
-			Timeout:             game.Timestamp.Add(s.timeoutDuration),
-		}, nil
-	}
-	latest := actions[0]
+
 	var resp = GetLogsOutput{
 		Game:                game.Game,
-		SectorActionsMap:    make(map[core.Sector][]core.ActionType),
 		NumTurn:             (len(actions) + 1) / 2,
 		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
-		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
+		// exp SET
+		SectorActionsMap: make(map[core.Sector][]core.ActionType),
+		Actions:          make([]LogAction, len(actions)),
 	}
 	// プレイヤの前回行動
 	for _, action := range actions {
@@ -251,17 +242,27 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		}
 	}
 
-	// ゲーム終了判定
-	resp.GameOver = s.gameOver(&latest.Action)
+	if len(actions) > 0 {
+		resp.GameOver = s.gameOver(&actions[0].Action)
+	}
 
-	// 行動要求
-	if resp.GameOver != nil {
-		// ゲーム終了の場合行動要求無し
-		resp.RequireAction = false
+	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
+		// 行動がないか、あっても一つで相手の行動のみの場合
+		resp.RequireAction = true
+		resp.RequireDeployAction = true
+		resp.Timeout = game.Timestamp.Add(s.timeoutDuration)
 	} else {
-		// ゲーム継続中
-		// 最後に行動したプレイヤーでないときは行動を要求
+		latest := actions[0]
 		resp.RequireAction = latest.PlayerId != input.PlayerId
+		resp.RequireDeployAction = false
+		resp.Timeout = latest.Timestamp.Add(s.timeoutDuration)
+	}
+
+	// 終了時0値
+	if resp.GameOver != nil {
+		resp.RequireAction = false
+		resp.RequireDeployAction = false
+		resp.Timeout = time.Time{}
 	}
 
 	// 行動ログ
@@ -289,26 +290,25 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 			resp.Actions[i].Direction = game.Direction(action.From, action.To)
 		}
 	}
-	if resp.GameOver != nil {
-		// ゲーム終了
-		return &resp, nil
-	}
-	sectors := game.SectorStatus(input.PlayerId, resp.Prev)
-	for sector, ss := range sectors {
-		acts := make([]core.ActionType, 0, len(ss))
-		for _, s := range ss {
-			var actionType core.ActionType
-			switch s {
-			case core.CanMove:
-				actionType = core.MoveAction
-			case core.CanFireTorpedo:
-				actionType = core.TorpedoFireAction
-			case core.CanTriggerMine:
-				actionType = core.MineTriggerAction
+	// 行動可能海域計算
+	if resp.GameOver == nil {
+		sectors := game.SectorStatus(input.PlayerId, resp.Prev)
+		for sector, ss := range sectors {
+			acts := make([]core.ActionType, 0, len(ss))
+			for _, s := range ss {
+				var actionType core.ActionType
+				switch s {
+				case core.CanMove:
+					actionType = core.MoveAction
+				case core.CanFireTorpedo:
+					actionType = core.TorpedoFireAction
+				case core.CanTriggerMine:
+					actionType = core.MineTriggerAction
+				}
+				acts = append(acts, actionType)
 			}
-			acts = append(acts, actionType)
+			resp.SectorActionsMap[sector] = acts
 		}
-		resp.SectorActionsMap[sector] = acts
 	}
 
 	// 最新の行動が自分である場合
