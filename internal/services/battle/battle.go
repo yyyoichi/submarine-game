@@ -418,6 +418,7 @@ func (s *BattleService) gameOver(latest *core.Action) *GameOver {
 		if latest.T == core.MineTriggerAction {
 			resp.Reason = core.MineHit
 		}
+		return &resp
 	}
 	if time.Now().After(latest.Timestamp.Add(s.timeoutDuration)) {
 		resp.Winner = latest.PlayerId

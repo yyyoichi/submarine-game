@@ -483,10 +483,8 @@ func TestBattleService(t *testing.T) {
 				Timestamp:    time.Now(),
 			}, &GameOver{Winner: "a", Reason: core.MineHit}},
 			{&core.Action{
-				PlayerId:     "a",
-				ActionResult: core.Hit,
-				T:            core.MineTriggerAction,
-				Timestamp:    time.Now().Add(-time.Duration(1 * time.Minute)),
+				PlayerId:  "a",
+				Timestamp: time.Now().Add(-time.Duration(1 * time.Minute)),
 			}, &GameOver{
 				Winner: "a",
 				Reason: core.Timeout,
