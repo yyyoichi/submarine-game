@@ -242,20 +242,20 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		}
 	}
 
-	if len(actions) > 0 {
-		resp.GameOver = s.gameOver(&actions[0].Action)
-	}
+	resp.GameOver = s.gameIsOver(game.Game, actions)
 
 	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
 		// 行動がないか、あっても一つで相手の行動のみの場合
 		resp.RequireAction = true
 		resp.RequireDeployAction = true
-		resp.Timeout = game.Timestamp.Add(s.timeoutDuration)
 	} else {
 		latest := actions[0]
 		resp.RequireAction = latest.PlayerId != input.PlayerId
 		resp.RequireDeployAction = false
 		resp.Timeout = latest.Timestamp.Add(s.timeoutDuration)
+	}
+	if len(actions) < 2 {
+		resp.Timeout = game.Timestamp.Add(s.timeoutDuration)
 	}
 
 	// 終了時0値
@@ -403,6 +403,27 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 		return nil, nil, fmt.Errorf("%w: ", ErrInvalidActionType)
 	}
 	return &prev.Action, &enemy.Action, nil
+}
+
+func (s *BattleService) gameIsOver(game core.Game, actions []actionModel) *GameOver {
+	var resp GameOver
+	switch l := len(actions); l {
+	case 0:
+		if time.Now().After(game.Timestamp.Add(s.timeoutDuration)) {
+			resp.Reason = core.Timeout
+			return &resp
+		}
+		return nil
+	case 1:
+		latest := actions[0].Action
+		if time.Now().After(game.Timestamp.Add(s.timeoutDuration)) {
+			resp.Winner = latest.PlayerId
+			resp.Reason = core.Timeout
+			return &resp
+		}
+		return nil
+	}
+	return s.gameOver(&actions[0].Action)
 }
 
 func (s *BattleService) gameOver(latest *core.Action) *GameOver {
