@@ -55,13 +55,19 @@ export function StartingComponent() {
       sector: sector.sector,
       actions: [ActionType.TRIGGER_MINE],
       bg: startMines.includes(sector.sector) ? "orange.500" : undefined,
-      onClick: !sector.island
-        ? () => {
-            setStartMines((pv) => {
-              return [sector.sector, ...pv].splice(0, 2);
-            });
-          }
-        : undefined,
+      onClick: sector.island
+        ? undefined
+        : startMines.includes(sector.sector)
+          ? () => {
+              setStartMines((pv) => {
+                return pv.filter((x) => x !== sector.sector);
+              });
+            }
+          : () => {
+              setStartMines((pv) => {
+                return [sector.sector, ...pv].splice(0, 2);
+              });
+            },
     };
     minesOceanMapProps.sectors.push(minesProps);
   }
