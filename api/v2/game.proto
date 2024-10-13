@@ -49,7 +49,7 @@ message LogsResponse {
     int32 form = 3; // 行動起点
     int32 to = 4; // 行動後位置
     int32 direction = 5; // 行動方角
-    ActionRequest result = 6; // 行動結果
+    ActionResult result = 6; // 行動結果
     int32 turn = 7; // ターン
     bool me = 8; // 自身の行動か
   }

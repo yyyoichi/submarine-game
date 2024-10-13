@@ -462,9 +462,9 @@ export class LogsResponse_Action extends Message<LogsResponse_Action> {
   /**
    * 行動結果
    *
-   * @generated from field: api.v2.ActionRequest result = 6;
+   * @generated from field: api.v2.ActionResult result = 6;
    */
-  result?: ActionRequest;
+  result = ActionResult.UNSPECIFIED;
 
   /**
    * ターン
@@ -493,7 +493,7 @@ export class LogsResponse_Action extends Message<LogsResponse_Action> {
     { no: 3, name: "form", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 4, name: "to", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "direction", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 6, name: "result", kind: "message", T: ActionRequest },
+    { no: 6, name: "result", kind: "enum", T: proto3.getEnumType(ActionResult) },
     { no: 7, name: "turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 8, name: "me", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
