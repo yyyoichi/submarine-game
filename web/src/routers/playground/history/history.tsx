@@ -1,30 +1,40 @@
 import {
-  TableContainer,
   Table,
-  Thead,
-  Tr,
-  Th,
+  TableContainer,
   Tbody,
   Td,
+  Th,
+  Thead,
+  Tr,
 } from "@chakra-ui/react";
 import { useLoaderData } from "react-router-dom";
-import type { HistoryResponse } from "../../../gen/api/v1/game_pb";
+import { ActionType, type LogsResponse } from "../../../gen/api/v2/game_pb";
 
-export function HistoryComponent() {
-  const history = useLoaderData() as HistoryResponse;
-  const histories = history.histories.sort((a, b) => a.turn - b.turn);
-  const histProps: { me: string; enemy: string }[] = [];
-  for (let i = 0; i < Math.round(histories.length / 2); i++) {
-    histProps.push({ me: "", enemy: "" });
-  }
-  for (const h of histories) {
-    const i = Math.floor((h.turn - 1) / 2);
-    if (h.userId !== "") {
-      histProps[i].me = `${h.description}${h.impact && `\n > ${h.impact}`}`;
-    } else {
-      histProps[i].enemy = h.description;
+export function LogsComponent() {
+  const logs = useLoaderData() as LogsResponse;
+  const jpType = (t?: ActionType) => {
+    switch (t) {
+      case ActionType.MOVE:
+        return "潜行";
+      case ActionType.FIIRE_TORPEDO:
+        return "魚雷攻撃";
+      case ActionType.TRIGGER_MINE:
+        return "機雷作動";
     }
-  }
+    return "潜行開始";
+  };
+  const jpDirection = (d?: number) => {
+    switch (d) {
+      case 0:
+        return "北";
+      case 1:
+        return "東";
+      case 2:
+        return "南";
+      case 3:
+        return "西";
+    }
+  };
   return (
     <TableContainer maxH={"100%"} overflowY={"auto"}>
       <Table variant="simple">
@@ -35,14 +45,18 @@ export function HistoryComponent() {
           </Tr>
         </Thead>
         <Tbody fontSize={"md"}>
-          {histProps.map((line, i) => (
+          {logs.actionLogs.map(({ me, enemy }, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <Tr key={i}>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {line.me}
+                {`海域${me?.to}: ${jpType(me?.type)}`}
               </Td>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {line.enemy}
+                {enemy?.turn === 0
+                  ? `海域?: ${enemy.type}`
+                  : enemy?.type === ActionType.MOVE
+                    ? `${jpDirection(enemy.direction)}方向: ${jpType(me?.type)}`
+                    : `海域${enemy?.at}: ${jpType(me?.type)}`}
               </Td>
             </Tr>
           ))}

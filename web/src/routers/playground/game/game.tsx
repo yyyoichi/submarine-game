@@ -14,63 +14,44 @@ import {
 } from "@chakra-ui/react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { Form, useLoaderData } from "react-router-dom";
-import {
-  ActionType,
-  CampStatus,
-  type HistoryResponse,
-} from "../../../gen/api/v1/game_pb";
-import { Board } from "../components/borad";
+import { ActionType, type LogsResponse } from "../../../gen/api/v2/game_pb";
 import { IconMove, IconTorpedo } from "../components/icon";
+import { OceanMap } from "../components/ocean";
 
 export function GameComponent() {
   const formRef = useRef<HTMLFormElement>(null);
-  const history = useLoaderData() as HistoryResponse;
+  const logs = useLoaderData() as LogsResponse;
   const [isLoading, setIsLoading] = useState(false);
-  const [clickCamp, setClickCamp] = useState<number | null>(null);
+  const [clickSector, setClickSector] = useState<number | null>(null);
   useEffect(() => {
-    setIsLoading(history.histories.length < 0);
-    setClickCamp(null);
-  }, [history.histories.length]);
-  const [actionTypeSelection, setActionTypeSelection] = useState<
-    ActionType.MOVE | ActionType.BOMB | ActionType.MINE | null
-  >(null);
-  const boardProps: ComponentProps<typeof Board> = { camps: [] };
+    if (logs.actionLogs.length > 0) {
+      setClickSector(null);
+    }
+  }, [logs.actionLogs.length]);
+  const [actionTypeSelection, setActionTypeSelection] =
+    useState<ActionType | null>(null);
+  const oceanMapProps: ComponentProps<typeof OceanMap> = {
+    boardWidth: logs.boardWidth,
+    sectors: [],
+  };
   const enableActionType: ActionType[] = [];
-  for (let i = 0; i < history.camps.length; i++) {
-    const line = history.camps[i];
-    boardProps.camps[i] = [];
-    for (let j = 0; j < line.camps.length; j++) {
-      const camp = line.camps[j];
-      // 島か自分の位置以外でステータスがあれば行動可能位置
-      const canClick =
-        !camp.status.includes(CampStatus.ISLAND) &&
-        !camp.status.includes(CampStatus.SUBMARINE) &&
-        history.winner === "" &&
-        history.myTurn &&
-        camp.status.length;
-      boardProps.camps[i][j] = {
-        camp: camp.camp ?? 0,
-        status: camp.status,
-        onClick: canClick
+  for (const sector of logs.sectors) {
+    const sectorProps: ComponentProps<typeof OceanMap>["sectors"][number] = {
+      isSelf: sector.selfOccupied,
+      island: sector.island,
+      sector: sector.sector,
+      actions: sector.enableActions,
+      bg: sector.sector === clickSector ? "blue.500" : undefined,
+      onClick:
+        logs.requireAction && sector.enableActions.length > 0
           ? () => {
-              setClickCamp(camp.camp ?? 0);
+              setClickSector(sector.sector);
               setActionTypeSelection(null);
             }
           : undefined,
-        bg: clickCamp === camp.camp ? "blue.500" : undefined,
-      };
-      if (clickCamp !== camp.camp) continue;
-      if (clickCamp === null) continue;
-      if (camp.status.includes(CampStatus.MOVE)) {
-        enableActionType.push(ActionType.MOVE);
-      }
-      if (camp.status.includes(CampStatus.BOMB)) {
-        enableActionType.push(ActionType.BOMB);
-      }
-      if (camp.status.includes(CampStatus.MINE)) {
-        enableActionType.push(ActionType.MINE);
-      }
-    }
+    };
+
+    oceanMapProps.sectors.push(sectorProps);
   }
   return (
     <Box mt={"auto"}>
@@ -82,12 +63,12 @@ export function GameComponent() {
         ref={formRef}
       >
         <input type="hidden" name="type" value="action" />
-        <input type="hidden" name="place" value={clickCamp || ""} />
+        <input type="hidden" name="at" value={clickSector || ""} />
         <VStack py={2}>
           <Text fontSize={"x-large"} fontWeight={"bold"} my={2}>
-            {history.description}
+            {logs.requireAction ? "潜行か攻撃か" : "相手の行動待機中"}
           </Text>
-          <Board {...boardProps} />
+          <OceanMap {...oceanMapProps} />
         </VStack>
         <Box visibility={"hidden"}>
           <input
@@ -100,27 +81,27 @@ export function GameComponent() {
           <input
             type="radio"
             name="act"
-            value={ActionType.BOMB}
-            checked={actionTypeSelection === ActionType.BOMB}
+            value={ActionType.FIIRE_TORPEDO}
+            checked={actionTypeSelection === ActionType.FIIRE_TORPEDO}
             readOnly
           />
           <input
             type="radio"
             name="act"
-            value={ActionType.MINE}
-            checked={actionTypeSelection === ActionType.MINE}
+            value={ActionType.TRIGGER_MINE}
+            checked={actionTypeSelection === ActionType.TRIGGER_MINE}
             readOnly
           />
         </Box>
         <Modal
-          isOpen={clickCamp !== null}
-          onClose={() => setClickCamp(null)}
+          isOpen={clickSector !== null}
+          onClose={() => setClickSector(null)}
           motionPreset="slideInBottom"
           portalProps={{ appendToParentPortal: true, containerRef: formRef }}
         >
           <ModalOverlay />
           <ModalContent mx={6} px={5} bg={"dark.500"}>
-            <ModalHeader>{`海域${clickCamp}`}</ModalHeader>
+            <ModalHeader>{`海域${clickSector}`}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               <Flex gap={5} flexDirection={"column"}>
@@ -138,10 +119,10 @@ export function GameComponent() {
                     }
                     onClick={() => setActionTypeSelection(ActionType.MOVE)}
                   >
-                    行動
+                    潜行
                   </Button>
                 )}
-                {enableActionType.includes(ActionType.BOMB) && (
+                {enableActionType.includes(ActionType.FIIRE_TORPEDO) && (
                   <Button
                     borderColor={"orange.500"}
                     leftIcon={<IconMove fill={"orange.500"} />}
@@ -149,16 +130,18 @@ export function GameComponent() {
                     borderWidth={"2px 4px 3px 2px"}
                     fontSize={"large"}
                     color={
-                      actionTypeSelection === ActionType.BOMB
+                      actionTypeSelection === ActionType.FIIRE_TORPEDO
                         ? undefined
                         : "gray.700"
                     }
-                    onClick={() => setActionTypeSelection(ActionType.BOMB)}
+                    onClick={() =>
+                      setActionTypeSelection(ActionType.FIIRE_TORPEDO)
+                    }
                   >
                     魚雷発射
                   </Button>
                 )}
-                {enableActionType.includes(ActionType.MINE) && (
+                {enableActionType.includes(ActionType.TRIGGER_MINE) && (
                   <Button
                     borderColor={"red.500"}
                     leftIcon={<IconTorpedo fill={"red.500"} />}
@@ -166,12 +149,13 @@ export function GameComponent() {
                     borderWidth={"2px 4px 3px 2px"}
                     fontSize={"large"}
                     color={
-                      actionTypeSelection === ActionType.MINE
+                      actionTypeSelection === ActionType.TRIGGER_MINE
                         ? undefined
                         : "gray.700"
                     }
-                    isDisabled={!enableActionType.includes(ActionType.MINE)}
-                    onClick={() => setActionTypeSelection(ActionType.MINE)}
+                    onClick={() =>
+                      setActionTypeSelection(ActionType.TRIGGER_MINE)
+                    }
                   >
                     機雷発動
                   </Button>
@@ -186,7 +170,7 @@ export function GameComponent() {
                 color={"white.500"}
                 isLoading={isLoading}
                 onClick={() => {
-                  setClickCamp(null);
+                  setClickSector(null);
                 }}
               >
                 キャンセル
