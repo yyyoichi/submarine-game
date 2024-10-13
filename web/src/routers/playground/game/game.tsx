@@ -28,7 +28,7 @@ export function GameComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [clickSector, setClickSector] = useState<number | null>(null);
   useEffect(() => {
-    if (logs.timeout > 0) {
+    if (logs.timeout) {
       setClickSector(null);
       setIsLoading(false);
     }
