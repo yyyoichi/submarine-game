@@ -25,6 +25,9 @@ type GetLogsInput struct {
 }
 
 type GetLogsOutput struct {
+	Game core.Game
+	// 前回のinput.PlayerIdの行動
+	Prev core.Action
 	// なにかしらのアクションを要求するか
 	RequireAction bool
 	// 初回の行動要求

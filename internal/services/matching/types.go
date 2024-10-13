@@ -7,5 +7,5 @@ type JoinOutput struct {
 	GameId       string
 	EnemyId      string
 	Matched      bool
-	WaitMatching func(context.Context) error
+	WaitMatching func(context.Context) <-chan error
 }

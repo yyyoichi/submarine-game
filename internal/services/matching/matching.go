@@ -42,34 +42,42 @@ func (s *MatchingService) Join() (*JoinOutput, error) {
 		output.Matched = true
 		output.GameId = gameId
 		output.EnemyId = enemyId
-		output.WaitMatching = func(ctx context.Context) error {
+		output.WaitMatching = func(ctx context.Context) <-chan error {
 			return nil
 		}
 		return &output, nil
 	}
-	output.WaitMatching = func(ctx context.Context) error {
-		for {
-			tick := time.NewTicker(s.waitTickerDuration)
-			defer tick.Stop()
+	output.WaitMatching = func(ctx context.Context) <-chan error {
+		ch := make(chan error)
+		go func() {
+			defer close(ch)
+			for {
+				tick := time.NewTicker(s.waitTickerDuration)
+				defer tick.Stop()
 
-			m, err := s.found(output.PlayerId)
-			if err != nil {
-				return err
-			}
-			if m != nil {
-				output.EnemyId = m.EnemyId
-				output.GameId = m.GameId
-				output.Matched = true
-				return nil
-			}
+				m, err := s.found(output.PlayerId)
+				if err != nil {
+					ch <- err
+					return
+				}
+				if m != nil {
+					output.EnemyId = m.EnemyId
+					output.GameId = m.GameId
+					output.Matched = true
+					return
+				}
 
-			select {
-			case <-ctx.Done():
-				return context.Cause(ctx)
-			case <-tick.C:
+				select {
+				case <-ctx.Done():
+					ch <- context.Cause(ctx)
+					return
+				case <-tick.C:
 
+				}
 			}
-		}
+		}()
+
+		return ch
 	}
 	return &output, nil
 }

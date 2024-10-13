@@ -17,6 +17,31 @@ type BattleService struct {
 	waitTickerDuration time.Duration
 }
 
+func New(store *store.Store) BattleService {
+	var battle BattleService
+	battle.Store = store
+	battle.init()
+	return battle
+}
+
+func (s *BattleService) NewGame(gameId string, playerIds [2]string) error {
+	game := core.Game{
+		GameId:    gameId,
+		PlayerIds: playerIds,
+		OceanMap:  core.DefaultOceanMap,
+		Islands:   make([]core.Sector, int(core.DefaultOceanMap.IslandCount)),
+		Submarines: map[string]core.Submarine{
+			playerIds[0]: core.DefaultSubmarine,
+			playerIds[1]: core.DefaultSubmarine,
+		},
+	}
+	err := s.setGame(game)
+	if err != nil {
+		return fmt.Errorf("cannot create new game: %w", err)
+	}
+	return nil
+}
+
 func (s *BattleService) DeploySubmarineAndMines(ctx context.Context, input *DeploySubmarineAndMinesInput) error {
 	s.init()
 
@@ -207,10 +232,19 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	}
 	latest := actions[0]
 	var resp = GetLogsOutput{
+		Game:                game.Game,
 		SectorActionsMap:    make(map[core.Sector][]core.ActionType),
 		NumTurn:             (len(actions) + 1) / 2,
 		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
 		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
+	}
+	// プレイヤの前回行動
+	if latest.PlayerId == input.PlayerId {
+		resp.Prev = latest.Action
+	} else {
+		// latestのlenが1のとき必ずinput.PlayerIdは一致するため
+		// この場合、lne = 2以上を保証
+		resp.Prev = actions[len(actions)-2].Action
 	}
 
 	// ゲーム終了判定
@@ -256,16 +290,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		return &resp, nil
 	}
 
-	// input.PlayerIdの前回行動
-	var prev core.Action
-	if latest.PlayerId == input.PlayerId {
-		prev = latest.Action
-	} else {
-		// latestのlenが1のとき必ずinput.PlayerIdは一致するため
-		// この場合、lne = 2以上を保証
-		prev = actions[len(actions)-2].Action
-	}
-	sectors := game.SectorStatus(input.PlayerId, prev)
+	sectors := game.SectorStatus(input.PlayerId, resp.Prev)
 	for sector, ss := range sectors {
 		acts := make([]core.ActionType, 0, len(ss))
 		for _, s := range ss {

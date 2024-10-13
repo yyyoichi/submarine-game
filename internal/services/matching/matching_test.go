@@ -36,7 +36,8 @@ func TestMatching(t *testing.T) {
 				output, err := matching.Join()
 				assert.NoError(t, err)
 				if !output.Matched {
-					err := output.WaitMatching(ctx)
+					errCh := output.WaitMatching(ctx)
+					err := <-errCh
 					assert.NoError(t, err)
 				}
 				outputCh <- output
