@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"slices"
 	"time"
 
@@ -35,6 +36,9 @@ func (s *BattleService) NewGame(gameId string, playerIds [2]string) error {
 			playerIds[1]: core.DefaultSubmarine,
 		},
 	}
+	l := int(core.DefaultOceanMap.H * core.DefaultOceanMap.W)
+	game.Islands[0] = core.Sector(rand.IntN(l))
+	game.Islands[1] = core.Sector(rand.IntN(l))
 	err := s.setGame(game)
 	if err != nil {
 		return fmt.Errorf("cannot create new game: %w", err)
@@ -224,6 +228,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
 		// 行動がないか、あっても一つで相手の行動のみの場合
 		return &GetLogsOutput{
+			Game:                game.Game,
 			RequireAction:       true,
 			RequireDeployAction: true,
 			TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),

@@ -153,16 +153,20 @@ func (h *V2Handler) Logs(ctx context.Context, req *connect.Request[v2.LogsReques
 			Sector:        int32(sector),
 			Island:        slices.Contains(output.Game.Islands, sector),
 			SelfOccupied:  output.Prev.At == sector,
-			EnableActions: make([]v2.ActionType, len(output.SectorActionsMap[sector])),
+			EnableActions: make([]v2.ActionType, 0, len(output.SectorActionsMap[sector])),
 		}
-		for i, actionType := range output.SectorActionsMap[sector] {
+		for _, actionType := range output.SectorActionsMap[sector] {
+			var dist v2.ActionType
 			switch actionType {
 			case core.MoveAction:
-				resp.Sectors[sector].EnableActions[i] = v2.ActionType_ACTION_TYPE_MOVE
+				dist = v2.ActionType_ACTION_TYPE_MOVE
 			case core.TorpedoFireAction:
-				resp.Sectors[sector].EnableActions[i] = v2.ActionType_ACTION_TYPE_FIIRE_TORPEDO
+				dist = v2.ActionType_ACTION_TYPE_FIIRE_TORPEDO
 			case core.MineTriggerAction:
-				resp.Sectors[sector].EnableActions[i] = v2.ActionType_ACTION_TYPE_TRIGGER_MINE
+				dist = v2.ActionType_ACTION_TYPE_TRIGGER_MINE
+			}
+			if dist != 0 {
+				resp.Sectors[sector].EnableActions = append(resp.Sectors[sector].EnableActions, dist)
 			}
 		}
 	}
