@@ -37,8 +37,9 @@ const (
 const (
 	// MatchingServiceJoinProcedure is the fully-qualified name of the MatchingService's Join RPC.
 	MatchingServiceJoinProcedure = "/api.v2.MatchingService/Join"
-	// MatchingServiceLeaveProcedure is the fully-qualified name of the MatchingService's Leave RPC.
-	MatchingServiceLeaveProcedure = "/api.v2.MatchingService/Leave"
+	// MatchingServiceWaitEnemyProcedure is the fully-qualified name of the MatchingService's WaitEnemy
+	// RPC.
+	MatchingServiceWaitEnemyProcedure = "/api.v2.MatchingService/WaitEnemy"
 	// BattleServiceLogsProcedure is the fully-qualified name of the BattleService's Logs RPC.
 	BattleServiceLogsProcedure = "/api.v2.BattleService/Logs"
 	// BattleServiceDeployProcedure is the fully-qualified name of the BattleService's Deploy RPC.
@@ -51,22 +52,22 @@ const (
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	matchingServiceServiceDescriptor     = v2.File_api_v2_game_proto.Services().ByName("MatchingService")
-	matchingServiceJoinMethodDescriptor  = matchingServiceServiceDescriptor.Methods().ByName("Join")
-	matchingServiceLeaveMethodDescriptor = matchingServiceServiceDescriptor.Methods().ByName("Leave")
-	battleServiceServiceDescriptor       = v2.File_api_v2_game_proto.Services().ByName("BattleService")
-	battleServiceLogsMethodDescriptor    = battleServiceServiceDescriptor.Methods().ByName("Logs")
-	battleServiceDeployMethodDescriptor  = battleServiceServiceDescriptor.Methods().ByName("Deploy")
-	battleServiceActionMethodDescriptor  = battleServiceServiceDescriptor.Methods().ByName("Action")
-	battleServiceWaitMethodDescriptor    = battleServiceServiceDescriptor.Methods().ByName("Wait")
+	matchingServiceServiceDescriptor         = v2.File_api_v2_game_proto.Services().ByName("MatchingService")
+	matchingServiceJoinMethodDescriptor      = matchingServiceServiceDescriptor.Methods().ByName("Join")
+	matchingServiceWaitEnemyMethodDescriptor = matchingServiceServiceDescriptor.Methods().ByName("WaitEnemy")
+	battleServiceServiceDescriptor           = v2.File_api_v2_game_proto.Services().ByName("BattleService")
+	battleServiceLogsMethodDescriptor        = battleServiceServiceDescriptor.Methods().ByName("Logs")
+	battleServiceDeployMethodDescriptor      = battleServiceServiceDescriptor.Methods().ByName("Deploy")
+	battleServiceActionMethodDescriptor      = battleServiceServiceDescriptor.Methods().ByName("Action")
+	battleServiceWaitMethodDescriptor        = battleServiceServiceDescriptor.Methods().ByName("Wait")
 )
 
 // MatchingServiceClient is a client for the api.v2.MatchingService service.
 type MatchingServiceClient interface {
 	// 対戦する
-	Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.ServerStreamForClient[v2.JoinResponse], error)
-	// 対戦から離れる
-	Leave(context.Context, *connect.Request[v2.LeaveRequest]) (*connect.Response[v2.LeaveResponse], error)
+	Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error)
+	// 対戦相手を待つ。signalキルで離脱する
+	WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest]) (*connect.ServerStreamForClient[v2.WaitEnemyResponse], error)
 }
 
 // NewMatchingServiceClient constructs a client for the api.v2.MatchingService service. By default,
@@ -85,10 +86,10 @@ func NewMatchingServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(matchingServiceJoinMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		leave: connect.NewClient[v2.LeaveRequest, v2.LeaveResponse](
+		waitEnemy: connect.NewClient[v2.WaitEnemyRequest, v2.WaitEnemyResponse](
 			httpClient,
-			baseURL+MatchingServiceLeaveProcedure,
-			connect.WithSchema(matchingServiceLeaveMethodDescriptor),
+			baseURL+MatchingServiceWaitEnemyProcedure,
+			connect.WithSchema(matchingServiceWaitEnemyMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -96,26 +97,26 @@ func NewMatchingServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 
 // matchingServiceClient implements MatchingServiceClient.
 type matchingServiceClient struct {
-	join  *connect.Client[v2.JoinRequest, v2.JoinResponse]
-	leave *connect.Client[v2.LeaveRequest, v2.LeaveResponse]
+	join      *connect.Client[v2.JoinRequest, v2.JoinResponse]
+	waitEnemy *connect.Client[v2.WaitEnemyRequest, v2.WaitEnemyResponse]
 }
 
 // Join calls api.v2.MatchingService.Join.
-func (c *matchingServiceClient) Join(ctx context.Context, req *connect.Request[v2.JoinRequest]) (*connect.ServerStreamForClient[v2.JoinResponse], error) {
-	return c.join.CallServerStream(ctx, req)
+func (c *matchingServiceClient) Join(ctx context.Context, req *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
+	return c.join.CallUnary(ctx, req)
 }
 
-// Leave calls api.v2.MatchingService.Leave.
-func (c *matchingServiceClient) Leave(ctx context.Context, req *connect.Request[v2.LeaveRequest]) (*connect.Response[v2.LeaveResponse], error) {
-	return c.leave.CallUnary(ctx, req)
+// WaitEnemy calls api.v2.MatchingService.WaitEnemy.
+func (c *matchingServiceClient) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitEnemyRequest]) (*connect.ServerStreamForClient[v2.WaitEnemyResponse], error) {
+	return c.waitEnemy.CallServerStream(ctx, req)
 }
 
 // MatchingServiceHandler is an implementation of the api.v2.MatchingService service.
 type MatchingServiceHandler interface {
 	// 対戦する
-	Join(context.Context, *connect.Request[v2.JoinRequest], *connect.ServerStream[v2.JoinResponse]) error
-	// 対戦から離れる
-	Leave(context.Context, *connect.Request[v2.LeaveRequest]) (*connect.Response[v2.LeaveResponse], error)
+	Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error)
+	// 対戦相手を待つ。signalキルで離脱する
+	WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest], *connect.ServerStream[v2.WaitEnemyResponse]) error
 }
 
 // NewMatchingServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -124,24 +125,24 @@ type MatchingServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	matchingServiceJoinHandler := connect.NewServerStreamHandler(
+	matchingServiceJoinHandler := connect.NewUnaryHandler(
 		MatchingServiceJoinProcedure,
 		svc.Join,
 		connect.WithSchema(matchingServiceJoinMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	matchingServiceLeaveHandler := connect.NewUnaryHandler(
-		MatchingServiceLeaveProcedure,
-		svc.Leave,
-		connect.WithSchema(matchingServiceLeaveMethodDescriptor),
+	matchingServiceWaitEnemyHandler := connect.NewServerStreamHandler(
+		MatchingServiceWaitEnemyProcedure,
+		svc.WaitEnemy,
+		connect.WithSchema(matchingServiceWaitEnemyMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v2.MatchingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case MatchingServiceJoinProcedure:
 			matchingServiceJoinHandler.ServeHTTP(w, r)
-		case MatchingServiceLeaveProcedure:
-			matchingServiceLeaveHandler.ServeHTTP(w, r)
+		case MatchingServiceWaitEnemyProcedure:
+			matchingServiceWaitEnemyHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -151,12 +152,12 @@ func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.Handl
 // UnimplementedMatchingServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedMatchingServiceHandler struct{}
 
-func (UnimplementedMatchingServiceHandler) Join(context.Context, *connect.Request[v2.JoinRequest], *connect.ServerStream[v2.JoinResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.Join is not implemented"))
+func (UnimplementedMatchingServiceHandler) Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.Join is not implemented"))
 }
 
-func (UnimplementedMatchingServiceHandler) Leave(context.Context, *connect.Request[v2.LeaveRequest]) (*connect.Response[v2.LeaveResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.Leave is not implemented"))
+func (UnimplementedMatchingServiceHandler) WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest], *connect.ServerStream[v2.WaitEnemyResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.WaitEnemy is not implemented"))
 }
 
 // BattleServiceClient is a client for the api.v2.BattleService service.

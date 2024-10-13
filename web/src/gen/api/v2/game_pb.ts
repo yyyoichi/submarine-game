@@ -195,70 +195,82 @@ export class JoinResponse extends Message<JoinResponse> {
 }
 
 /**
- * @generated from message api.v2.LeaveRequest
+ * @generated from message api.v2.WaitEnemyRequest
  */
-export class LeaveRequest extends Message<LeaveRequest> {
+export class WaitEnemyRequest extends Message<WaitEnemyRequest> {
   /**
    * @generated from field: string player_id = 1;
    */
   playerId = "";
 
-  constructor(data?: PartialMessage<LeaveRequest>) {
+  constructor(data?: PartialMessage<WaitEnemyRequest>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v2.LeaveRequest";
+  static readonly typeName = "api.v2.WaitEnemyRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LeaveRequest {
-    return new LeaveRequest().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitEnemyRequest {
+    return new WaitEnemyRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): LeaveRequest {
-    return new LeaveRequest().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitEnemyRequest {
+    return new WaitEnemyRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): LeaveRequest {
-    return new LeaveRequest().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitEnemyRequest {
+    return new WaitEnemyRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: LeaveRequest | PlainMessage<LeaveRequest> | undefined, b: LeaveRequest | PlainMessage<LeaveRequest> | undefined): boolean {
-    return proto3.util.equals(LeaveRequest, a, b);
+  static equals(a: WaitEnemyRequest | PlainMessage<WaitEnemyRequest> | undefined, b: WaitEnemyRequest | PlainMessage<WaitEnemyRequest> | undefined): boolean {
+    return proto3.util.equals(WaitEnemyRequest, a, b);
   }
 }
 
 /**
- * @generated from message api.v2.LeaveResponse
+ * @generated from message api.v2.WaitEnemyResponse
  */
-export class LeaveResponse extends Message<LeaveResponse> {
-  constructor(data?: PartialMessage<LeaveResponse>) {
+export class WaitEnemyResponse extends Message<WaitEnemyResponse> {
+  /**
+   * @generated from field: string game_id = 1;
+   */
+  gameId = "";
+
+  /**
+   * @generated from field: string player_id = 2;
+   */
+  playerId = "";
+
+  constructor(data?: PartialMessage<WaitEnemyResponse>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v2.LeaveResponse";
+  static readonly typeName = "api.v2.WaitEnemyResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LeaveResponse {
-    return new LeaveResponse().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitEnemyResponse {
+    return new WaitEnemyResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): LeaveResponse {
-    return new LeaveResponse().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WaitEnemyResponse {
+    return new WaitEnemyResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): LeaveResponse {
-    return new LeaveResponse().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WaitEnemyResponse {
+    return new WaitEnemyResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: LeaveResponse | PlainMessage<LeaveResponse> | undefined, b: LeaveResponse | PlainMessage<LeaveResponse> | undefined): boolean {
-    return proto3.util.equals(LeaveResponse, a, b);
+  static equals(a: WaitEnemyResponse | PlainMessage<WaitEnemyResponse> | undefined, b: WaitEnemyResponse | PlainMessage<WaitEnemyResponse> | undefined): boolean {
+    return proto3.util.equals(WaitEnemyResponse, a, b);
   }
 }
 

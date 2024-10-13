@@ -6,9 +6,9 @@ option go_package = "github.com/yyyoichi/submarine-game/internal/gen/api/v2;apiv
 
 service MatchingService {
   // 対戦する
-  rpc Join(JoinRequest) returns (stream JoinResponse) {}
-  // 対戦から離れる
-  rpc Leave(LeaveRequest) returns (LeaveResponse) {}
+  rpc Join(JoinRequest) returns (JoinResponse) {}
+  // 対戦相手を待つ。signalキルで離脱する
+  rpc WaitEnemy(WaitEnemyRequest) returns (stream WaitEnemyResponse) {}
 }
 
 message JoinRequest {}
@@ -18,12 +18,14 @@ message JoinResponse {
   string player_id = 2;
 }
 
-message LeaveRequest {
+message WaitEnemyRequest {
   string player_id = 1;
 }
 
-message LeaveResponse {}
-
+message WaitEnemyResponse {
+  string game_id = 1;
+  string player_id = 2;
+}
 
 service BattleService {
   // 行動履歴を取得する

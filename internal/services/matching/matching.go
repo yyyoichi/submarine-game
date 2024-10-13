@@ -25,14 +25,45 @@ func New(s *store.Store) *MatchingService {
 	return &matching
 }
 
-func (s *MatchingService) Leave(playerId string) error {
+// [2]string{gameId, enemeyId}
+func (s *MatchingService) Wait(ctx context.Context, playerId string) <-chan [2]string {
 	s.init()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.waitPlayer == playerId {
-		s.waitPlayer = ""
-	}
-	return nil
+
+	ch := make(chan [2]string)
+	go func() {
+		defer func() {
+			close(ch)
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			if s.waitPlayer == playerId {
+				s.waitPlayer = ""
+			}
+		}()
+		for {
+			tick := time.NewTicker(s.waitTickerDuration)
+			defer tick.Stop()
+
+			m, err := s.found(playerId)
+			if err != nil {
+				continue
+			}
+			if m != nil {
+				ch <- [2]string{m.GameId, m.EnemyId}
+				return
+			}
+			if !s.waitIsMe(playerId) {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+			}
+		}
+	}()
+
+	return ch
 }
 
 func (s *MatchingService) Join() (*JoinOutput, error) {
@@ -49,42 +80,6 @@ func (s *MatchingService) Join() (*JoinOutput, error) {
 		output.Matched = true
 		output.GameId = gameId
 		output.EnemyId = enemyId
-		output.WaitMatching = func(ctx context.Context) <-chan error {
-			return nil
-		}
-		return &output, nil
-	}
-	output.WaitMatching = func(ctx context.Context) <-chan error {
-		ch := make(chan error)
-		go func() {
-			defer close(ch)
-			for {
-				tick := time.NewTicker(s.waitTickerDuration)
-				defer tick.Stop()
-
-				m, err := s.found(output.PlayerId)
-				if err != nil {
-					ch <- err
-					return
-				}
-				if m != nil {
-					output.EnemyId = m.EnemyId
-					output.GameId = m.GameId
-					output.Matched = true
-					return
-				}
-
-				select {
-				case <-ctx.Done():
-					ch <- context.Cause(ctx)
-					return
-				case <-tick.C:
-
-				}
-			}
-		}()
-
-		return ch
 	}
 	return &output, nil
 }
@@ -104,6 +99,12 @@ func (s *MatchingService) found(playerId string) (*matchModel, error) {
 	}
 	err = s.store.Delete(&models)
 	return &values[0], err
+}
+
+func (s *MatchingService) waitIsMe(playerId string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.waitPlayer == playerId
 }
 
 func (s *MatchingService) match(playerId string) (string, string, error) {

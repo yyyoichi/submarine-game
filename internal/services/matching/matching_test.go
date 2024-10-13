@@ -36,9 +36,12 @@ func TestMatching(t *testing.T) {
 				output, err := matching.Join()
 				assert.NoError(t, err)
 				if !output.Matched {
-					errCh := output.WaitMatching(ctx)
-					err := <-errCh
-					assert.NoError(t, err)
+					gameCh := matching.Wait(ctx, output.PlayerId)
+					game := <-gameCh
+					assert.NotEmpty(t, game)
+					output.GameId = game[0]
+					output.EnemyId = game[1]
+					output.Matched = true
 				}
 				outputCh <- output
 			}()

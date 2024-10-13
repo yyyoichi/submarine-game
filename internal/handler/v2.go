@@ -28,28 +28,33 @@ func NewV2(s *store.Store) V2Handler {
 	}
 }
 
-func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinRequest], stream *connect.ServerStream[v2.JoinResponse]) error {
+func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
 	output, err := h.matchingService.Join()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp := &v2.JoinResponse{
 		PlayerId: output.PlayerId,
+		GameId:   output.GameId,
 	}
 	if output.Matched {
 		err := h.battleService.NewGame(output.GameId, [2]string{output.EnemyId, output.PlayerId})
 		if err != nil {
-			return err
+			return nil, err
 		}
-		resp.GameId = output.GameId
-		if err := stream.Send(resp); err != nil {
-			return err
-		}
-		return nil
 	}
+	return &connect.Response[v2.JoinResponse]{
+		Msg: resp,
+	}, nil
+}
+
+func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitEnemyRequest], stream *connect.ServerStream[v2.WaitEnemyResponse]) error {
 	tick := time.NewTicker(time.Duration(1 * time.Second))
 	defer tick.Stop()
-	ch := output.WaitMatching(ctx)
+	var resp = &v2.WaitEnemyResponse{
+		PlayerId: req.Msg.PlayerId,
+	}
+	ch := h.matchingService.Wait(ctx, req.Msg.PlayerId)
 	for {
 		select {
 		case <-ctx.Done():
@@ -57,25 +62,13 @@ func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinReques
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
-		case err := <-ch:
-			if err != nil {
-				return err
-			}
-			resp.GameId = output.GameId
+		case gameIdEnemyId := <-ch:
+			resp.GameId = gameIdEnemyId[0]
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
 		}
 	}
-}
-
-// 対戦から離れる
-func (h *V2Handler) Leave(ctx context.Context, req *connect.Request[v2.LeaveRequest]) (*connect.Response[v2.LeaveResponse], error) {
-	err := h.matchingService.Leave(req.Msg.PlayerId)
-	if err != nil {
-		return nil, err
-	}
-	return &connect.Response[v2.LeaveResponse]{}, nil
 }
 
 func (h *V2Handler) Logs(ctx context.Context, req *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
