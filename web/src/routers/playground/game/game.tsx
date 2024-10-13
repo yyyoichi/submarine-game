@@ -56,6 +56,9 @@ export function GameComponent() {
     };
 
     oceanMapProps.sectors.push(sectorProps);
+    if (sector.sector === clickSector) {
+      enableActionType.push(...sector.enableActions);
+    }
   }
   let gameMainText = "";
   switch (logs.gameIsOver) {
