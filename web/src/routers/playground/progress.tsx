@@ -17,19 +17,18 @@ export function ProgressBar(props: ProgressBarProps) {
   }, [logs.timeout, logs.millSecondPerTurn]);
   const [value, setValue] = useState(calc());
   useEffect(() => {
-    const interval = setInterval(() => {
-      let v = 0;
-      setValue(() => {
-        v = calc();
-        return v;
-      });
-      if (v > 0) return;
-      props.callback();
-      clearInterval(interval);
-    }, 100); // 毎秒更新
-
-    return () => clearInterval(interval);
-  }, [calc, props.callback]);
+    if (value === 0) {
+      return;
+    }
+    const id = setTimeout(() => {
+      const v = calc();
+      if (v === 0) {
+        props.callback();
+      }
+      setValue(v);
+    }, 100);
+    return () => clearTimeout(id);
+  }, [calc, props.callback, value]);
 
   return <Progress hasStripe color={"red.500"} value={value} />;
 }

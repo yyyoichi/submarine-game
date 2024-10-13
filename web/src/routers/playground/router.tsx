@@ -18,10 +18,10 @@ import {
   useSubmit,
 } from "react-router-dom";
 import { battleClient } from "../../api/connect";
-import { HistoryRequest } from "../../gen/api/v1/game_pb";
 import {
   ActionRequest,
   DeployRequest,
+  LogsRequest,
   type LogsResponse,
   WaitRequest,
 } from "../../gen/api/v2/game_pb";
@@ -38,8 +38,11 @@ function Home() {
     if (logs.requireAction) {
       return;
     }
+    if (logs.requireDeployAction) {
+      return;
+    }
     submit(null, { method: "PATCH" });
-  }, [logs.requireAction, submit]);
+  }, [logs.requireAction, logs.requireDeployAction, submit]);
 
   return (
     <Container>
@@ -81,15 +84,15 @@ function Home() {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { gameId, userId } = params;
+  const { gameId, playerId } = params;
   try {
-    const history = await battleClient.logs(
-      new HistoryRequest({
-        gameId: gameId ?? "",
-        userId: userId ?? "",
+    const logs = await battleClient.logs(
+      new LogsRequest({
+        gameId,
+        playerId,
       }),
     );
-    return history;
+    return logs;
   } catch (err) {
     const connectErr = new ConnectError(err as string);
     console.error(connectErr.message);
