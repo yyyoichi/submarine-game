@@ -30,6 +30,7 @@ export function GameComponent() {
   useEffect(() => {
     if (logs.timeout > 0) {
       setClickSector(null);
+      setIsLoading(false);
     }
   }, [logs.timeout]);
   const [actionTypeSelection, setActionTypeSelection] =
