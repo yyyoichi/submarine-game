@@ -338,40 +338,47 @@ export class LogsResponse extends Message<LogsResponse> {
   gameOverReason = GameOverReason.UNSPECIFIED;
 
   /**
+   * 勝利したか
+   *
+   * @generated from field: bool win = 5;
+   */
+  win = false;
+
+  /**
    * 経過ターン数
    *
-   * @generated from field: int32 num_turn = 5;
+   * @generated from field: int32 num_turn = 6;
    */
   numTurn = 0;
 
   /**
    * 行動期限
    *
-   * @generated from field: int64 timeout = 6;
+   * @generated from field: int64 timeout = 7;
    */
   timeout = protoInt64.zero;
 
   /**
    * 行動可能時間
    *
-   * @generated from field: int64 mill_second_per_turn = 7;
+   * @generated from field: int64 mill_second_per_turn = 8;
    */
   millSecondPerTurn = protoInt64.zero;
 
   /**
    * ボードの横幅
    *
-   * @generated from field: int32 board_width = 8;
+   * @generated from field: int32 board_width = 9;
    */
   boardWidth = 0;
 
   /**
-   * @generated from field: repeated api.v2.LogsResponse.TurnAction action_logs = 9;
+   * @generated from field: repeated api.v2.LogsResponse.TurnAction action_logs = 10;
    */
   actionLogs: LogsResponse_TurnAction[] = [];
 
   /**
-   * @generated from field: repeated api.v2.LogsResponse.SectorStatus sectors = 10;
+   * @generated from field: repeated api.v2.LogsResponse.SectorStatus sectors = 11;
    */
   sectors: LogsResponse_SectorStatus[] = [];
 
@@ -387,12 +394,13 @@ export class LogsResponse extends Message<LogsResponse> {
     { no: 2, name: "require_deploy_action", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "game_is_over", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 4, name: "game_over_reason", kind: "enum", T: proto3.getEnumType(GameOverReason) },
-    { no: 5, name: "num_turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 6, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 7, name: "mill_second_per_turn", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 8, name: "board_width", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 9, name: "action_logs", kind: "message", T: LogsResponse_TurnAction, repeated: true },
-    { no: 10, name: "sectors", kind: "message", T: LogsResponse_SectorStatus, repeated: true },
+    { no: 5, name: "win", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "num_turn", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 7, name: "timeout", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 8, name: "mill_second_per_turn", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 9, name: "board_width", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 10, name: "action_logs", kind: "message", T: LogsResponse_TurnAction, repeated: true },
+    { no: 11, name: "sectors", kind: "message", T: LogsResponse_SectorStatus, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LogsResponse {

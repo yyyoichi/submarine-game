@@ -68,12 +68,13 @@ message LogsResponse {
   bool require_deploy_action = 2; // 初回配置の行動が必要か
   bool game_is_over = 3; // ゲームが終了しているか
   GameOverReason game_over_reason = 4; // ゲーム終了理由
-  int32 num_turn = 5; // 経過ターン数
-  int64 timeout = 6;// 行動期限
-  int64 mill_second_per_turn = 7; // 行動可能時間
-  int32 board_width = 8; // ボードの横幅
-  repeated TurnAction action_logs = 9;
-  repeated SectorStatus sectors = 10;
+  bool win = 5; // 勝利したか
+  int32 num_turn = 6; // 経過ターン数
+  int64 timeout = 7;// 行動期限
+  int64 mill_second_per_turn = 8; // 行動可能時間
+  int32 board_width = 9; // ボードの横幅
+  repeated TurnAction action_logs = 10;
+  repeated SectorStatus sectors = 11;
 }
 
 message DeployRequest {
