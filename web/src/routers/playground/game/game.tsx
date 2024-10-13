@@ -14,7 +14,11 @@ import {
 } from "@chakra-ui/react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { Form, useLoaderData } from "react-router-dom";
-import { ActionType, type LogsResponse } from "../../../gen/api/v2/game_pb";
+import {
+  ActionType,
+  GameOverReason,
+  type LogsResponse,
+} from "../../../gen/api/v2/game_pb";
 import { IconMove, IconTorpedo } from "../components/icon";
 import { OceanMap } from "../components/ocean";
 
@@ -53,6 +57,46 @@ export function GameComponent() {
 
     oceanMapProps.sectors.push(sectorProps);
   }
+  let gameMainText = "";
+  switch (logs.gameIsOver) {
+    case true:
+      if (logs.win) {
+        let reason = "";
+        switch (logs.gameOverReason) {
+          case GameOverReason.MINE_HIT:
+            reason = "魚雷命中";
+            break;
+          case GameOverReason.TORPEDO_HIT:
+            reason = "機雷命中";
+            break;
+          case GameOverReason.TIMEOUT:
+            reason = "タイムアップ";
+            break;
+        }
+        gameMainText = `${reason}！勝利！！`;
+      } else {
+        let reason = "";
+        switch (logs.gameOverReason) {
+          case GameOverReason.MINE_HIT:
+            reason = "魚雷直撃";
+            break;
+          case GameOverReason.TORPEDO_HIT:
+            reason = "機雷直撃";
+            break;
+          case GameOverReason.TIMEOUT:
+            reason = "タイムアップ";
+            break;
+        }
+        gameMainText = `${reason}！敗北...`;
+      }
+      break;
+    case false:
+      if (logs.requireAction) {
+        gameMainText = "潜行か行動か";
+      } else {
+        gameMainText = "相手の行動を待機中";
+      }
+  }
   return (
     <Box mt={"auto"}>
       <Form
@@ -66,7 +110,7 @@ export function GameComponent() {
         <input type="hidden" name="at" value={clickSector || ""} />
         <VStack py={2}>
           <Text fontSize={"x-large"} fontWeight={"bold"} my={2}>
-            {logs.requireAction ? "潜行か攻撃か" : "相手の行動待機中"}
+            {gameMainText}
           </Text>
           <OceanMap {...oceanMapProps} />
         </VStack>
