@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 	"slices"
 	"time"
@@ -244,12 +245,11 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		Timeout:             latest.Timestamp.Add(s.timeoutDuration),
 	}
 	// プレイヤの前回行動
-	if latest.PlayerId == input.PlayerId {
-		resp.Prev = latest.Action
-	} else {
-		// latestのlenが1のとき必ずinput.PlayerIdは一致するため
-		// この場合、lne = 2以上を保証
-		resp.Prev = actions[len(actions)-2].Action
+	for _, action := range actions {
+		if action.PlayerId == input.PlayerId {
+			resp.Prev = action.Action
+			break
+		}
 	}
 
 	// ゲーム終了判定
@@ -294,8 +294,8 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		// ゲーム終了
 		return &resp, nil
 	}
-
 	sectors := game.SectorStatus(input.PlayerId, resp.Prev)
+	slog.Info("log", slog.Any("prev", resp.Prev), slog.String("playerId", input.PlayerId), slog.Any("sectors", sectors))
 	for sector, ss := range sectors {
 		acts := make([]core.ActionType, 0, len(ss))
 		for _, s := range ss {
