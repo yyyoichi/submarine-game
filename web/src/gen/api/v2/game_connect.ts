@@ -38,15 +38,15 @@ export const MatchingService = {
 } as const;
 
 /**
- * @generated from service api.v2.GameService
+ * @generated from service api.v2.BattleService
  */
-export const GameService = {
-  typeName: "api.v2.GameService",
+export const BattleService = {
+  typeName: "api.v2.BattleService",
   methods: {
     /**
      * 行動履歴を取得する
      *
-     * @generated from rpc api.v2.GameService.Logs
+     * @generated from rpc api.v2.BattleService.Logs
      */
     logs: {
       name: "Logs",
@@ -57,7 +57,7 @@ export const GameService = {
     /**
      * 初回の行動する
      *
-     * @generated from rpc api.v2.GameService.Deploy
+     * @generated from rpc api.v2.BattleService.Deploy
      */
     deploy: {
       name: "Deploy",
@@ -68,7 +68,7 @@ export const GameService = {
     /**
      * 行動する
      *
-     * @generated from rpc api.v2.GameService.Action
+     * @generated from rpc api.v2.BattleService.Action
      */
     action: {
       name: "Action",
@@ -79,7 +79,7 @@ export const GameService = {
     /**
      * 相手の行動を待機する
      *
-     * @generated from rpc api.v2.GameService.Wait
+     * @generated from rpc api.v2.BattleService.Wait
      */
     wait: {
       name: "Wait",

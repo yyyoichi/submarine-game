@@ -17,7 +17,7 @@ import {
   useLoaderData,
   useSubmit,
 } from "react-router-dom";
-import { gameClient } from "../../api/connect";
+import { battleClient } from "../../api/connect";
 import { HistoryRequest } from "../../gen/api/v1/game_pb";
 import {
   ActionRequest,
@@ -83,7 +83,7 @@ function Home() {
 export async function loader({ params }: LoaderFunctionArgs) {
   const { gameId, userId } = params;
   try {
-    const history = await gameClient.logs(
+    const history = await battleClient.logs(
       new HistoryRequest({
         gameId: gameId ?? "",
         userId: userId ?? "",
@@ -116,7 +116,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
               at: Number(at),
               mines: [Number(mine1), Number(mine2)],
             });
-            await gameClient.deploy(req, { signal: request.signal });
+            await battleClient.deploy(req, { signal: request.signal });
             break;
           }
           case "action": {
@@ -129,7 +129,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
               playerId,
               at: Number(at),
             });
-            await gameClient.action(req, { signal: request.signal });
+            await battleClient.action(req, { signal: request.signal });
             break;
           }
         }
@@ -140,7 +140,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
           gameId,
           playerId,
         });
-        for await (const _ of gameClient.wait(req, {
+        for await (const _ of battleClient.wait(req, {
           signal: request.signal,
         })) {
         }

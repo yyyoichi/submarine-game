@@ -23,8 +23,8 @@ const _ = connect.IsAtLeastVersion1_13_0
 const (
 	// MatchingServiceName is the fully-qualified name of the MatchingService service.
 	MatchingServiceName = "api.v2.MatchingService"
-	// GameServiceName is the fully-qualified name of the GameService service.
-	GameServiceName = "api.v2.GameService"
+	// BattleServiceName is the fully-qualified name of the BattleService service.
+	BattleServiceName = "api.v2.BattleService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -39,14 +39,14 @@ const (
 	MatchingServiceJoinProcedure = "/api.v2.MatchingService/Join"
 	// MatchingServiceLeaveProcedure is the fully-qualified name of the MatchingService's Leave RPC.
 	MatchingServiceLeaveProcedure = "/api.v2.MatchingService/Leave"
-	// GameServiceLogsProcedure is the fully-qualified name of the GameService's Logs RPC.
-	GameServiceLogsProcedure = "/api.v2.GameService/Logs"
-	// GameServiceDeployProcedure is the fully-qualified name of the GameService's Deploy RPC.
-	GameServiceDeployProcedure = "/api.v2.GameService/Deploy"
-	// GameServiceActionProcedure is the fully-qualified name of the GameService's Action RPC.
-	GameServiceActionProcedure = "/api.v2.GameService/Action"
-	// GameServiceWaitProcedure is the fully-qualified name of the GameService's Wait RPC.
-	GameServiceWaitProcedure = "/api.v2.GameService/Wait"
+	// BattleServiceLogsProcedure is the fully-qualified name of the BattleService's Logs RPC.
+	BattleServiceLogsProcedure = "/api.v2.BattleService/Logs"
+	// BattleServiceDeployProcedure is the fully-qualified name of the BattleService's Deploy RPC.
+	BattleServiceDeployProcedure = "/api.v2.BattleService/Deploy"
+	// BattleServiceActionProcedure is the fully-qualified name of the BattleService's Action RPC.
+	BattleServiceActionProcedure = "/api.v2.BattleService/Action"
+	// BattleServiceWaitProcedure is the fully-qualified name of the BattleService's Wait RPC.
+	BattleServiceWaitProcedure = "/api.v2.BattleService/Wait"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -54,11 +54,11 @@ var (
 	matchingServiceServiceDescriptor     = v2.File_api_v2_game_proto.Services().ByName("MatchingService")
 	matchingServiceJoinMethodDescriptor  = matchingServiceServiceDescriptor.Methods().ByName("Join")
 	matchingServiceLeaveMethodDescriptor = matchingServiceServiceDescriptor.Methods().ByName("Leave")
-	gameServiceServiceDescriptor         = v2.File_api_v2_game_proto.Services().ByName("GameService")
-	gameServiceLogsMethodDescriptor      = gameServiceServiceDescriptor.Methods().ByName("Logs")
-	gameServiceDeployMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Deploy")
-	gameServiceActionMethodDescriptor    = gameServiceServiceDescriptor.Methods().ByName("Action")
-	gameServiceWaitMethodDescriptor      = gameServiceServiceDescriptor.Methods().ByName("Wait")
+	battleServiceServiceDescriptor       = v2.File_api_v2_game_proto.Services().ByName("BattleService")
+	battleServiceLogsMethodDescriptor    = battleServiceServiceDescriptor.Methods().ByName("Logs")
+	battleServiceDeployMethodDescriptor  = battleServiceServiceDescriptor.Methods().ByName("Deploy")
+	battleServiceActionMethodDescriptor  = battleServiceServiceDescriptor.Methods().ByName("Action")
+	battleServiceWaitMethodDescriptor    = battleServiceServiceDescriptor.Methods().ByName("Wait")
 )
 
 // MatchingServiceClient is a client for the api.v2.MatchingService service.
@@ -159,8 +159,8 @@ func (UnimplementedMatchingServiceHandler) Leave(context.Context, *connect.Reque
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.Leave is not implemented"))
 }
 
-// GameServiceClient is a client for the api.v2.GameService service.
-type GameServiceClient interface {
+// BattleServiceClient is a client for the api.v2.BattleService service.
+type BattleServiceClient interface {
 	// 行動履歴を取得する
 	Logs(context.Context, *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error)
 	// 初回の行動する
@@ -171,73 +171,73 @@ type GameServiceClient interface {
 	Wait(context.Context, *connect.Request[v2.WaitRequest]) (*connect.ServerStreamForClient[v2.WaitResponse], error)
 }
 
-// NewGameServiceClient constructs a client for the api.v2.GameService service. By default, it uses
-// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewBattleServiceClient constructs a client for the api.v2.BattleService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GameServiceClient {
+func NewBattleServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) BattleServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	return &gameServiceClient{
+	return &battleServiceClient{
 		logs: connect.NewClient[v2.LogsRequest, v2.LogsResponse](
 			httpClient,
-			baseURL+GameServiceLogsProcedure,
-			connect.WithSchema(gameServiceLogsMethodDescriptor),
+			baseURL+BattleServiceLogsProcedure,
+			connect.WithSchema(battleServiceLogsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		deploy: connect.NewClient[v2.DeployRequest, v2.DeployResponse](
 			httpClient,
-			baseURL+GameServiceDeployProcedure,
-			connect.WithSchema(gameServiceDeployMethodDescriptor),
+			baseURL+BattleServiceDeployProcedure,
+			connect.WithSchema(battleServiceDeployMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		action: connect.NewClient[v2.ActionRequest, v2.ActionResponse](
 			httpClient,
-			baseURL+GameServiceActionProcedure,
-			connect.WithSchema(gameServiceActionMethodDescriptor),
+			baseURL+BattleServiceActionProcedure,
+			connect.WithSchema(battleServiceActionMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		wait: connect.NewClient[v2.WaitRequest, v2.WaitResponse](
 			httpClient,
-			baseURL+GameServiceWaitProcedure,
-			connect.WithSchema(gameServiceWaitMethodDescriptor),
+			baseURL+BattleServiceWaitProcedure,
+			connect.WithSchema(battleServiceWaitMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
-// gameServiceClient implements GameServiceClient.
-type gameServiceClient struct {
+// battleServiceClient implements BattleServiceClient.
+type battleServiceClient struct {
 	logs   *connect.Client[v2.LogsRequest, v2.LogsResponse]
 	deploy *connect.Client[v2.DeployRequest, v2.DeployResponse]
 	action *connect.Client[v2.ActionRequest, v2.ActionResponse]
 	wait   *connect.Client[v2.WaitRequest, v2.WaitResponse]
 }
 
-// Logs calls api.v2.GameService.Logs.
-func (c *gameServiceClient) Logs(ctx context.Context, req *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
+// Logs calls api.v2.BattleService.Logs.
+func (c *battleServiceClient) Logs(ctx context.Context, req *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
 	return c.logs.CallUnary(ctx, req)
 }
 
-// Deploy calls api.v2.GameService.Deploy.
-func (c *gameServiceClient) Deploy(ctx context.Context, req *connect.Request[v2.DeployRequest]) (*connect.Response[v2.DeployResponse], error) {
+// Deploy calls api.v2.BattleService.Deploy.
+func (c *battleServiceClient) Deploy(ctx context.Context, req *connect.Request[v2.DeployRequest]) (*connect.Response[v2.DeployResponse], error) {
 	return c.deploy.CallUnary(ctx, req)
 }
 
-// Action calls api.v2.GameService.Action.
-func (c *gameServiceClient) Action(ctx context.Context, req *connect.Request[v2.ActionRequest]) (*connect.Response[v2.ActionResponse], error) {
+// Action calls api.v2.BattleService.Action.
+func (c *battleServiceClient) Action(ctx context.Context, req *connect.Request[v2.ActionRequest]) (*connect.Response[v2.ActionResponse], error) {
 	return c.action.CallUnary(ctx, req)
 }
 
-// Wait calls api.v2.GameService.Wait.
-func (c *gameServiceClient) Wait(ctx context.Context, req *connect.Request[v2.WaitRequest]) (*connect.ServerStreamForClient[v2.WaitResponse], error) {
+// Wait calls api.v2.BattleService.Wait.
+func (c *battleServiceClient) Wait(ctx context.Context, req *connect.Request[v2.WaitRequest]) (*connect.ServerStreamForClient[v2.WaitResponse], error) {
 	return c.wait.CallServerStream(ctx, req)
 }
 
-// GameServiceHandler is an implementation of the api.v2.GameService service.
-type GameServiceHandler interface {
+// BattleServiceHandler is an implementation of the api.v2.BattleService service.
+type BattleServiceHandler interface {
 	// 行動履歴を取得する
 	Logs(context.Context, *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error)
 	// 初回の行動する
@@ -248,67 +248,67 @@ type GameServiceHandler interface {
 	Wait(context.Context, *connect.Request[v2.WaitRequest], *connect.ServerStream[v2.WaitResponse]) error
 }
 
-// NewGameServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
+// NewBattleServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	gameServiceLogsHandler := connect.NewUnaryHandler(
-		GameServiceLogsProcedure,
+func NewBattleServiceHandler(svc BattleServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	battleServiceLogsHandler := connect.NewUnaryHandler(
+		BattleServiceLogsProcedure,
 		svc.Logs,
-		connect.WithSchema(gameServiceLogsMethodDescriptor),
+		connect.WithSchema(battleServiceLogsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	gameServiceDeployHandler := connect.NewUnaryHandler(
-		GameServiceDeployProcedure,
+	battleServiceDeployHandler := connect.NewUnaryHandler(
+		BattleServiceDeployProcedure,
 		svc.Deploy,
-		connect.WithSchema(gameServiceDeployMethodDescriptor),
+		connect.WithSchema(battleServiceDeployMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	gameServiceActionHandler := connect.NewUnaryHandler(
-		GameServiceActionProcedure,
+	battleServiceActionHandler := connect.NewUnaryHandler(
+		BattleServiceActionProcedure,
 		svc.Action,
-		connect.WithSchema(gameServiceActionMethodDescriptor),
+		connect.WithSchema(battleServiceActionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	gameServiceWaitHandler := connect.NewServerStreamHandler(
-		GameServiceWaitProcedure,
+	battleServiceWaitHandler := connect.NewServerStreamHandler(
+		BattleServiceWaitProcedure,
 		svc.Wait,
-		connect.WithSchema(gameServiceWaitMethodDescriptor),
+		connect.WithSchema(battleServiceWaitMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/api.v2.GameService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/api.v2.BattleService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case GameServiceLogsProcedure:
-			gameServiceLogsHandler.ServeHTTP(w, r)
-		case GameServiceDeployProcedure:
-			gameServiceDeployHandler.ServeHTTP(w, r)
-		case GameServiceActionProcedure:
-			gameServiceActionHandler.ServeHTTP(w, r)
-		case GameServiceWaitProcedure:
-			gameServiceWaitHandler.ServeHTTP(w, r)
+		case BattleServiceLogsProcedure:
+			battleServiceLogsHandler.ServeHTTP(w, r)
+		case BattleServiceDeployProcedure:
+			battleServiceDeployHandler.ServeHTTP(w, r)
+		case BattleServiceActionProcedure:
+			battleServiceActionHandler.ServeHTTP(w, r)
+		case BattleServiceWaitProcedure:
+			battleServiceWaitHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 }
 
-// UnimplementedGameServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedGameServiceHandler struct{}
+// UnimplementedBattleServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedBattleServiceHandler struct{}
 
-func (UnimplementedGameServiceHandler) Logs(context.Context, *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.GameService.Logs is not implemented"))
+func (UnimplementedBattleServiceHandler) Logs(context.Context, *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.BattleService.Logs is not implemented"))
 }
 
-func (UnimplementedGameServiceHandler) Deploy(context.Context, *connect.Request[v2.DeployRequest]) (*connect.Response[v2.DeployResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.GameService.Deploy is not implemented"))
+func (UnimplementedBattleServiceHandler) Deploy(context.Context, *connect.Request[v2.DeployRequest]) (*connect.Response[v2.DeployResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.BattleService.Deploy is not implemented"))
 }
 
-func (UnimplementedGameServiceHandler) Action(context.Context, *connect.Request[v2.ActionRequest]) (*connect.Response[v2.ActionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.GameService.Action is not implemented"))
+func (UnimplementedBattleServiceHandler) Action(context.Context, *connect.Request[v2.ActionRequest]) (*connect.Response[v2.ActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.BattleService.Action is not implemented"))
 }
 
-func (UnimplementedGameServiceHandler) Wait(context.Context, *connect.Request[v2.WaitRequest], *connect.ServerStream[v2.WaitResponse]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.GameService.Wait is not implemented"))
+func (UnimplementedBattleServiceHandler) Wait(context.Context, *connect.Request[v2.WaitRequest], *connect.ServerStream[v2.WaitResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.BattleService.Wait is not implemented"))
 }
