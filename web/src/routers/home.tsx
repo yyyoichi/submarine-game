@@ -147,7 +147,11 @@ export async function action() {
     if (!playerId) {
       return;
     }
-    matchingClient.leave(new LeaveRequest());
+    matchingClient.leave(
+      new LeaveRequest({
+        playerId,
+      }),
+    );
   };
   window.addEventListener("beforeunload", leaveFromGame);
 
