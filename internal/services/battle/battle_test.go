@@ -425,7 +425,7 @@ func TestBattleService(t *testing.T) {
 				RequireDeployAction: false,
 				NumTurn:             1,
 				GameOver: &GameOver{
-					Winner: "2",
+					Winner: "1",
 					Reason: core.Timeout,
 				},
 				Actions: []LogAction{
@@ -488,14 +488,14 @@ func TestBattleService(t *testing.T) {
 				T:            core.MineTriggerAction,
 				Timestamp:    time.Now().Add(-time.Duration(1 * time.Minute)),
 			}, &GameOver{
-				Winner: "b",
+				Winner: "a",
 				Reason: core.Timeout,
 			}},
 		}
 		for _, tt := range test {
 			battle := BattleService{}
 			battle.init()
-			act := battle.gameOver(tt.input, "b")
+			act := battle.gameOver(tt.input)
 			if tt.exp == nil {
 				assert.Nil(t, act)
 			} else {

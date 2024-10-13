@@ -253,7 +253,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	}
 
 	// ゲーム終了判定
-	resp.GameOver = s.gameOver(&latest.Action, game.Enemy(latest.PlayerId))
+	resp.GameOver = s.gameOver(&latest.Action)
 
 	// 行動要求
 	if resp.GameOver != nil {
@@ -344,7 +344,7 @@ func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-c
 			if err != nil {
 				continue
 			}
-			if gemeOver := s.gameOver(&latest.Action, game.Enemy(latest.PlayerId)); gemeOver != nil {
+			if gemeOver := s.gameOver(&latest.Action); gemeOver != nil {
 				return
 			}
 			if latest.PlayerId != input.PlayerId {
@@ -407,7 +407,7 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 	return &prev.Action, &enemy.Action, nil
 }
 
-func (s *BattleService) gameOver(latest *core.Action, enemyIdOfLatest string) *GameOver {
+func (s *BattleService) gameOver(latest *core.Action) *GameOver {
 	if latest == nil {
 		return nil
 	}
@@ -422,7 +422,7 @@ func (s *BattleService) gameOver(latest *core.Action, enemyIdOfLatest string) *G
 		}
 	}
 	if time.Now().After(latest.Timestamp.Add(s.timeoutDuration)) {
-		resp.Winner = enemyIdOfLatest
+		resp.Winner = latest.PlayerId
 		resp.Reason = core.Timeout
 	}
 
