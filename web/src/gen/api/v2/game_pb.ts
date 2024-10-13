@@ -108,16 +108,16 @@ export enum ActionResult {
   /**
    * 命中
    *
-   * @generated from enum value: ACTION_RESULT_HIST = 5;
+   * @generated from enum value: ACTION_RESULT_HIT = 5;
    */
-  HIST = 5,
+  HIT = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ActionResult)
 proto3.util.setEnumType(ActionResult, "api.v2.ActionResult", [
   { no: 0, name: "ACTION_RESULT_UNSPECIFIED" },
   { no: 1, name: "ACTION_RESULT_FULL_SPEED_AHEAD" },
   { no: 2, name: "ACTION_RESULT_HARD_TO_STARBOARD" },
-  { no: 5, name: "ACTION_RESULT_HIST" },
+  { no: 5, name: "ACTION_RESULT_HIT" },
 ]);
 
 /**

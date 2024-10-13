@@ -116,7 +116,7 @@ func (h *V2Handler) Logs(ctx context.Context, req *connect.Request[v2.LogsReques
 		case core.HardToStarboard:
 			dist.Result = v2.ActionResult_ACTION_RESULT_HARD_TO_STARBOARD
 		case core.Hit:
-			dist.Result = v2.ActionResult_ACTION_RESULT_HIST
+			dist.Result = v2.ActionResult_ACTION_RESULT_HIT
 		default:
 			dist.Result = v2.ActionResult_ACTION_RESULT_UNSPECIFIED
 		}
