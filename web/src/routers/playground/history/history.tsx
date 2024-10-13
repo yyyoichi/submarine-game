@@ -8,7 +8,11 @@ import {
   Tr,
 } from "@chakra-ui/react";
 import { useLoaderData } from "react-router-dom";
-import { ActionType, type LogsResponse } from "../../../gen/api/v2/game_pb";
+import {
+  ActionResult,
+  ActionType,
+  type LogsResponse,
+} from "../../../gen/api/v2/game_pb";
 
 export function LogsComponent() {
   const logs = useLoaderData() as LogsResponse;
@@ -35,6 +39,17 @@ export function LogsComponent() {
         return "西";
     }
   };
+  const jpResult = (r?: ActionResult) => {
+    switch (r) {
+      case ActionResult.HIT:
+        return "\n>> 命中！";
+      case ActionResult.FULL_SPEED_AHEAD:
+        return "\n>> ヨーソロー";
+      case ActionResult.HARD_TO_STARBOARD:
+        return "\n>> 面舵一杯！";
+    }
+    return "";
+  };
   return (
     <TableContainer maxH={"100%"} overflowY={"auto"}>
       <Table variant="simple">
@@ -49,7 +64,10 @@ export function LogsComponent() {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <Tr key={i}>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {me && `海域${me.at}: ${jpType(me.type)}`}
+                {me &&
+                  (me.type === ActionType.MOVE
+                    ? `海域${me.to}: ${jpType(me.type)}`
+                    : `海域${me.at}: ${jpType(me.type)}${jpResult(me.result)}`)}
               </Td>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
                 {enemy &&
@@ -57,7 +75,7 @@ export function LogsComponent() {
                     ? `海域${enemy.at === -1 ? "?" : enemy.at}: ${jpType(enemy.type)}`
                     : enemy.type === ActionType.MOVE
                       ? `${jpDirection(enemy.direction)}方向: ${jpType(enemy.type)}`
-                      : `海域${enemy.to}: ${jpType(enemy.type)}`)}
+                      : `海域${enemy.to}: ${jpType(enemy.type)}${jpResult(enemy.result)}`)}
               </Td>
             </Tr>
           ))}
