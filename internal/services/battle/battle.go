@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/rand/v2"
 	"slices"
 	"time"
@@ -295,7 +294,6 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		return &resp, nil
 	}
 	sectors := game.SectorStatus(input.PlayerId, resp.Prev)
-	slog.Info("log", slog.Any("prev", resp.Prev), slog.String("playerId", input.PlayerId), slog.Any("sectors", sectors))
 	for sector, ss := range sectors {
 		acts := make([]core.ActionType, 0, len(ss))
 		for _, s := range ss {
