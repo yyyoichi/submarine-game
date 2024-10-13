@@ -205,7 +205,7 @@ export function GameComponent() {
                       setActionTypeSelection(ActionType.TRIGGER_MINE)
                     }
                   >
-                    機雷発動
+                    機雷作動
                   </Button>
                 )}
               </Flex>
