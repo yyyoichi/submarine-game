@@ -103,7 +103,7 @@ enum ActionType {
   ACTION_TYPE_UNSPECIFIED = 0;
   ACTION_TYPE_MOVE = 1; // 移動
   ACTION_TYPE_FIIRE_TORPEDO = 2; // 魚雷
-  ACTION_TYPE_TRIGGER_MINE = 5; // 制御水雷
+  ACTION_TYPE_TRIGGER_MINE = 3; // 制御水雷
 }
 
 enum GameOverReason {
