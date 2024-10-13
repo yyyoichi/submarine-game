@@ -17,11 +17,11 @@ type BattleService struct {
 	waitTickerDuration time.Duration
 }
 
-func New(store *store.Store) BattleService {
+func New(s *store.Store) *BattleService {
 	var battle BattleService
-	battle.Store = store
+	battle.Store = s
 	battle.init()
-	return battle
+	return &battle
 }
 
 func (s *BattleService) NewGame(gameId string, playerIds [2]string) error {

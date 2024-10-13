@@ -18,7 +18,9 @@ import (
 	"connectrpc.com/connect"
 	apiv1 "github.com/yyyoichi/submarine-game/internal/gen/api/v1"
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v1/apiv1connect"
+	"github.com/yyyoichi/submarine-game/internal/gen/api/v2/apiv2connect"
 	"github.com/yyyoichi/submarine-game/internal/handler"
+	"github.com/yyyoichi/submarine-game/internal/store"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -32,8 +34,15 @@ func main() {
 
 	rpc := http.NewServeMux()
 	rpc.Handle(apiv1connect.NewHelloServiceHandler(&Handler{}))
+	s, err := store.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	v2Handler := handler.NewV2(s)
 	gmHandler := handler.NewHandler(context.Background())
 	rpc.Handle(apiv1connect.NewGameServiceHandler(gmHandler))
+	rpc.Handle(apiv2connect.NewMatchingServiceHandler(&v2Handler))
+	rpc.Handle(apiv2connect.NewBattleServiceHandler(&v2Handler))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", notFoundHandler)

@@ -11,13 +11,21 @@ import (
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v2/apiv2connect"
 	"github.com/yyyoichi/submarine-game/internal/services/battle"
 	"github.com/yyyoichi/submarine-game/internal/services/matching"
+	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 type V2Handler struct {
-	matchingService matching.MatchingService
-	battleService   battle.BattleService
+	matchingService *matching.MatchingService
+	battleService   *battle.BattleService
 	apiv2connect.MatchingServiceHandler
-	apiv2connect.GameServiceHandler
+	apiv2connect.BattleServiceHandler
+}
+
+func NewV2(s *store.Store) V2Handler {
+	return V2Handler{
+		matchingService: matching.New(s),
+		battleService:   battle.New(s),
+	}
 }
 
 func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinRequest], stream *connect.ServerStream[v2.JoinResponse]) error {

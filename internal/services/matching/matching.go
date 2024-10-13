@@ -18,6 +18,13 @@ type MatchingService struct {
 	waitTickerDuration time.Duration
 }
 
+func New(s *store.Store) *MatchingService {
+	var matching MatchingService
+	matching.store = s
+	matching.init()
+	return &matching
+}
+
 func (s *MatchingService) Leave(playerId string) error {
 	s.init()
 	s.mu.Lock()
