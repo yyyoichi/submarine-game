@@ -1,4 +1,5 @@
 import {
+  Box,
   Container,
   Fade,
   Flex,
@@ -60,7 +61,20 @@ function Home() {
         <TabPanels>
           <TabPanel p={0}>
             <Fade in={logs.requireDeployAction}>
-              <StartingComponent />
+              <Flex
+                direction={"column"}
+                p={0}
+                py={2}
+                minH={"100svh"}
+                maxH={"100svh"}
+              >
+                <StartingComponent />
+                <Box mt={"auto"}>
+                  <ProgressBar
+                    callback={() => submit(null, { method: "DELETE" })}
+                  />
+                </Box>
+              </Flex>
             </Fade>
           </TabPanel>
           <TabPanel p={0}>
