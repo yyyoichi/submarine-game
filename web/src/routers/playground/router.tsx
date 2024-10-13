@@ -41,8 +41,11 @@ function Home() {
     if (logs.requireDeployAction) {
       return;
     }
+    if (logs.gameIsOver) {
+      return;
+    }
     submit(null, { method: "PATCH" });
-  }, [logs.requireAction, logs.requireDeployAction, submit]);
+  }, [logs.requireAction, logs.requireDeployAction, logs.gameIsOver, submit]);
 
   return (
     <Container>
