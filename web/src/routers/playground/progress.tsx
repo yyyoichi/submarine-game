@@ -20,6 +20,9 @@ export function ProgressBar(props: ProgressBarProps) {
     if (value === 0) {
       return;
     }
+    if (logs.gameIsOver) {
+      return;
+    }
     const id = setTimeout(() => {
       const v = calc();
       if (v === 0) {
@@ -28,7 +31,7 @@ export function ProgressBar(props: ProgressBarProps) {
       setValue(v);
     }, 100);
     return () => clearTimeout(id);
-  }, [calc, props.callback, value]);
+  }, [logs.gameIsOver, calc, props.callback, value]);
 
   return <Progress hasStripe color={"red.500"} value={value} />;
 }
