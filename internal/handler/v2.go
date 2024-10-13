@@ -40,6 +40,7 @@ func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinReques
 		return nil
 	}
 	tick := time.NewTicker(time.Duration(1 * time.Second))
+	defer tick.Stop()
 	ch := output.WaitMatching(ctx)
 	for {
 		select {
@@ -210,6 +211,7 @@ func (h *V2Handler) Wait(ctx context.Context, req *connect.Request[v2.WaitReques
 	}
 	resp := &v2.WaitResponse{}
 	tick := time.NewTicker(time.Duration(1 * time.Second))
+	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
