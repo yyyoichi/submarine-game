@@ -7,6 +7,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.3.1
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
+	github.com/yyyoichi/hookdb v0.0.1
 	golang.org/x/net v0.30.0
 	google.golang.org/protobuf v1.35.1
 )
@@ -19,6 +20,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

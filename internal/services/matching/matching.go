@@ -3,10 +3,12 @@ package matching
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/yyyoichi/hookdb"
 	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
@@ -15,6 +17,7 @@ type MatchingService struct {
 	mu         sync.Mutex
 
 	store              *store.Store
+	db                 hookdb.HookDB
 	waitTickerDuration time.Duration
 }
 
@@ -107,29 +110,133 @@ func (s *MatchingService) waitIsMe(playerId string) bool {
 	return s.waitPlayer == playerId
 }
 
+func (s *MatchingService) Leave(playerId string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.waitPlayer == playerId {
+		s.waitPlayer = ""
+		return nil
+	}
+	return s.db.RemoveHook([]byte(fmt.Sprintf("WP%s", playerId)))
+}
+
+func (s *MatchingService) Match(ctx context.Context, cancel func(error)) (string, <-chan string) {
+	s.init()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ch := make(chan string)
+	playerId := uuid.NewString()
+
+	k := fmt.Sprintf("WP%s", playerId)
+
+	if s.waitPlayer == "" {
+		s.waitPlayer = playerId
+		innerCh := make(chan string)
+
+		s.db.AppendHook([]byte(k), func(k, v []byte) (removeHook bool) {
+			select {
+			case <-ctx.Done():
+			default:
+				innerCh <- string(v)
+			}
+			return true
+		})
+		go func() {
+			defer close(ch)
+			defer close(innerCh)
+			select {
+			case <-ctx.Done():
+				s.mu.Lock()
+				defer s.mu.Unlock()
+				if playerId == s.waitPlayer {
+					s.waitPlayer = ""
+				}
+				_ = s.db.RemoveHook([]byte(fmt.Sprintf("WP%s", playerId)))
+				return
+			case gameId, ok := <-innerCh:
+				if !ok {
+					return
+				}
+				ch <- gameId
+			}
+		}()
+	} else {
+		gameId := uuid.NewString()
+		err := s.db.Put([]byte(fmt.Sprintf("WP%s", s.waitPlayer)), []byte(gameId))
+		if err != nil {
+			cancel(err)
+			close(ch)
+		} else {
+			s.waitPlayer = ""
+		}
+		go func() {
+			defer close(ch)
+			select {
+			case <-ctx.Done():
+			case ch <- gameId:
+			}
+		}()
+	}
+	return playerId, ch
+
+	// go func() {
+	// 	if s.waitPlayer == "" {
+	// 		s.waitPlayer = playerId
+	// 		s.db.AppendHook([]byte(fmt.Sprintf("WP%s", playerId)), func(k, v []byte) (removeHook bool) {
+	// 			defer close(ch)
+	// 			select {
+	// 			case <-ctx.Done():
+	// 				return true
+	// 			default:
+	// 				ch <- string(v)
+	// 			}
+	// 			return true
+	// 		})
+
+	// 		return
+	// 	}
+	// 	defer close(ch)
+	// 	// ユーザが見つかった場合
+	// 	gameId := uuid.NewString()
+	// 	// waitPlayerが検索できるようにゲーム情報を渡しておく。
+	// 	err := s.db.Put([]byte(fmt.Sprintf("WP%s", s.waitPlayer)), []byte(gameId))
+	// 	if err != nil {
+	// 		cancel(err)
+	// 		return
+	// 	}
+	// 	s.waitPlayer = ""
+	// 	ch <- gameId
+	// }()
+	// return playerId, ch
+}
+
 func (s *MatchingService) match(playerId string) (string, string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.waitPlayer == "" {
 		s.waitPlayer = playerId
+		s.db.AppendHook([]byte(fmt.Sprintf("WP%s", playerId)), func(k, v []byte) (removeHook bool) {
+
+			return true
+		})
 		return "", "", nil
 	}
 
 	gameId := uuid.NewString()
 	// waitPlayerが検索できるようにゲーム情報を渡しておく。
 	waitPlayer := s.waitPlayer
-	var models store.Models[matchModel]
-	models.Append(matchModel{
-		GameId:   gameId,
-		PlayerId: waitPlayer,
-		EnemyId:  playerId,
-	})
-	err := s.store.Set(&models)
+	tx := s.db.TransactionWithLock()
+	err := tx.Put([]byte(fmt.Sprintf("WP%s", waitPlayer)), []byte(gameId))
 	if err != nil {
+		tx.Rollback()
+		return "", "", err
+	}
+	if err = tx.Commit(); err != nil {
 		return "", "", err
 	}
 	s.waitPlayer = ""
-	return gameId, waitPlayer, err
+	return gameId, waitPlayer, nil
 }
 
 func (s *MatchingService) init() {
