@@ -130,7 +130,7 @@ func TestMatchingMatch(t *testing.T) {
 		assert.NoError(t, context.Cause(ctx))
 	})
 
-	t.Run("Reave", func(t *testing.T) {
+	t.Run("Leave", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, cancel := context.WithCancelCause(context.Background())
