@@ -10,48 +10,18 @@ import (
 	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
-// implements sotre.model
-type gameModel struct {
-	core.Game
-}
-
-func newGameModel(gameId string) gameModel {
-	return gameModel{Game: core.Game{GameId: gameId}}
-}
-
-func (m gameModel) Key() ([]byte, error) {
+func getGameModelKey(gameId string) ([]byte, error) {
 	var buf bytes.Buffer
 	_, err := buf.WriteString("G")
 	if err != nil {
 		return nil, err
 	}
 
-	err = store.WriteUUID(&buf, m.GameId)
+	err = store.WriteUUID(&buf, gameId)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func (m gameModel) PrefixKey() ([]byte, error) {
-	return m.Key()
-}
-
-func (gameModel) ParseKey(k []byte) (gameModel, error) {
-	var dist gameModel
-
-	r := bytes.NewReader(k)
-	_, err := r.ReadByte()
-	if err != nil {
-		return dist, err
-	}
-	dist.GameId, err = store.ReadUUID(r)
-	return dist, err
-}
-
-func (gameModel) Parse(v []byte) (dist gameModel, err error) {
-	err = json.Unmarshal(v, &dist)
-	return
 }
 
 // implements sotre.model
@@ -62,6 +32,30 @@ type actionModel struct {
 
 func newActionModel(gameId string) actionModel {
 	return actionModel{Action: core.Action{GameId: gameId}}
+}
+
+func getActionModelKey(gameId string, playerId string, timestamp time.Time) ([]byte, error) {
+	var buf bytes.Buffer
+	_, err := buf.WriteString("A")
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.WriteUUID(&buf, gameId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.WriteInt64(&buf, timestamp.UnixNano())
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.WriteUUID(&buf, playerId)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func (m actionModel) Key() ([]byte, error) {

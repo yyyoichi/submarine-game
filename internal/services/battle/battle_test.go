@@ -697,10 +697,10 @@ func TestRepository(t *testing.T) {
 		// get
 		dist, err = battle.getGame("1")
 		assert.NoError(t, err)
-		testEqualGame(t, want1, dist.Game)
+		testEqualGame(t, want1, *dist)
 		dist, err = battle.getGame("2")
 		assert.NoError(t, err)
-		testEqualGame(t, want2, dist.Game)
+		testEqualGame(t, want2, *dist)
 
 		// delete 1
 		err = battle.deleteGame("1")
@@ -709,7 +709,7 @@ func TestRepository(t *testing.T) {
 		assert.ErrorIs(t, err, ErrGameNotFound)
 		dist, err = battle.getGame("2")
 		assert.NoError(t, err)
-		testEqualGame(t, want2, dist.Game)
+		testEqualGame(t, want2, *dist)
 
 		// delete 2
 		err = battle.deleteGame("2")

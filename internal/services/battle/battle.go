@@ -2,18 +2,21 @@ package battle
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand/v2"
 	"slices"
 	"time"
 
+	"github.com/yyyoichi/hookdb"
 	"github.com/yyyoichi/submarine-game/internal/core"
 	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 type BattleService struct {
 	Store              *store.Store
+	db                 hookdb.HookDB
 	timeoutDuration    time.Duration
 	waitTickerDuration time.Duration
 }
@@ -114,7 +117,7 @@ func (s *BattleService) Move(ctx context.Context, input *ActionInput) error {
 	at := core.Sector(input.At)
 
 	me, _, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
-		Game:            game.Game,
+		Game:            *game,
 		PlayerId:        input.PlayerId,
 		ExpSectorStatus: core.CanMove,
 		At:              at,
@@ -149,7 +152,7 @@ func (s *BattleService) FireTorpedo(ctx context.Context, input *ActionInput) err
 	at := core.Sector(input.At)
 
 	me, enemy, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
-		Game:            game.Game,
+		Game:            *game,
 		PlayerId:        input.PlayerId,
 		ExpSectorStatus: core.CanFireTorpedo,
 		At:              at,
@@ -185,7 +188,7 @@ func (s *BattleService) TriggerMine(ctx context.Context, input *ActionInput) err
 	at := core.Sector(input.At)
 
 	me, enemy, err := s.GetValidPrevActions(ctx, &GetValidPrevActionsInput{
-		Game:            game.Game,
+		Game:            *game,
 		PlayerId:        input.PlayerId,
 		ExpSectorStatus: core.CanTriggerMine,
 		At:              at,
@@ -227,7 +230,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	}
 
 	var resp = GetLogsOutput{
-		Game:                game.Game,
+		Game:                *game,
 		NumTurn:             (len(actions) + 1) / 2,
 		TimeoutDurationMSec: s.timeoutDuration.Milliseconds(),
 		// exp SET
@@ -242,7 +245,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		}
 	}
 
-	resp.GameOver = s.gameIsOver(game.Game, actions)
+	resp.GameOver = s.gameIsOver(*game, actions)
 
 	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
 		// 行動がないか、あっても一つで相手の行動のみの場合
@@ -455,44 +458,75 @@ func (s *BattleService) gameOver(latest *core.Action) *GameOver {
 // 新しいゲームをセットする
 func (s *BattleService) setGame(game core.Game) error {
 	game.Timestamp = time.Now()
+	key, err := getGameModelKey(game.GameId)
+	if err != nil {
+		return fmt.Errorf("cannot get key from game model: %w", err)
+	}
+	v, err := json.Marshal(game)
+	if err != nil {
+		return fmt.Errorf("cannot marshal game model: %w", err)
+	}
 
-	var models store.Models[gameModel]
-	models.Append(gameModel{Game: game})
-	return s.Store.Set(&models)
+	err = s.db.Put(key, v)
+	if err != nil {
+		return fmt.Errorf("cannot put game model: %w", err)
+	}
+
+	return nil
 }
 
 // ゲームを取得する
-func (s *BattleService) getGame(gameId string) (*gameModel, error) {
-	var models store.Models[gameModel]
-	models.Append(newGameModel(gameId))
-	err := s.Store.Get(&models)
+func (s *BattleService) getGame(gameId string) (*core.Game, error) {
+	key, err := getGameModelKey(gameId)
 	if err != nil {
-		if errors.Is(err, store.ErrKeyNotFound) {
+		return nil, fmt.Errorf("cannot get key from game model: %w", err)
+	}
+	v, err := s.db.Get(key)
+	if err != nil {
+		if errors.Is(err, hookdb.ErrKeyNotFound) {
 			err = fmt.Errorf("%w: gameId[%s]: %w", ErrGameNotFound, gameId, err)
 		}
-		return nil, err
+		return nil, fmt.Errorf("cannot get game model: %w", err)
 	}
-	values := models.GetValues()
-	if len(values) == 0 {
-		return nil, fmt.Errorf("%w: gameId[%s]", ErrGameNotFound, gameId)
+	var output core.Game
+	err = json.Unmarshal(v, &output)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal game model: %w", err)
 	}
-	return &values[0], nil
+	return &output, nil
 }
 
 func (s *BattleService) deleteGame(gameId string) error {
-	var models store.Models[gameModel]
-	models.Append(newGameModel(gameId))
-	return s.Store.Delete(&models)
+	key, err := getGameModelKey(gameId)
+	if err != nil {
+		return fmt.Errorf("cannot get key from game model: %w", err)
+	}
+	err = s.db.Delete(key)
+	if err != nil {
+		if errors.Is(err, hookdb.ErrKeyNotFound) {
+			return fmt.Errorf("%w: gameId[%s]: %w", ErrGameNotFound, gameId, err)
+		}
+		return fmt.Errorf("cannot delete game model: %w", err)
+	}
+	return nil
 }
 
 // 行動を記録する
 func (s *BattleService) appendAction(action core.Action) error {
-	model := actionModel{Action: action}
-	model.Action.Timestamp = model.ReverseUnixNano.setTimestamp()
-
-	var models store.Models[actionModel]
-	models.Append(model)
-	return s.Store.Set(&models, store.WithTTL(time.Duration(time.Minute*30)))
+	action.Timestamp = time.Now()
+	key, err := getActionModelKey(action.GameId, action.PlayerId, action.Timestamp)
+	if err != nil {
+		return fmt.Errorf("cannot get key from action model: %w", err)
+	}
+	v, err := json.Marshal(action)
+	if err != nil {
+		return fmt.Errorf("cannot marshal action model: %w", err)
+	}
+	err = s.db.Put(key, v)
+	if err != nil {
+		return fmt.Errorf("cannot put action model: %w", err)
+	}
+	return nil
 }
 
 // 各プレイヤーの最後の行動を取得する
