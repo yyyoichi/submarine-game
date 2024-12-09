@@ -13,17 +13,10 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { ConnectError } from "@connectrpc/connect";
-import { useEffect, useState } from "react";
-import {
-  type ActionFunctionArgs,
-  Form,
-  redirect,
-  useNavigate,
-  useSearchParams,
-  useSubmit,
-} from "react-router-dom";
+import { useState } from "react";
+import { type ActionFunctionArgs, Form, redirect } from "react-router-dom";
 import { matchingClient } from "../api/connect";
-import { JoinRequest, WaitEnemyRequest } from "../gen/api/v2/game_pb";
+import { WaitEnemyRequest } from "../gen/api/v2/game_pb";
 
 const highlightStyle: SystemStyleObject = {
   textDecoration: "underline",
@@ -31,19 +24,7 @@ const highlightStyle: SystemStyleObject = {
   color: "white.500",
 };
 function Home() {
-  const [searchParam] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const submit = useSubmit();
-  const navigate = useNavigate();
-  useEffect(() => {
-    const playerId = searchParam.get("playerId");
-    if (playerId) {
-      navigate("/", { replace: true });
-      const formData = new FormData();
-      formData.append("playerId", playerId);
-      submit(formData, { method: "DELETE" });
-    }
-  }, [submit, searchParam, navigate]);
   return (
     <Container p={0}>
       <Heading
@@ -163,22 +144,9 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     switch (request.method) {
       case "POST": {
-        const resp = await matchingClient.join(new JoinRequest());
-        if (resp.gameId) {
-          return redirect(`/playground/${resp.gameId}/${resp.playerId}`);
-        }
-        return redirect(`/?playerId=${resp.playerId}`);
-      }
-      case "DELETE": {
-        const playerId =
-          (await request.formData()).get("playerId")?.toString() || "";
-        if (!playerId) return;
-        const stream = matchingClient.waitEnemy(
-          new WaitEnemyRequest({
-            playerId: playerId,
-          }),
-          { signal: request.signal },
-        );
+        const stream = matchingClient.waitEnemy(new WaitEnemyRequest(), {
+          signal: request.signal,
+        });
         for await (const resp of stream) {
           if (resp.gameId) {
             return redirect(`/playground/${resp.gameId}/${resp.playerId}`);

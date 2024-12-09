@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ActionRequest, ActionResponse, DeployRequest, DeployResponse, JoinRequest, JoinResponse, LogsRequest, LogsResponse, WaitEnemyRequest, WaitEnemyResponse, WaitRequest, WaitResponse } from "./game_pb.js";
+import { ActionRequest, ActionResponse, DeployRequest, DeployResponse, LogsRequest, LogsResponse, WaitEnemyRequest, WaitEnemyResponse, WaitRequest, WaitResponse } from "./game_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -12,17 +12,6 @@ import { MethodKind } from "@bufbuild/protobuf";
 export const MatchingService = {
   typeName: "api.v2.MatchingService",
   methods: {
-    /**
-     * 対戦する
-     *
-     * @generated from rpc api.v2.MatchingService.Join
-     */
-    join: {
-      name: "Join",
-      I: JoinRequest,
-      O: JoinResponse,
-      kind: MethodKind.Unary,
-    },
     /**
      * 対戦相手を待つ。signalキルで離脱する
      *

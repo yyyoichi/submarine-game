@@ -35,8 +35,6 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// MatchingServiceJoinProcedure is the fully-qualified name of the MatchingService's Join RPC.
-	MatchingServiceJoinProcedure = "/api.v2.MatchingService/Join"
 	// MatchingServiceWaitEnemyProcedure is the fully-qualified name of the MatchingService's WaitEnemy
 	// RPC.
 	MatchingServiceWaitEnemyProcedure = "/api.v2.MatchingService/WaitEnemy"
@@ -53,7 +51,6 @@ const (
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
 	matchingServiceServiceDescriptor         = v2.File_api_v2_game_proto.Services().ByName("MatchingService")
-	matchingServiceJoinMethodDescriptor      = matchingServiceServiceDescriptor.Methods().ByName("Join")
 	matchingServiceWaitEnemyMethodDescriptor = matchingServiceServiceDescriptor.Methods().ByName("WaitEnemy")
 	battleServiceServiceDescriptor           = v2.File_api_v2_game_proto.Services().ByName("BattleService")
 	battleServiceLogsMethodDescriptor        = battleServiceServiceDescriptor.Methods().ByName("Logs")
@@ -64,8 +61,6 @@ var (
 
 // MatchingServiceClient is a client for the api.v2.MatchingService service.
 type MatchingServiceClient interface {
-	// 対戦する
-	Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error)
 	// 対戦相手を待つ。signalキルで離脱する
 	WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest]) (*connect.ServerStreamForClient[v2.WaitEnemyResponse], error)
 }
@@ -80,12 +75,6 @@ type MatchingServiceClient interface {
 func NewMatchingServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) MatchingServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &matchingServiceClient{
-		join: connect.NewClient[v2.JoinRequest, v2.JoinResponse](
-			httpClient,
-			baseURL+MatchingServiceJoinProcedure,
-			connect.WithSchema(matchingServiceJoinMethodDescriptor),
-			connect.WithClientOptions(opts...),
-		),
 		waitEnemy: connect.NewClient[v2.WaitEnemyRequest, v2.WaitEnemyResponse](
 			httpClient,
 			baseURL+MatchingServiceWaitEnemyProcedure,
@@ -97,13 +86,7 @@ func NewMatchingServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 
 // matchingServiceClient implements MatchingServiceClient.
 type matchingServiceClient struct {
-	join      *connect.Client[v2.JoinRequest, v2.JoinResponse]
 	waitEnemy *connect.Client[v2.WaitEnemyRequest, v2.WaitEnemyResponse]
-}
-
-// Join calls api.v2.MatchingService.Join.
-func (c *matchingServiceClient) Join(ctx context.Context, req *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
-	return c.join.CallUnary(ctx, req)
 }
 
 // WaitEnemy calls api.v2.MatchingService.WaitEnemy.
@@ -113,8 +96,6 @@ func (c *matchingServiceClient) WaitEnemy(ctx context.Context, req *connect.Requ
 
 // MatchingServiceHandler is an implementation of the api.v2.MatchingService service.
 type MatchingServiceHandler interface {
-	// 対戦する
-	Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error)
 	// 対戦相手を待つ。signalキルで離脱する
 	WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest], *connect.ServerStream[v2.WaitEnemyResponse]) error
 }
@@ -125,12 +106,6 @@ type MatchingServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	matchingServiceJoinHandler := connect.NewUnaryHandler(
-		MatchingServiceJoinProcedure,
-		svc.Join,
-		connect.WithSchema(matchingServiceJoinMethodDescriptor),
-		connect.WithHandlerOptions(opts...),
-	)
 	matchingServiceWaitEnemyHandler := connect.NewServerStreamHandler(
 		MatchingServiceWaitEnemyProcedure,
 		svc.WaitEnemy,
@@ -139,8 +114,6 @@ func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.Handl
 	)
 	return "/api.v2.MatchingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case MatchingServiceJoinProcedure:
-			matchingServiceJoinHandler.ServeHTTP(w, r)
 		case MatchingServiceWaitEnemyProcedure:
 			matchingServiceWaitEnemyHandler.ServeHTTP(w, r)
 		default:
@@ -151,10 +124,6 @@ func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.Handl
 
 // UnimplementedMatchingServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedMatchingServiceHandler struct{}
-
-func (UnimplementedMatchingServiceHandler) Join(context.Context, *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.Join is not implemented"))
-}
 
 func (UnimplementedMatchingServiceHandler) WaitEnemy(context.Context, *connect.Request[v2.WaitEnemyRequest], *connect.ServerStream[v2.WaitEnemyResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v2.MatchingService.WaitEnemy is not implemented"))

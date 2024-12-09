@@ -121,88 +121,9 @@ proto3.util.setEnumType(ActionResult, "api.v2.ActionResult", [
 ]);
 
 /**
- * @generated from message api.v2.JoinRequest
- */
-export class JoinRequest extends Message<JoinRequest> {
-  constructor(data?: PartialMessage<JoinRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v2.JoinRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinRequest {
-    return new JoinRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JoinRequest {
-    return new JoinRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JoinRequest {
-    return new JoinRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: JoinRequest | PlainMessage<JoinRequest> | undefined, b: JoinRequest | PlainMessage<JoinRequest> | undefined): boolean {
-    return proto3.util.equals(JoinRequest, a, b);
-  }
-}
-
-/**
- * @generated from message api.v2.JoinResponse
- */
-export class JoinResponse extends Message<JoinResponse> {
-  /**
-   * @generated from field: string game_id = 1;
-   */
-  gameId = "";
-
-  /**
-   * @generated from field: string player_id = 2;
-   */
-  playerId = "";
-
-  constructor(data?: PartialMessage<JoinResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "api.v2.JoinResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "game_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): JoinResponse {
-    return new JoinResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): JoinResponse {
-    return new JoinResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): JoinResponse {
-    return new JoinResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: JoinResponse | PlainMessage<JoinResponse> | undefined, b: JoinResponse | PlainMessage<JoinResponse> | undefined): boolean {
-    return proto3.util.equals(JoinResponse, a, b);
-  }
-}
-
-/**
  * @generated from message api.v2.WaitEnemyRequest
  */
 export class WaitEnemyRequest extends Message<WaitEnemyRequest> {
-  /**
-   * @generated from field: string player_id = 1;
-   */
-  playerId = "";
-
   constructor(data?: PartialMessage<WaitEnemyRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -211,7 +132,6 @@ export class WaitEnemyRequest extends Message<WaitEnemyRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v2.WaitEnemyRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "player_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WaitEnemyRequest {
