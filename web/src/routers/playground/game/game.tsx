@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Flex,
+  Heading,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -13,7 +14,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
-import { Form, useLoaderData } from "react-router-dom";
+import { Form, Link, useLoaderData } from "react-router-dom";
 import {
   ActionType,
   GameOverReason,
@@ -117,6 +118,19 @@ export function GameComponent() {
             {gameMainText}
           </Text>
           <OceanMap {...oceanMapProps} />
+          {logs.gameIsOver && (
+            <Heading
+              as="h2"
+              size="sm"
+              pt={1}
+              fontFamily={"Train One"}
+              display={"inline-block"}
+              w={"full"}
+              textAlign={"end"}
+            >
+              <Link to="/">{"New Game ->"}</Link>
+            </Heading>
+          )}
         </VStack>
         <Box visibility={"hidden"}>
           <input
