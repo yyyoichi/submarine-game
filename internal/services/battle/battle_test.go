@@ -304,7 +304,7 @@ func TestBattleService(t *testing.T) {
 			err := tt.fn(ctx, &input)
 			assert.NoError(t, err)
 
-			latest, err := battle.getLatestAction(game.GameId)
+			latest, err := battle.getLatestAction(battle.db.DB, game.GameId)
 			assert.NoError(t, err)
 			// timestamp以外同一であることを確認する
 			assert.Equal(t, tt.exp.GameId, latest.GameId)
@@ -714,7 +714,7 @@ func TestRepository(t *testing.T) {
 	t.Run("Action", func(t *testing.T) {
 		var battle = New()
 
-		dist, err := battle.getLatestAction("a")
+		dist, err := battle.getLatestAction(battle.db.DB, "a")
 		assert.NoError(t, err)
 		assert.Nil(t, dist)
 		prevs, err := battle.getPrevActions("a")
@@ -738,7 +738,7 @@ func TestRepository(t *testing.T) {
 		err = battle.appendAction(want2)
 		assert.NoError(t, err)
 
-		dist, err = battle.getLatestAction("a")
+		dist, err = battle.getLatestAction(battle.db.DB, "a")
 		assert.NoError(t, err)
 		testEqualAction(t, want2, *dist)
 
@@ -774,7 +774,7 @@ func TestRepository(t *testing.T) {
 		}
 		err = battle.appendAction(want3)
 		assert.NoError(t, err)
-		dist, err = battle.getLatestAction("a")
+		dist, err = battle.getLatestAction(battle.db.DB, "a")
 		assert.NoError(t, err)
 		testEqualAction(t, want3, *dist)
 		dist, err = battle.getPrevAction("a", "1")

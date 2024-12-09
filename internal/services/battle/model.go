@@ -72,24 +72,24 @@ func writeUUID(w io.Writer, s string) error {
 	return err
 }
 
-func readUUID(r io.Reader) (string, error) {
-	var b = make([]byte, lenUUID)
-	_, err := r.Read(b)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes.Trim(b, "\x00")), nil
-}
+// func readUUID(r io.Reader) (string, error) {
+// 	var b = make([]byte, lenUUID)
+// 	_, err := r.Read(b)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return string(bytes.Trim(b, "\x00")), nil
+// }
 
 func writeInt64(w io.Writer, i int64) error {
 	return binary.Write(w, binary.BigEndian, uint64(i))
 }
 
-func readInt64(r io.Reader) (int64, error) {
-	var b = make([]byte, 8)
-	_, err := r.Read(b)
-	if err != nil {
-		return 0, err
-	}
-	return int64(binary.BigEndian.Uint64(b)), nil
-}
+// func readInt64(r io.Reader) (int64, error) {
+// 	var b = make([]byte, 8)
+// 	_, err := r.Read(b)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return int64(binary.BigEndian.Uint64(b)), nil
+// }

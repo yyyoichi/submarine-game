@@ -316,6 +316,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 }
 
 // 自分のターンまで待機する
+// err がある場合、必ずchanは送信されない。
 func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-chan struct{}, error) {
 	s.init()
 
@@ -331,28 +332,49 @@ func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-c
 		return nil, fmt.Errorf("%w: player[%s] is not found", ErrGameNotFound, input.PlayerId)
 	}
 
+	tx := s.db.TransactionWithLock()
+	rollback := func(err error) error {
+		if txe := tx.Rollback(); txe != nil {
+			err = fmt.Errorf("cannot rollback: %w: %w", txe, err)
+		}
+		return err
+	}
+	latest, err := s.getLatestAction(tx.DB, input.GameId)
+	if err != nil {
+		return nil, rollback(fmt.Errorf("cannot get latest action: %w", err))
+	}
+
+	if latest.PlayerId != input.PlayerId {
+		err := tx.Commit()
+		if err != nil {
+			return nil, rollback(fmt.Errorf("cannot commit: %w", err))
+		}
+		ch := make(chan struct{})
+		go func() {
+			close(ch)
+		}()
+		return ch, nil
+	}
+
+	// 自分の行動でない場合、相手の行動を待つ
+	prefix, err := getActionModelQueryKey(input.GameId)
+	if err != nil {
+		return nil, rollback(fmt.Errorf("cannot get key from action model: %w", err))
+	}
+	outputCh, err := tx.Subscribe(ctx, prefix, hookdb.WithOnceSubscription())
+	if err != nil {
+		return nil, rollback(fmt.Errorf("cannot subscribe: %w", err))
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, rollback(fmt.Errorf("cannot commit: %w", err))
+	}
+
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
-		tick := time.NewTicker(s.waitTickerDuration)
-		defer tick.Stop()
-
-		for {
-			latest, err := s.getLatestAction(input.GameId)
-			if err != nil {
-				continue
-			}
-			if gemeOver := s.gameOver(latest); gemeOver != nil {
-				return
-			}
-			if latest.PlayerId != input.PlayerId {
-				return
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case <-tick.C:
-			}
+		for range outputCh {
+			return
 		}
 	}()
 	return ch, nil
@@ -557,13 +579,13 @@ func (s *BattleService) getPrevActions(gameId string) (map[string]*core.Action, 
 }
 
 // ゲームの最後の行動を取得する
-func (s *BattleService) getLatestAction(gameId string) (*core.Action, error) {
+func (s *BattleService) getLatestAction(tx *hookdb.DB, gameId string) (*core.Action, error) {
 	prefix, err := getActionModelQueryKey(gameId)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get key from action model: %w", err)
 	}
 
-	for v, err := range s.db.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
+	for v, err := range tx.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot query action model: %w", err)
 		}
