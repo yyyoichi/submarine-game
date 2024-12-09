@@ -1,20 +1,22 @@
 import { Flex, Square, type SquareProps } from "@chakra-ui/react";
-import { CampStatus } from "../../../gen/api/v1/game_pb";
+import { ActionType } from "../../../gen/api/v2/game_pb";
 import {
-  IconBomb,
   IconLandscape,
   IconMine,
   IconMove,
   IconMyLocation,
+  IconTorpedo,
 } from "./icon";
 
-type CellProps = {
-  camp: number;
-  status: CampStatus[];
+type SectorProps = {
+  sector: number;
+  actions: ActionType[];
+  island: boolean;
+  isSelf: boolean;
   bg?: string;
 } & Pick<SquareProps, "onClick">;
 
-export function Cell(props: CellProps) {
+export function Sector(props: SectorProps) {
   const CellWrap = (sps: SquareProps) => {
     const p: SquareProps = {
       aspectRatio: 1,
@@ -28,14 +30,14 @@ export function Cell(props: CellProps) {
     return <Square {...p}>{sps.children}</Square>;
   };
 
-  if (props.status.includes(CampStatus.SUBMARINE)) {
+  if (props.isSelf) {
     return (
       <CellWrap>
         <IconMyLocation fill={"white.500"} width={"50%"} height={"50%"} />
       </CellWrap>
     );
   }
-  if (props.status.includes(CampStatus.ISLAND)) {
+  if (props.island) {
     return (
       <CellWrap>
         <IconLandscape fill={"white.500"} width={"50%"} height={"50%"} />
@@ -44,18 +46,16 @@ export function Cell(props: CellProps) {
   }
   return (
     <CellWrap>
-      {props.camp}
+      {props.sector}
       <Flex position={"absolute"} top={0} left={0} p={0} gap={0}>
-        {props.status.sort().map((s) => {
+        {props.actions.sort().map((s) => {
           switch (s) {
-            case CampStatus.MOVE:
+            case ActionType.MOVE:
               return <IconMove key={s} fill={"green.500"} />;
-            case CampStatus.BOMB:
-              return <IconBomb key={s} fill={"orange.500"} />;
-            case CampStatus.MINE:
+            case ActionType.FIIRE_TORPEDO:
+              return <IconTorpedo key={s} fill={"orange.500"} />;
+            case ActionType.TRIGGER_MINE:
               return <IconMine key={s} fill={"red.500"} />;
-            case CampStatus.PLACE:
-              return <IconMyLocation key={s} fill={"white.500"} />;
           }
         })}
       </Flex>

@@ -1,23 +1,5 @@
 import {
-  useLoaderData,
-  type LoaderFunctionArgs,
-  type ActionFunctionArgs,
-  useSubmit,
-} from "react-router-dom";
-import { getGameClient } from "../../api/connect";
-import {
-  ActionRequest,
-  ActionType,
-  HistoryRequest,
-  type HistoryResponse,
-  WaitRequest,
-  FirstActionRequest,
-} from "../../gen/api/v1/game_pb";
-import { ConnectError } from "@connectrpc/connect";
-import { useEffect } from "react";
-import { HistoryComponent } from "./history/history";
-import { StartingComponent } from "./start/start";
-import {
+  Box,
   Container,
   Fade,
   Flex,
@@ -28,24 +10,47 @@ import {
   Tabs,
   VisuallyHidden,
 } from "@chakra-ui/react";
+import { ConnectError } from "@connectrpc/connect";
+import { useEffect } from "react";
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  useLoaderData,
+  useSubmit,
+} from "react-router-dom";
+import { battleClient } from "../../api/connect";
+import {
+  ActionRequest,
+  DeployRequest,
+  LogsRequest,
+  type LogsResponse,
+  WaitRequest,
+} from "../../gen/api/v2/game_pb";
 import { GameComponent } from "./game/game";
+import { LogsComponent } from "./history/history";
 import { ProgressBar } from "./progress";
+import { StartingComponent } from "./start/start";
 
 function Home() {
-  const history = useLoaderData() as HistoryResponse;
-  const doneFirstAction = history.histories.length > 0;
+  const logs = useLoaderData() as LogsResponse;
 
   const submit = useSubmit();
   useEffect(() => {
-    if (history.myTurn) {
+    if (logs.requireAction) {
+      return;
+    }
+    if (logs.requireDeployAction) {
+      return;
+    }
+    if (logs.gameIsOver) {
       return;
     }
     submit(null, { method: "PATCH" });
-  }, [history.myTurn, submit]);
+  }, [logs.requireAction, logs.requireDeployAction, logs.gameIsOver, submit]);
 
   return (
     <Container>
-      <Tabs index={doneFirstAction ? 1 : 0} p={0}>
+      <Tabs index={logs.requireDeployAction ? 0 : 1} p={0}>
         <VisuallyHidden>
           <TabList>
             <Tab />
@@ -55,12 +60,7 @@ function Home() {
 
         <TabPanels>
           <TabPanel p={0}>
-            <Fade in={!doneFirstAction}>
-              <StartingComponent />
-            </Fade>
-          </TabPanel>
-          <TabPanel p={0}>
-            <Fade in={doneFirstAction}>
+            <Fade in={logs.requireDeployAction}>
               <Flex
                 direction={"column"}
                 p={0}
@@ -68,7 +68,25 @@ function Home() {
                 minH={"100svh"}
                 maxH={"100svh"}
               >
-                <HistoryComponent />
+                <StartingComponent />
+                <Box mt={"auto"}>
+                  <ProgressBar
+                    callback={() => submit(null, { method: "DELETE" })}
+                  />
+                </Box>
+              </Flex>
+            </Fade>
+          </TabPanel>
+          <TabPanel p={0}>
+            <Fade in={!logs.requireDeployAction}>
+              <Flex
+                direction={"column"}
+                p={0}
+                py={2}
+                minH={"100svh"}
+                maxH={"100svh"}
+              >
+                <LogsComponent />
                 <GameComponent />
                 <ProgressBar
                   callback={() => submit(null, { method: "DELETE" })}
@@ -83,16 +101,15 @@ function Home() {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { gameId, userId } = params;
-  const client = getGameClient();
+  const { gameId, playerId } = params;
   try {
-    const history = await client.history(
-      new HistoryRequest({
-        gameId: gameId ?? "",
-        userId: userId ?? "",
+    const logs = await battleClient.logs(
+      new LogsRequest({
+        gameId,
+        playerId,
       }),
     );
-    return history;
+    return logs;
   } catch (err) {
     const connectErr = new ConnectError(err as string);
     console.error(connectErr.message);
@@ -101,72 +118,56 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const { gameId, userId } = params;
+  const { gameId, playerId } = params;
 
   try {
     switch (request.method) {
       case "POST": {
         switch (formData.get("type")?.toString()) {
           case "first": {
-            const place = formData.get("place")?.toString();
+            const at = formData.get("at")?.toString();
             const [mine1, mine2] = formData
               .get("mines")
               ?.toString()
               .split(",") || ["0", "0"];
-            const req = new FirstActionRequest({
+            const req = new DeployRequest({
               gameId,
-              userId,
-              camp: Number(place),
-              mineCamps: [Number(mine1), Number(mine2)],
+              playerId,
+              at: Number(at),
+              mines: [Number(mine1), Number(mine2)],
             });
-            const clinet = getGameClient();
-            await clinet.firstAction(req, { signal: request.signal });
+            await battleClient.deploy(req, { signal: request.signal });
             break;
           }
           case "action": {
-            const place = formData.get("place")?.toString();
-            let actionType = ActionType.UNSPECIFIED;
+            const at = formData.get("at")?.toString();
             const strActionType = formData.get("act")?.toString();
-            if (strActionType === "1") {
-              actionType = ActionType.MOVE;
-            } else if (strActionType === "2") {
-              actionType = ActionType.BOMB;
-            } else if (strActionType === "5") {
-              actionType = ActionType.MINE;
-            }
+            const actionType = Number(strActionType);
             const req = new ActionRequest({
               type: actionType,
               gameId,
-              userId,
-              camp: Number(place),
+              playerId,
+              at: Number(at),
             });
-            const clinet = getGameClient();
-            await clinet.action(req, { signal: request.signal });
+            await battleClient.action(req, { signal: request.signal });
             break;
           }
         }
         break;
       }
       case "PATCH": {
-        const clinet = getGameClient();
         const req = new WaitRequest({
           gameId,
-          userId,
+          playerId,
         });
-        for await (const _ of clinet.wait(req, { signal: request.signal })) {
+        for await (const _ of battleClient.wait(req, {
+          signal: request.signal,
+        })) {
         }
         break;
       }
 
       case "DELETE": {
-        const clinet = getGameClient();
-        const req = new ActionRequest({
-          type: ActionType.LEAVE,
-          gameId,
-          userId,
-          camp: 0,
-        });
-        await clinet.action(req, { signal: request.signal });
         break;
       }
     }

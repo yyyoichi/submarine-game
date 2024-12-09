@@ -21,7 +21,8 @@
 		},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "v20.16"
-    }
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "postCreateCommand": "sh /workspaces/submarine-game/.devcontainer/init.sh",
   "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",

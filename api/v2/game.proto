@@ -1,0 +1,114 @@
+syntax = "proto3";
+// import "google/protobuf/timestamp.proto";
+
+package api.v2;
+option go_package = "github.com/yyyoichi/submarine-game/internal/gen/api/v2;apiv2";
+
+service MatchingService {
+  // 対戦相手を待つ。signalキルで離脱する
+  rpc WaitEnemy(WaitEnemyRequest) returns (stream WaitEnemyResponse) {}
+}
+
+message WaitEnemyRequest {
+}
+
+message WaitEnemyResponse {
+  string game_id = 1;
+  string player_id = 2;
+}
+
+service BattleService {
+  // 行動履歴を取得する
+  rpc Logs(LogsRequest) returns (LogsResponse) {}
+  // 初回の行動する
+  rpc Deploy(DeployRequest) returns (DeployResponse) {}
+  // 行動する
+  rpc Action(ActionRequest) returns (ActionResponse) {}
+  // 相手の行動を待機する
+  rpc Wait(WaitRequest) returns (stream WaitResponse) {}
+}
+
+
+message LogsRequest {
+  string game_id = 1;
+  string player_id = 2;
+}
+
+message LogsResponse {
+  message Action {
+    ActionType type = 1; // 行動内容
+    int32 at = 2; // 行動位置
+    int32 form = 3; // 行動起点
+    int32 to = 4; // 行動後位置
+    int32 direction = 5; // 行動方角
+    ActionResult result = 6; // 行動結果
+    int32 turn = 7; // ターン
+    bool me = 8; // 自身の行動か
+  }
+  message TurnAction {
+    Action me = 1;
+    Action enemy = 2;
+  }
+
+  message SectorStatus {
+    int32 sector = 1;
+    bool island = 2;
+    bool self_occupied = 3;
+    repeated ActionType enable_actions = 4;
+  }
+  bool require_action = 1; // 行動必要かどうか
+  bool require_deploy_action = 2; // 初回配置の行動が必要か
+  bool game_is_over = 3; // ゲームが終了しているか
+  GameOverReason game_over_reason = 4; // ゲーム終了理由
+  bool win = 5; // 勝利したか
+  int32 num_turn = 6; // 経過ターン数
+  int64 timeout = 7;// 行動期限
+  int64 mill_second_per_turn = 8; // 行動可能時間
+  int32 board_width = 9; // ボードの横幅
+  repeated TurnAction action_logs = 10;
+  repeated SectorStatus sectors = 11;
+}
+
+message DeployRequest {
+  string game_id = 1;
+  string player_id = 2;
+  uint32 at = 3; // 初回行動場所
+  repeated uint32 mines = 4; // 機雷敷設場所
+}
+message DeployResponse {}
+
+message ActionRequest {
+  string game_id = 1;
+  string player_id = 2;
+  uint32 at = 3; // 行動場所
+  ActionType type = 4; // 行動内容
+}
+message ActionResponse {}
+
+message WaitRequest {
+  string game_id = 1;
+  string player_id = 2;
+}
+
+message WaitResponse {}
+
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  ACTION_TYPE_MOVE = 1; // 移動
+  ACTION_TYPE_FIIRE_TORPEDO = 2; // 魚雷
+  ACTION_TYPE_TRIGGER_MINE = 3; // 制御水雷
+}
+
+enum GameOverReason {
+  GAME_OVER_REASON_UNSPECIFIED = 0;
+  GAME_OVER_REASON_TORPEDO_HIT = 1; // 魚雷命中
+  GAME_OVER_REASON_MINE_HIT = 2; // 機雷命中
+  GAME_OVER_REASON_TIMEOUT = 10; // 時間切れ
+}
+
+enum ActionResult {
+  ACTION_RESULT_UNSPECIFIED = 0;
+  ACTION_RESULT_FULL_SPEED_AHEAD = 1; // ヨーソロー
+  ACTION_RESULT_HARD_TO_STARBOARD = 2; // 面舵一杯
+  ACTION_RESULT_HIT = 5; // 命中
+}

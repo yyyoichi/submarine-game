@@ -1,12 +1,12 @@
-import React from "react";
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
+import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ErrorPage from "./routers/error";
 import Home, { action as homeAction } from "./routers/home";
 import Playground, {
-  loader as playgroundLoader,
   action as playgroundAction,
+  loader as playgroundLoader,
 } from "./routers/playground/router";
 
 const router = createBrowserRouter([
@@ -17,7 +17,7 @@ const router = createBrowserRouter([
     action: homeAction,
   },
   {
-    path: "playground/:gameId/:userId",
+    path: "playground/:gameId/:playerId",
     element: <Playground />,
     errorElement: <ErrorPage />,
     loader: playgroundLoader,

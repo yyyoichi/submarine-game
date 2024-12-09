@@ -1,30 +1,55 @@
 import {
-  TableContainer,
   Table,
-  Thead,
-  Tr,
-  Th,
+  TableContainer,
   Tbody,
   Td,
+  Th,
+  Thead,
+  Tr,
 } from "@chakra-ui/react";
 import { useLoaderData } from "react-router-dom";
-import type { HistoryResponse } from "../../../gen/api/v1/game_pb";
+import {
+  ActionResult,
+  ActionType,
+  type LogsResponse,
+} from "../../../gen/api/v2/game_pb";
 
-export function HistoryComponent() {
-  const history = useLoaderData() as HistoryResponse;
-  const histories = history.histories.sort((a, b) => a.turn - b.turn);
-  const histProps: { me: string; enemy: string }[] = [];
-  for (let i = 0; i < Math.round(histories.length / 2); i++) {
-    histProps.push({ me: "", enemy: "" });
-  }
-  for (const h of histories) {
-    const i = Math.floor((h.turn - 1) / 2);
-    if (h.userId !== "") {
-      histProps[i].me = `${h.description}${h.impact && `\n > ${h.impact}`}`;
-    } else {
-      histProps[i].enemy = h.description;
+export function LogsComponent() {
+  const logs = useLoaderData() as LogsResponse;
+  const jpType = (t?: ActionType) => {
+    switch (t) {
+      case ActionType.MOVE:
+        return "潜行";
+      case ActionType.FIIRE_TORPEDO:
+        return "魚雷攻撃";
+      case ActionType.TRIGGER_MINE:
+        return "機雷作動";
     }
-  }
+    return "潜行開始";
+  };
+  const jpDirection = (d?: number) => {
+    switch (d) {
+      case 0:
+        return "北";
+      case 1:
+        return "東";
+      case 2:
+        return "南";
+      case 3:
+        return "西";
+    }
+  };
+  const jpResult = (r?: ActionResult) => {
+    switch (r) {
+      case ActionResult.HIT:
+        return "\n>> 命中！";
+      case ActionResult.FULL_SPEED_AHEAD:
+        return "\n>> ヨーソロー";
+      case ActionResult.HARD_TO_STARBOARD:
+        return "\n>> 面舵一杯！";
+    }
+    return "";
+  };
   return (
     <TableContainer maxH={"100%"} overflowY={"auto"}>
       <Table variant="simple">
@@ -35,14 +60,22 @@ export function HistoryComponent() {
           </Tr>
         </Thead>
         <Tbody fontSize={"md"}>
-          {histProps.map((line, i) => (
+          {logs.actionLogs.map(({ me, enemy }, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <Tr key={i}>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {line.me}
+                {me &&
+                  (me.type === ActionType.MOVE
+                    ? `海域${me.to}: ${jpType(me.type)}`
+                    : `海域${me.at}: ${jpType(me.type)}${jpResult(me.result)}`)}
               </Td>
               <Td py={".5rem"} px={1} whiteSpace={"pre-line"}>
-                {line.enemy}
+                {enemy &&
+                  (enemy.turn === 0
+                    ? `海域${enemy.at === -1 ? "?" : enemy.at}: ${jpType(enemy.type)}`
+                    : enemy.type === ActionType.MOVE
+                      ? `${jpDirection(enemy.direction)}方向: ${jpType(enemy.type)}`
+                      : `海域${enemy.to}: ${jpType(enemy.type)}${jpResult(enemy.result)}`)}
               </Td>
             </Tr>
           ))}

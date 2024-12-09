@@ -1,34 +1,37 @@
-import { useState, useEffect } from "react";
-import { useLoaderData } from "react-router-dom";
-import type { HistoryResponse } from "../../gen/api/v1/game_pb";
 import { Progress } from "@chakra-ui/react";
+import { useCallback, useEffect, useState } from "react";
+import { useLoaderData } from "react-router-dom";
+import type { LogsResponse } from "../../gen/api/v2/game_pb";
 
 type ProgressBarProps = {
   callback: () => void;
 };
 export function ProgressBar(props: ProgressBarProps) {
-  const history = useLoaderData() as HistoryResponse;
-  const [timeLeft, setTimeLeft] = useState(
-    Number(history.timeout) - Date.now(),
-  );
+  const logs = useLoaderData() as LogsResponse;
+  const calc = useCallback(() => {
+    const r = Number(logs.timeout) - Date.now();
+    if (r < 0) {
+      return 0;
+    }
+    return (r / Number(logs.millSecondPerTurn)) * 100;
+  }, [logs.timeout, logs.millSecondPerTurn]);
+  const [value, setValue] = useState(calc());
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (history.winner !== "") {
-        return;
+    if (value === 0) {
+      return;
+    }
+    if (logs.gameIsOver) {
+      return;
+    }
+    const id = setTimeout(() => {
+      const v = calc();
+      if (v === 0) {
+        props.callback();
       }
-      const currentTime = Number(history.timeout) - Date.now();
-      setTimeLeft(currentTime);
-      if (currentTime > 0) return;
-      props.callback();
-    }, 100); // 毎秒更新
+      setValue(v);
+    }, 100);
+    return () => clearTimeout(id);
+  }, [logs.gameIsOver, calc, props.callback, value]);
 
-    return () => clearInterval(interval);
-  }, [history.timeout, history.winner, props.callback]);
-
-  return (
-    <Progress
-      hasStripe
-      value={0 < timeLeft ? (timeLeft / 1000 / 30) * 100 : 0}
-    />
-  );
+  return <Progress hasStripe color={"red.500"} value={value} />;
 }

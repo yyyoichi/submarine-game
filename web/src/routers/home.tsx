@@ -1,8 +1,4 @@
-import { useEffect, useState } from "react";
-import { Form, redirect } from "react-router-dom";
-import { getGameClient, leaveEffect } from "../api/connect";
-import { JoinRequest } from "../gen/api/v1/game_pb";
-import { ConnectError } from "@connectrpc/connect";
+import { ArrowRightIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -16,17 +12,19 @@ import {
   UnorderedList,
   VStack,
 } from "@chakra-ui/react";
-import { ArrowRightIcon } from "@chakra-ui/icons";
+import { ConnectError } from "@connectrpc/connect";
+import { useState } from "react";
+import { type ActionFunctionArgs, Form, redirect } from "react-router-dom";
+import { matchingClient } from "../api/connect";
+import { WaitEnemyRequest } from "../gen/api/v2/game_pb";
 
 const highlightStyle: SystemStyleObject = {
   textDecoration: "underline",
   fontWeight: "bold",
   color: "white.500",
 };
-
 function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  useEffect(leaveEffect, []);
   return (
     <Container p={0}>
       <Heading
@@ -142,15 +140,19 @@ function Home() {
   );
 }
 
-export async function action() {
+export async function action({ request }: ActionFunctionArgs) {
   try {
-    const client = getGameClient();
-    const stream = client.join(new JoinRequest());
-    for await (const resp of stream) {
-      if (resp.gameId === "") {
-        continue;
+    switch (request.method) {
+      case "POST": {
+        const stream = matchingClient.waitEnemy(new WaitEnemyRequest(), {
+          signal: request.signal,
+        });
+        for await (const resp of stream) {
+          if (resp.gameId) {
+            return redirect(`/playground/${resp.gameId}/${resp.playerId}`);
+          }
+        }
       }
-      return redirect(`/playground/${resp.gameId}/${resp.userId}`);
     }
   } catch (e) {
     if (e instanceof ConnectError) {
