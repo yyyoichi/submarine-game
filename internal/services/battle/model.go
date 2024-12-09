@@ -2,12 +2,9 @@ package battle
 
 import (
 	"bytes"
-	"encoding/json"
-	"math"
+	"encoding/binary"
+	"io"
 	"time"
-
-	"github.com/yyyoichi/submarine-game/internal/core"
-	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 func getGameModelKey(gameId string) ([]byte, error) {
@@ -17,21 +14,11 @@ func getGameModelKey(gameId string) ([]byte, error) {
 		return nil, err
 	}
 
-	err = store.WriteUUID(&buf, gameId)
+	err = writeUUID(&buf, gameId)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-// implements sotre.model
-type actionModel struct {
-	core.Action
-	ReverseUnixNano reverseUnixNano
-}
-
-func newActionModel(gameId string) actionModel {
-	return actionModel{Action: core.Action{GameId: gameId}}
 }
 
 func getActionModelKey(gameId string, playerId string, timestamp time.Time) ([]byte, error) {
@@ -41,106 +28,68 @@ func getActionModelKey(gameId string, playerId string, timestamp time.Time) ([]b
 		return nil, err
 	}
 
-	err = store.WriteUUID(&buf, gameId)
+	err = writeUUID(&buf, gameId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = store.WriteInt64(&buf, timestamp.UnixNano())
+	err = writeInt64(&buf, timestamp.UnixNano())
 	if err != nil {
 		return nil, err
 	}
 
-	err = store.WriteUUID(&buf, playerId)
+	err = writeUUID(&buf, playerId)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-func (m actionModel) Key() ([]byte, error) {
+func getActionModelQueryKey(gameId string) ([]byte, error) {
 	var buf bytes.Buffer
 	_, err := buf.WriteString("A")
 	if err != nil {
 		return nil, err
 	}
-
-	err = store.WriteUUID(&buf, m.GameId)
-	if err != nil {
-		return nil, err
-	}
-
-	err = store.WriteInt64(&buf, int64(m.ReverseUnixNano))
-	if err != nil {
-		return nil, err
-	}
-
-	err = store.WriteUUID(&buf, m.PlayerId)
+	err = writeUUID(&buf, gameId)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-func (m actionModel) PrefixKey() ([]byte, error) {
-	var buf bytes.Buffer
-	_, err := buf.WriteString("A")
-	if err != nil {
-		return nil, err
+var lenUUID = 36
+
+func writeUUID(w io.Writer, s string) error {
+	var b = make([]byte, lenUUID)
+	if lenUUID < len(s) {
+		// 末尾から書き込み
+		_ = copy(b, []byte(s)[len(s)-lenUUID:])
+	} else {
+		_ = copy(b, []byte(s))
 	}
-	err = store.WriteUUID(&buf, m.GameId)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+	_, err := w.Write(b)
+	return err
 }
 
-func (m actionModel) ParseKey(k []byte) (actionModel, error) {
-	var dist actionModel
-
-	r := bytes.NewReader(k)
-	_, err := r.ReadByte()
+func readUUID(r io.Reader) (string, error) {
+	var b = make([]byte, lenUUID)
+	_, err := r.Read(b)
 	if err != nil {
-		return dist, err
+		return "", err
 	}
-
-	dist.GameId, err = store.ReadUUID(r)
-	if err != nil {
-		return dist, err
-	}
-
-	reverse, err := store.ReadInt64(r)
-	if err != nil {
-		return dist, err
-	}
-	dist.ReverseUnixNano = reverseUnixNano(reverse)
-
-	dist.PlayerId, err = store.ReadUUID(r)
-	if err != nil {
-		return dist, err
-	}
-
-	return dist, nil
+	return string(bytes.Trim(b, "\x00")), nil
 }
 
-func (m actionModel) Parse(v []byte) (dist actionModel, err error) {
-	err = json.Unmarshal(v, &dist)
+func writeInt64(w io.Writer, i int64) error {
+	return binary.Write(w, binary.BigEndian, uint64(i))
+}
+
+func readInt64(r io.Reader) (int64, error) {
+	var b = make([]byte, 8)
+	_, err := r.Read(b)
 	if err != nil {
-		return
+		return 0, err
 	}
-	dist.Timestamp = dist.ReverseUnixNano.restore()
-	return
-}
-
-// NOTE badgerのReverseイテレーションができないので応急処置
-// MaxInt64から現在時刻を引いた行動時刻
-type reverseUnixNano int64
-
-func (u *reverseUnixNano) setTimestamp() time.Time {
-	now := time.Now()
-	*u = reverseUnixNano(math.MaxInt64 - now.UnixNano())
-	return now
-}
-func (u *reverseUnixNano) restore() time.Time {
-	return time.Unix(0, int64(math.MaxInt64-*u))
+	return int64(binary.BigEndian.Uint64(b)), nil
 }

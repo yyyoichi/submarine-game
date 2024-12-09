@@ -7,15 +7,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/yyyoichi/submarine-game/internal/core"
-	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 func TestBattleService(t *testing.T) {
 	ctx := context.Background()
-	store, err := store.New()
-	require.NoError(t, err)
 
 	t.Run("DeploySubmarineAndMines", func(t *testing.T) {
 		t.Parallel()
@@ -113,8 +109,8 @@ func TestBattleService(t *testing.T) {
 				ErrInvalidSector},
 		}
 		for _, tt := range test {
-			battle := BattleService{Store: store}
-			tt.preProcess(&battle)
+			var battle = New()
+			tt.preProcess(battle)
 			err := battle.DeploySubmarineAndMines(ctx, tt.input)
 			if tt.exp == nil {
 				assert.NoError(t, err)
@@ -220,8 +216,8 @@ func TestBattleService(t *testing.T) {
 				ErrInvalidActionType},
 		}
 		for _, tt := range test {
-			battle := BattleService{Store: store}
-			tt.preProcess(&battle)
+			var battle = New()
+			tt.preProcess(battle)
 			_, _, err := battle.GetValidPrevActions(ctx, tt.input)
 			if tt.exp == nil {
 				assert.NoError(t, err)
@@ -236,7 +232,7 @@ func TestBattleService(t *testing.T) {
 
 		ctx = context.Background()
 
-		battle := BattleService{Store: store}
+		var battle = New()
 		// 行動はいつも13に対して行われ、常に現在位置7に対して
 		// 魚雷機雷行動可能。
 		// 魚雷機雷攻撃の場合、相手は常に14にいるため面舵一杯となる。
@@ -311,13 +307,13 @@ func TestBattleService(t *testing.T) {
 			latest, err := battle.getLatestAction(game.GameId)
 			assert.NoError(t, err)
 			// timestamp以外同一であることを確認する
-			assert.Equal(t, tt.exp.GameId, latest.Action.GameId)
-			assert.Equal(t, tt.exp.PlayerId, latest.Action.PlayerId)
-			assert.Equal(t, tt.exp.ActionResult, latest.Action.ActionResult)
-			assert.Equal(t, tt.exp.At, latest.Action.At)
-			assert.Equal(t, tt.exp.To, latest.Action.To)
-			assert.Equal(t, tt.exp.T, latest.Action.T)
-			assert.Equal(t, tt.exp.Mines, latest.Action.Mines)
+			assert.Equal(t, tt.exp.GameId, latest.GameId)
+			assert.Equal(t, tt.exp.PlayerId, latest.PlayerId)
+			assert.Equal(t, tt.exp.ActionResult, latest.ActionResult)
+			assert.Equal(t, tt.exp.At, latest.At)
+			assert.Equal(t, tt.exp.To, latest.To)
+			assert.Equal(t, tt.exp.T, latest.T)
+			assert.Equal(t, tt.exp.Mines, latest.Mines)
 
 		}
 	})
@@ -440,8 +436,8 @@ func TestBattleService(t *testing.T) {
 			}},
 		}
 		for _, tt := range test {
-			battle := BattleService{Store: store}
-			tt.preProcess(&battle)
+			var battle = New()
+			tt.preProcess(battle)
 			output, err := battle.GetLogs(ctx, tt.input)
 			assert.Equal(t, tt.expErr, err)
 			if tt.expOutput == nil {
@@ -522,11 +518,9 @@ func TestBattleService(t *testing.T) {
 			gameId  = "PlayGame"
 			playerA = "playerA"
 			playerB = "playerB"
-			battle  = BattleService{
-				Store:              store,
-				waitTickerDuration: time.Duration(time.Millisecond * 2),
-			}
+			battle  = New()
 		)
+		battle.waitTickerDuration = time.Duration(time.Millisecond * 2)
 		battle.setGame(core.Game{
 			GameId:     gameId,
 			PlayerIds:  [2]string{playerA, playerB},
@@ -661,10 +655,7 @@ func TestBattleService(t *testing.T) {
 
 func TestRepository(t *testing.T) {
 	t.Run("Game", func(t *testing.T) {
-		var err error
-		battle := BattleService{}
-		battle.Store, err = store.New()
-		require.NoError(t, err)
+		var battle = New()
 
 		want1 := core.Game{
 			GameId:    "1",
@@ -684,7 +675,7 @@ func TestRepository(t *testing.T) {
 				"c": core.DefaultSubmarine,
 				"d": core.DefaultSubmarine,
 			}}
-		err = battle.setGame(want1)
+		err := battle.setGame(want1)
 		assert.NoError(t, err)
 		err = battle.setGame(want2)
 		assert.NoError(t, err)
@@ -721,10 +712,7 @@ func TestRepository(t *testing.T) {
 	})
 
 	t.Run("Action", func(t *testing.T) {
-		var err error
-		battle := BattleService{}
-		battle.Store, err = store.New()
-		require.NoError(t, err)
+		var battle = New()
 
 		dist, err := battle.getLatestAction("a")
 		assert.NoError(t, err)
@@ -752,27 +740,27 @@ func TestRepository(t *testing.T) {
 
 		dist, err = battle.getLatestAction("a")
 		assert.NoError(t, err)
-		testEqualAction(t, want2, dist.Action)
+		testEqualAction(t, want2, *dist)
 
 		dist, err = battle.getPrevAction("a", "2")
 		assert.NoError(t, err)
-		testEqualAction(t, want2, dist.Action)
+		testEqualAction(t, want2, *dist)
 
 		dist, err = battle.getPrevAction("a", "1")
 		assert.NoError(t, err)
-		testEqualAction(t, want1, dist.Action)
+		testEqualAction(t, want1, *dist)
 
 		prevs, err = battle.getPrevActions("a")
 		assert.Nil(t, err)
-		testEqualAction(t, want1, prevs["1"].Action)
-		testEqualAction(t, want2, prevs["2"].Action)
+		testEqualAction(t, want1, *prevs["1"])
+		testEqualAction(t, want2, *prevs["2"])
 
 		// 新しい順
 		actions, err := battle.getAllAction("a")
 		assert.NoError(t, err)
 		assert.Len(t, actions, 2)
-		testEqualAction(t, want2, actions[0].Action)
-		testEqualAction(t, want1, actions[1].Action)
+		testEqualAction(t, want2, actions[0])
+		testEqualAction(t, want1, actions[1])
 
 		want3 := core.Action{
 			GameId:       "a",
@@ -788,25 +776,25 @@ func TestRepository(t *testing.T) {
 		assert.NoError(t, err)
 		dist, err = battle.getLatestAction("a")
 		assert.NoError(t, err)
-		testEqualAction(t, want3, dist.Action)
+		testEqualAction(t, want3, *dist)
 		dist, err = battle.getPrevAction("a", "1")
 		assert.NoError(t, err)
-		testEqualAction(t, want3, dist.Action)
+		testEqualAction(t, want3, *dist)
 		dist, err = battle.getPrevAction("a", "2")
 		assert.NoError(t, err)
-		testEqualAction(t, want2, dist.Action)
+		testEqualAction(t, want2, *dist)
 		prevs, err = battle.getPrevActions("a")
 		assert.Nil(t, err)
-		testEqualAction(t, want3, prevs["1"].Action)
-		testEqualAction(t, want2, prevs["2"].Action)
+		testEqualAction(t, want3, *prevs["1"])
+		testEqualAction(t, want2, *prevs["2"])
 
 		// 新しい順
 		actions, err = battle.getAllAction("a")
 		assert.NoError(t, err)
 		assert.Len(t, actions, 3)
-		testEqualAction(t, want3, actions[0].Action)
-		testEqualAction(t, want2, actions[1].Action)
-		testEqualAction(t, want1, actions[2].Action)
+		testEqualAction(t, want3, actions[0])
+		testEqualAction(t, want2, actions[1])
+		testEqualAction(t, want1, actions[2])
 	})
 }
 

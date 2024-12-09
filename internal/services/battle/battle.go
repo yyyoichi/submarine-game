@@ -11,19 +11,16 @@ import (
 
 	"github.com/yyyoichi/hookdb"
 	"github.com/yyyoichi/submarine-game/internal/core"
-	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 type BattleService struct {
-	Store              *store.Store
-	db                 hookdb.HookDB
+	db                 *hookdb.HookDB
 	timeoutDuration    time.Duration
 	waitTickerDuration time.Duration
 }
 
-func New(s *store.Store) *BattleService {
+func New() *BattleService {
 	var battle BattleService
-	battle.Store = s
 	battle.init()
 	return &battle
 }
@@ -240,7 +237,7 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	// プレイヤの前回行動
 	for _, action := range actions {
 		if action.PlayerId == input.PlayerId {
-			resp.Prev = action.Action
+			resp.Prev = action
 			break
 		}
 	}
@@ -345,7 +342,7 @@ func (s *BattleService) WaitTurn(ctx context.Context, input *WaitTurnInput) (<-c
 			if err != nil {
 				continue
 			}
-			if gemeOver := s.gameOver(&latest.Action); gemeOver != nil {
+			if gemeOver := s.gameOver(latest); gemeOver != nil {
 				return
 			}
 			if latest.PlayerId != input.PlayerId {
@@ -400,15 +397,15 @@ func (s *BattleService) GetValidPrevActions(_ context.Context, input *GetValidPr
 	}
 
 	// セクターの利用可能ステータスの確認
-	enables := input.Game.SectorStatus(input.PlayerId, prev.Action, input.At)
+	enables := input.Game.SectorStatus(input.PlayerId, *prev, input.At)
 	status, found := enables[input.At]
 	if !found || !slices.Contains(status, input.ExpSectorStatus) {
 		return nil, nil, fmt.Errorf("%w: ", ErrInvalidActionType)
 	}
-	return &prev.Action, &enemy.Action, nil
+	return prev, enemy, nil
 }
 
-func (s *BattleService) gameIsOver(game core.Game, actions []actionModel) *GameOver {
+func (s *BattleService) gameIsOver(game core.Game, actions []core.Action) *GameOver {
 	var resp GameOver
 	switch l := len(actions); l {
 	case 0:
@@ -418,7 +415,7 @@ func (s *BattleService) gameIsOver(game core.Game, actions []actionModel) *GameO
 		}
 		return nil
 	case 1:
-		latest := actions[0].Action
+		latest := actions[0]
 		if time.Now().After(game.Timestamp.Add(s.timeoutDuration)) {
 			resp.Winner = latest.PlayerId
 			resp.Reason = core.Timeout
@@ -426,7 +423,7 @@ func (s *BattleService) gameIsOver(game core.Game, actions []actionModel) *GameO
 		}
 		return nil
 	}
-	return s.gameOver(&actions[0].Action)
+	return s.gameOver(&actions[0])
 }
 
 func (s *BattleService) gameOver(latest *core.Action) *GameOver {
@@ -530,95 +527,102 @@ func (s *BattleService) appendAction(action core.Action) error {
 }
 
 // 各プレイヤーの最後の行動を取得する
-func (s *BattleService) getPrevActions(gameId string) (map[string]*actionModel, error) {
-	var got = make(map[string]struct{}, 2)
-
-	var models store.Models[actionModel]
-	models.Append(newActionModel(gameId))
-	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
-		_, found := got[am.PlayerId]
-		if !found {
-			got[am.PlayerId] = struct{}{}
-			is = true
-		}
-		end = len(got) == 2
-		return
-	}
-	err := s.Store.Query(&models, store.WithReverse(false), store.WithPrefetchValues(false))
+func (s *BattleService) getPrevActions(gameId string) (map[string]*core.Action, error) {
+	var got = make(map[string]*core.Action, 2)
+	prefix, err := getActionModelQueryKey(gameId)
 	if err != nil {
-		if errors.Is(err, store.ErrKeyNotFound) {
-			return nil, nil
-		}
-		return nil, err
+		return nil, fmt.Errorf("cannot get key from action model: %w", err)
 	}
 
-	var resp = make(map[string]*actionModel, 2)
-	for _, v := range models.GetValues() {
-		resp[v.PlayerId] = &v
+	for v, err := range s.db.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
+		if err != nil {
+			if errors.Is(err, hookdb.ErrKeyNotFound) {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("cannot query action model: %w", err)
+		}
+		var action core.Action
+		err = json.Unmarshal(v, &action)
+		if err != nil {
+			return nil, fmt.Errorf("cannot unmarshal action model: %w", err)
+		}
+		if _, found := got[action.PlayerId]; !found {
+			got[action.PlayerId] = &action
+		}
+		if len(got) == 2 {
+			break
+		}
+	}
+	return got, nil
+}
+
+// ゲームの最後の行動を取得する
+func (s *BattleService) getLatestAction(gameId string) (*core.Action, error) {
+	prefix, err := getActionModelQueryKey(gameId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get key from action model: %w", err)
+	}
+
+	for v, err := range s.db.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
+		if err != nil {
+			return nil, fmt.Errorf("cannot query action model: %w", err)
+		}
+		var resp core.Action
+		err = json.Unmarshal(v, &resp)
+		if err != nil {
+			return nil, fmt.Errorf("cannot unmarshal action model: %w", err)
+		}
+		return &resp, nil
+	}
+	return nil, nil
+}
+
+// playerIdの最後の行動を取得する
+func (s *BattleService) getPrevAction(gameId, playerId string) (*core.Action, error) {
+	var resp *core.Action
+	prefix, err := getActionModelQueryKey(gameId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get key from action model: %w", err)
+	}
+
+	for v, err := range s.db.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
+		if err != nil {
+			return nil, fmt.Errorf("cannot query action model: %w", err)
+		}
+		var action core.Action
+		err = json.Unmarshal(v, &action)
+		if err != nil {
+			return nil, fmt.Errorf("cannot unmarshal action model: %w", err)
+		}
+		if action.PlayerId == playerId {
+			resp = &action
+			break
+		}
 	}
 	return resp, nil
 }
 
-// ゲームの最後の行動を取得する
-func (s *BattleService) getLatestAction(gameId string) (*actionModel, error) {
-	var models store.Models[actionModel]
-	models.Append(newActionModel(gameId))
-	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
-		return true, true
-	}
-	err := s.Store.Query(&models, store.WithReverse(false), store.WithPrefetchValues(false))
-	if err != nil {
-		if errors.Is(err, store.ErrKeyNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	values := models.GetValues()
-	if len(values) == 0 {
-		return nil, nil
-	}
-	return &values[0], nil
-}
-
-// playerIdの最後の行動を取得する
-func (s *BattleService) getPrevAction(gameId, playerId string) (*actionModel, error) {
-	var models store.Models[actionModel]
-	models.Append(newActionModel(gameId))
-	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
-		if am.PlayerId == playerId {
-			return true, true
-		}
-		return false, false
-	}
-	err := s.Store.Query(&models, store.WithReverse(false), store.WithPrefetchValues(true))
-	if err != nil {
-		if errors.Is(err, store.ErrKeyNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	values := models.GetValues()
-	if len(values) == 0 {
-		return nil, nil
-	}
-	return &values[0], nil
-}
-
 // 新しい順に行動を全件取得する。
-func (s *BattleService) getAllAction(gameId string) ([]actionModel, error) {
-	var models store.Models[actionModel]
-	models.Append(newActionModel(gameId))
-	models.IsQueryTarget = func(am actionModel) (is bool, end bool) {
-		return true, false
-	}
-	err := s.Store.Query(&models)
+func (s *BattleService) getAllAction(gameId string) ([]core.Action, error) {
+	var resp []core.Action
+	prefix, err := getActionModelQueryKey(gameId)
 	if err != nil {
-		if errors.Is(err, store.ErrKeyNotFound) {
-			return nil, nil
-		}
-		return nil, err
+		return nil, fmt.Errorf("cannot get key from action model: %w", err)
 	}
-	return models.GetValues(), nil
+
+	for v, err := range s.db.Query(context.Background(), prefix, hookdb.WithReverseQuery()) {
+		if err != nil {
+			return nil, fmt.Errorf("cannot query action model: %w", err)
+		}
+		resp = slices.Grow(resp, 1)
+		var action core.Action
+		err = json.Unmarshal(v, &action)
+		if err != nil {
+			return nil, fmt.Errorf("cannot unmarshal action model: %w", err)
+		}
+		resp = append(resp, action)
+	}
+	return resp, nil
 }
 
 func (s *BattleService) init() {
@@ -627,5 +631,8 @@ func (s *BattleService) init() {
 	}
 	if s.waitTickerDuration == 0 {
 		s.waitTickerDuration = time.Duration(time.Millisecond * 200)
+	}
+	if s.db == nil {
+		s.db = hookdb.New()
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v2/apiv2connect"
 	"github.com/yyyoichi/submarine-game/internal/services/battle"
 	"github.com/yyyoichi/submarine-game/internal/services/matching"
-	"github.com/yyyoichi/submarine-game/internal/store"
 )
 
 type V2Handler struct {
@@ -21,52 +20,37 @@ type V2Handler struct {
 	apiv2connect.BattleServiceHandler
 }
 
-func NewV2(s *store.Store) V2Handler {
+func NewV2() V2Handler {
 	return V2Handler{
-		matchingService: matching.New(s),
-		battleService:   battle.New(s),
+		matchingService: matching.New(),
+		battleService:   battle.New(),
 	}
-}
-
-func (h *V2Handler) Join(ctx context.Context, req *connect.Request[v2.JoinRequest]) (*connect.Response[v2.JoinResponse], error) {
-	output, err := h.matchingService.Join()
-	if err != nil {
-		return nil, err
-	}
-	resp := &v2.JoinResponse{
-		PlayerId: output.PlayerId,
-		GameId:   output.GameId,
-	}
-	if output.Matched {
-		err := h.battleService.NewGame(output.GameId, [2]string{output.EnemyId, output.PlayerId})
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &connect.Response[v2.JoinResponse]{
-		Msg: resp,
-	}, nil
 }
 
 func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitEnemyRequest], stream *connect.ServerStream[v2.WaitEnemyResponse]) error {
+	ctx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+	playerId, ch := h.matchingService.Match(ctx, cancel)
 	tick := time.NewTicker(time.Duration(1 * time.Second))
 	defer tick.Stop()
+
 	var resp = &v2.WaitEnemyResponse{
-		PlayerId: req.Msg.PlayerId,
+		PlayerId: playerId,
 	}
-	ch := h.matchingService.Wait(ctx, req.Msg.PlayerId)
 	for {
 		select {
 		case <-ctx.Done():
+			return nil
 		case <-tick.C:
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
-		case gameIdEnemyId := <-ch:
-			resp.GameId = gameIdEnemyId[0]
+		case gameId := <-ch:
+			resp.GameId = gameId
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
+			return nil
 		}
 	}
 }
