@@ -6,13 +6,21 @@
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2,
-    "ignore": ["**/gen/*"]
+    "ignore": [
+      "**/gen/*",
+      "**/dist/*",
+      "**/node_modules/*"
+    ]
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true
     },
-    "ignore": ["**/gen/*"]
+    "ignore": [
+      "**/gen/*",
+      "**/dist/*",
+      "**/node_modules/*"
+    ]
   }
 }
