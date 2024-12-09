@@ -3,6 +3,7 @@ package matching
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,31 +35,28 @@ func (s *MatchingService) Leave(playerId string) error {
 	return s.db.RemoveHook([]byte(fmt.Sprintf("WP%s", playerId)))
 }
 
-func (s *MatchingService) Match(ctx context.Context, cancel func(error)) (string, <-chan string) {
+type MatchOutput struct {
+	GameId   string
+	PlayerId string
+	EnemyId  string
+}
+
+func (s *MatchingService) Match(ctx context.Context) (<-chan MatchOutput, error) {
 	s.init()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	ch := make(chan string)
 	playerId := uuid.NewString()
-
-	k := fmt.Sprintf("WP%s", playerId)
 
 	if s.waitPlayer == "" {
 		s.waitPlayer = playerId
-		innerCh := make(chan string)
-
-		s.db.AppendHook([]byte(k), func(k, v []byte) (removeHook bool) {
-			select {
-			case <-ctx.Done():
-			default:
-				innerCh <- string(v)
-			}
-			return true
-		})
-		go func() {
+		output, err := s.db.Subscribe(ctx, []byte(fmt.Sprintf("WP%s", playerId)), hookdb.WithOnceSubscription())
+		if err != nil {
+			return nil, err
+		}
+		ch := make(chan MatchOutput)
+		go func(me string) {
 			defer close(ch)
-			defer close(innerCh)
 			select {
 			case <-ctx.Done():
 				s.mu.Lock()
@@ -68,31 +66,39 @@ func (s *MatchingService) Match(ctx context.Context, cancel func(error)) (string
 				}
 				_ = s.db.RemoveHook([]byte(fmt.Sprintf("WP%s", playerId)))
 				return
-			case gameId, ok := <-innerCh:
+			case v, ok := <-output:
 				if !ok {
 					return
 				}
-				ch <- gameId
+				vv := strings.Split(string(v), ",")
+				ch <- MatchOutput{
+					PlayerId: me,
+					GameId:   vv[0],
+					EnemyId:  vv[1],
+				}
 			}
-		}()
-	} else {
-		gameId := uuid.NewString()
-		err := s.db.Put([]byte(fmt.Sprintf("WP%s", s.waitPlayer)), []byte(gameId))
-		if err != nil {
-			cancel(err)
-			close(ch)
-		} else {
-			s.waitPlayer = ""
-		}
-		go func() {
-			defer close(ch)
-			select {
-			case <-ctx.Done():
-			case ch <- gameId:
-			}
-		}()
+		}(playerId)
+		return ch, nil
 	}
-	return playerId, ch
+	gameId := uuid.NewString()
+	key := []byte(fmt.Sprintf("WP%s", s.waitPlayer))
+	v := []byte(fmt.Sprintf("%s,%s", gameId, playerId))
+	err := s.db.Put(key, v)
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan MatchOutput)
+	go func(enemy string) {
+		defer close(ch)
+		ch <- MatchOutput{
+			GameId:   gameId,
+			PlayerId: playerId,
+			EnemyId:  enemy,
+		}
+	}(s.waitPlayer)
+	s.waitPlayer = ""
+	return ch, nil
 
 }
 

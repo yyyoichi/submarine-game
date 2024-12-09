@@ -30,16 +30,17 @@ func TestMatchingMatch(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					playerId, gameIdCh := m.Match(ctx, cancel)
+					out, err := m.Match(ctx)
+					assert.NoError(t, err)
 					select {
 					case <-ctx.Done():
 						return
-					case gameId, ok := <-gameIdCh:
+					case v, ok := <-out:
 						if !ok {
 							return
 						}
-						assert.NotEmpty(t, gameId)
-						gamePalyerCh <- [2]string{gameId, playerId}
+						assert.NotEmpty(t, v)
+						gamePalyerCh <- [2]string{v.GameId, v.PlayerId}
 					}
 				}()
 			}
@@ -67,21 +68,18 @@ func TestMatchingMatch(t *testing.T) {
 
 	t.Run("Leave", func(t *testing.T) {
 		t.Parallel()
-
-		ctx, cancel := context.WithCancelCause(context.Background())
-		defer cancel(nil)
-
 		m := MatchingService{
 			db: hookdb.New(),
 		}
-		timeCtx, timecancel := context.WithTimeout(ctx, time.Millisecond*1)
+		timeCtx, timecancel := context.WithTimeout(context.Background(), time.Millisecond*1)
 		defer timecancel()
 
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
 			// タイムアウトでキャンセルされる
-			_, ch := m.Match(timeCtx, cancel)
+			ch, err := m.Match(timeCtx)
+			assert.NoError(t, err)
 			_, ok := <-ch
 			assert.False(t, ok)
 		}()

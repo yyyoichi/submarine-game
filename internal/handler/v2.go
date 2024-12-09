@@ -28,15 +28,14 @@ func NewV2() V2Handler {
 }
 
 func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitEnemyRequest], stream *connect.ServerStream[v2.WaitEnemyResponse]) error {
-	ctx, cancel := context.WithCancelCause(ctx)
-	defer cancel(nil)
-	playerId, ch := h.matchingService.Match(ctx, cancel)
+	ch, err := h.matchingService.Match(ctx)
+	if err != nil {
+		return err
+	}
 	tick := time.NewTicker(time.Duration(1 * time.Second))
 	defer tick.Stop()
 
-	var resp = &v2.WaitEnemyResponse{
-		PlayerId: playerId,
-	}
+	var resp = &v2.WaitEnemyResponse{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -45,12 +44,13 @@ func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitE
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
-		case gameId := <-ch:
-			resp.GameId = gameId
+		case out := <-ch:
+			resp.GameId = out.GameId
+			resp.PlayerId = out.PlayerId
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
-			return nil
+			return h.battleService.NewGame(out.GameId, [2]string{out.PlayerId, out.EnemyId})
 		}
 	}
 }
