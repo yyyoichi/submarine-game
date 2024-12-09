@@ -520,7 +520,6 @@ func TestBattleService(t *testing.T) {
 			playerB = "playerB"
 			battle  = New()
 		)
-		battle.waitTickerDuration = time.Duration(time.Millisecond * 2)
 		battle.setGame(core.Game{
 			GameId:     gameId,
 			PlayerIds:  [2]string{playerA, playerB},

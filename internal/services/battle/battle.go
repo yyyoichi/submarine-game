@@ -14,9 +14,8 @@ import (
 )
 
 type BattleService struct {
-	db                 *hookdb.HookDB
-	timeoutDuration    time.Duration
-	waitTickerDuration time.Duration
+	db              *hookdb.HookDB
+	timeoutDuration time.Duration
 }
 
 func New() *BattleService {
@@ -650,9 +649,6 @@ func (s *BattleService) getAllAction(gameId string) ([]core.Action, error) {
 func (s *BattleService) init() {
 	if s.timeoutDuration == 0 {
 		s.timeoutDuration = time.Duration(time.Second*30 + time.Millisecond*500)
-	}
-	if s.waitTickerDuration == 0 {
-		s.waitTickerDuration = time.Duration(time.Millisecond * 200)
 	}
 	if s.db == nil {
 		s.db = hookdb.New()

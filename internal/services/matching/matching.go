@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/yyyoichi/hookdb"
@@ -15,8 +14,7 @@ type MatchingService struct {
 	waitPlayer string
 	mu         sync.Mutex
 
-	db                 *hookdb.HookDB
-	waitTickerDuration time.Duration
+	db *hookdb.HookDB
 }
 
 func New() *MatchingService {
@@ -103,9 +101,6 @@ func (s *MatchingService) Match(ctx context.Context) (<-chan MatchOutput, error)
 }
 
 func (s *MatchingService) init() {
-	if s.waitTickerDuration == 0 {
-		s.waitTickerDuration = time.Duration(time.Millisecond * 200)
-	}
 	if s.db == nil {
 		s.db = hookdb.New()
 	}
