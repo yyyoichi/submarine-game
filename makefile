@@ -18,3 +18,15 @@ deploy:
 login:
 	gcloud auth login
 
+dev: build
+	@echo "🏗️  Building WebAssembly"
+	@echo "🚀 Running Server"
+	@go run cmd/app/main.go
+
+build:
+	env GOOS=js GOARCH=wasm go build -o cmd/app/public/dist/game.wasm cmd/screen/main.go
+
+initwasm:
+	cp $(shell go env GOROOT)/misc/wasm/wasm_exec.js cmd/app/public/dist/
+
+
