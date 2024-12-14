@@ -18,3 +18,8 @@ curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor 
 echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 sudo apt-get update && sudo apt-get install google-cloud-cli -y
 
+# install for ebitengine
+
+sudo apt install -y gcc
+sudo apt install -y libc6-dev libgl1-mesa-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
+
