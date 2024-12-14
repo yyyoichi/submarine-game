@@ -1,20 +1,22 @@
 package state
 
 type Options[T any] struct {
-	InitialValue    *T            // default new(T)
-	SetValidateFunc func(T) error // defult return nil
+	InitialValue    *T            // default new(T). set at first time only
+	SetValidateFunc func(T) error // defult return nil. set at first time only
 }
 
-func (o *Options[T]) getInitialValue() *T {
+// return pointer of T
+func (o *Options[T]) getInitialValue() any {
 	if o.InitialValue != nil {
 		return o.InitialValue
 	}
 	return new(T)
 }
 
-func (o *Options[T]) valid(v T) error {
+// validate v
+func (o *Options[T]) valid(v any) error {
 	if o.SetValidateFunc != nil {
-		return o.SetValidateFunc(v)
+		return o.SetValidateFunc(v.(T))
 	}
 	return nil
 }

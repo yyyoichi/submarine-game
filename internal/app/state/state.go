@@ -11,11 +11,17 @@ type (
 	}
 	storeData struct {
 		mu    sync.Mutex
-		value any
+		valid func(v any) error
+		value any // must pointer
 	}
 )
 
-func (s *store) putStateKey(key string, initValue any) {
+type initConfig interface {
+	getInitialValue() any // must return pointer
+	valid(v any) error    // recieve non-pointer
+}
+
+func (s *store) putStateKey(key string, config initConfig) {
 	s.mu.RLock()
 	if _, found := s.states[key]; found {
 		s.mu.RUnlock()
@@ -25,6 +31,7 @@ func (s *store) putStateKey(key string, initValue any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.states[key] = &storeData{
-		value: initValue,
+		value: config.getInitialValue(),
+		valid: config.valid,
 	}
 }

@@ -42,4 +42,31 @@ func TestState(t *testing.T) {
 		assert.Equal(t, 23, u.age)
 		assert.Equal(t, u, u2)
 	})
+
+	t.Run("Test UseGlobalState with validate", func(t *testing.T) {
+		u, setUser := UseGlobalState[user](
+			"test-validate",
+			WithSetValidateFunc(func(u user) error {
+				if u.age < 20 {
+					return assert.AnError
+				}
+				return nil
+			}),
+			WithInitialValue(user{"taro", 20}),
+		)
+		assert.Equal(t, 20, u.age)
+		err := setUser(user{"taro", 19})
+		assert.ErrorIs(t, err, assert.AnError)
+
+		u, setUser = UseGlobalState[user](
+			"test-validate",
+			WithSetValidateFunc(func(u user) error {
+				return assert.AnError
+			}),
+			WithInitialValue(user{"taro", 100}),
+		)
+		// set only once at first time
+		assert.NoError(t, setUser(user{"taro", 21}))
+		assert.Equal(t, 21, u.age)
+	})
 }

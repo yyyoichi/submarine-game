@@ -10,13 +10,13 @@ func UseGlobalState[T any](key string, opts ...OptionFunc[T]) (*T, SetStateFunc[
 		_ = opt(&o)
 	}
 
-	statesStore.putStateKey(key, o.getInitialValue())
+	statesStore.putStateKey(key, &o)
 	d := statesStore.states[key]
 	p := d.value.(*T)
 	return p, func(v T) error {
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		err := o.valid(v)
+		err := d.valid(v)
 		if err != nil {
 			return err
 		}
