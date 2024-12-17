@@ -24,9 +24,9 @@ dev: build
 	@go run cmd/app/main.go
 
 build:
-	env GOOS=js GOARCH=wasm go build -o cmd/app/public/dist/game.wasm cmd/screen/main.go
+	env GOOS=js GOARCH=wasm go build -o internal/app/public/dist/game.wasm cmd/screen/main.go
 
 initwasm:
-	cp $(shell go env GOROOT)/misc/wasm/wasm_exec.js cmd/app/public/dist/
+	cp $(shell go env GOROOT)/misc/wasm/wasm_exec.js internal/app/public/dist/
 
 
