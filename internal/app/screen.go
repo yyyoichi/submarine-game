@@ -40,9 +40,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		H:      6,
 		P:      8,
 	}
-	m.ClearOceanMap()
-	m.IsLand(2)
-	m.IsLand(10)
+	m.ClearOceanMap(2, 10)
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(10, 200)

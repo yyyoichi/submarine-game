@@ -18,7 +18,6 @@ var (
 const (
 	path_maptile_umi_01         = "assets/maptile_umi_01.png"
 	path_maptile_ranga_black_02 = "assets/maptile_renga_black_02.png"
-	path_maptile_numa           = "assets/maptile_numa.png"
 )
 
 func getFillImageParams(width, height float64, path string) iter.Seq2[*ebiten.Image, *ebiten.DrawImageOptions] {

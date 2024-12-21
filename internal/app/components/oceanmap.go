@@ -3,6 +3,7 @@ package components
 import (
 	"image/color"
 	"iter"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -17,7 +18,7 @@ type OceanMap struct {
 	fillW, fillH float64 // セクタのFillの幅、高さ
 }
 
-func (m *OceanMap) ClearOceanMap() {
+func (m *OceanMap) ClearOceanMap(islands ...int) {
 	//全辺のパディング1/2を除いたのがセクタのサイズ
 	m.sectW, m.sectH = (m.Width-m.P)/float64(m.W), (m.Height-m.P)/float64(m.H)
 	m.fillW, m.fillH = m.sectW-m.P, m.sectH-m.P
@@ -31,21 +32,14 @@ func (m *OceanMap) ClearOceanMap() {
 	white := ebiten.NewImage(int(m.fillW), int(m.fillH))
 	white.Fill(color.White) // 重なった部分を透過するだけなので何色でもいい。
 	for sector := range m.generateSector() {
+		if slices.Contains(islands, sector) {
+			continue
+		}
 		op := &ebiten.DrawImageOptions{}
 		m.applayTxTy(op, sector)
 		op.Blend = ebiten.BlendDestinationOut
 		m.Src.DrawImage(white, op)
 	}
-}
-
-func (m *OceanMap) IsLand(sector int) {
-	island := ebiten.NewImage(int(m.fillW), int(m.fillH))
-	for img, op := range getFillImageParams(m.fillW, m.fillH, path_maptile_numa) {
-		island.DrawImage(img, op)
-	}
-	op := &ebiten.DrawImageOptions{}
-	m.applayTxTy(op, sector)
-	m.Src.DrawImage(island, op)
 }
 
 func (m *OceanMap) applayTxTy(op *ebiten.DrawImageOptions, sector int) {
