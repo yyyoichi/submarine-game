@@ -14,13 +14,13 @@ type OceanMap struct {
 	Src           *ebiten.Image // (Width, Height)の画像
 
 	sectW, sectH float64 // セクタの幅、高さ
-	fillW, fillH int     // セクタのFillの幅、高さ
+	fillW, fillH float64 // セクタのFillの幅、高さ
 }
 
 func (m *OceanMap) ClearOceanMap() {
 	//全辺のパディング1/2を除いたのがセクタのサイズ
 	m.sectW, m.sectH = (m.Width-m.P)/float64(m.W), (m.Height-m.P)/float64(m.H)
-	m.fillW, m.fillH = int(m.sectW-m.P), int(m.sectH-m.P)
+	m.fillW, m.fillH = m.sectW-m.P, m.sectH-m.P
 
 	// scrを黒いブロック画像で埋める
 	m.Src = ebiten.NewImage(int(m.Width), int(m.Height))
@@ -28,7 +28,7 @@ func (m *OceanMap) ClearOceanMap() {
 		m.Src.DrawImage(img, op)
 	}
 	// 各セクターごとにBlendして穴を開ける。
-	white := ebiten.NewImage(m.fillW, m.fillH)
+	white := ebiten.NewImage(int(m.fillW), int(m.fillH))
 	white.Fill(color.White) // 重なった部分を透過するだけなので何色でもいい。
 	for sector := range m.generateSector() {
 		op := &ebiten.DrawImageOptions{}
@@ -39,11 +39,13 @@ func (m *OceanMap) ClearOceanMap() {
 }
 
 func (m *OceanMap) IsLand(sector int) {
-	img := ebiten.NewImage(m.fillW, m.fillH)
-	img.Fill(color.White)
+	island := ebiten.NewImage(int(m.fillW), int(m.fillH))
+	for img, op := range getFillImageParams(m.fillW, m.fillH, path_maptile_numa) {
+		island.DrawImage(img, op)
+	}
 	op := &ebiten.DrawImageOptions{}
 	m.applayTxTy(op, sector)
-	m.Src.DrawImage(img, op)
+	m.Src.DrawImage(island, op)
 }
 
 func (m *OceanMap) applayTxTy(op *ebiten.DrawImageOptions, sector int) {
