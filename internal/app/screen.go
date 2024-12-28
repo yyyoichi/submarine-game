@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	screenWidth  = 430
-	screenHeight = 930
+	screenWidth  = 1280
+	screenHeight = 720
 )
 
 type Game struct {
@@ -34,8 +34,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(img, options)
 	}
 	m := components.OceanMap{
-		Width:  screenWidth - 20,
-		Height: screenWidth - 20,
+		Width:  screenHeight - 20,
+		Height: screenHeight - 20,
 		W:      6,
 		H:      6,
 		P:      8,
@@ -43,7 +43,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	m.ClearOceanMap(2, 10)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(10, 200)
+	op.GeoM.Translate(10, 10)
 	screen.DrawImage(m.Src, op)
 }
 
