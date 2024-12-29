@@ -10,7 +10,7 @@ import (
 func main() {
 	ebiten.SetWindowTitle("Hello, World!!")
 	ebiten.SetTPS(1)
-	if err := ebiten.RunGame(&app.Game{}); err != nil {
+	if err := ebiten.RunGame(app.New()); err != nil {
 		log.Fatal(err)
 	}
 }

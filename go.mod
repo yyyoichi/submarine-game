@@ -5,7 +5,8 @@ go 1.23.1
 require (
 	connectrpc.com/connect v1.17.0
 	github.com/google/uuid v1.6.0
-	github.com/hajimehoshi/ebiten/v2 v2.8.5
+	github.com/hajimehoshi/ebiten/v2 v2.8.6
+	github.com/qmuntal/stateless v1.7.1
 	github.com/stretchr/testify v1.9.0
 	github.com/yyyoichi/hookdb v0.0.2
 	golang.org/x/net v0.30.0
