@@ -2,10 +2,12 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/qmuntal/stateless"
+	"github.com/yyyoichi/submarine-game/internal/app/animation"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
 )
 
@@ -27,6 +29,12 @@ const (
 	Init Trigger = "Init"
 )
 
+var fadeAni = animation.Animation{
+	TPS:          60,
+	ByPercentage: [][2]float32{{0, 0}, {0.1, 1}, {0.8, 1}, {1, 0}},
+	Duration:     time.Duration(time.Millisecond * 1200),
+}
+
 type Game struct {
 	state *stateless.StateMachine
 	count int
@@ -40,13 +48,17 @@ func New() *Game {
 }
 
 func (g *Game) Update() error {
+	if g.count%(60*4) == 0 {
+		fadeAni.Clear()
+	}
 	g.count++
-	if g.count%10 == 0 {
+	if g.count/60%10 == 0 {
 		g.state.Fire(Play, GamePlay)
 	}
-	if g.count%10 == 5 {
+	if g.count/60%10 == 5 {
 		g.state.Fire(Init, GameStart)
 	}
+	fadeAni.Update()
 	return nil
 }
 
@@ -62,11 +74,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		P:      8,
 	}
 
-	m.ClearOceanMap(2, g.count%(6*6))
+	m.ClearOceanMap(2, g.count/60%(6*6))
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(10, 10)
 	screen.DrawImage(m.Src, op)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("count: %d, state: %s", g.count, g.state.String()))
+
+	sf := components.FullScreen{
+		Width:  screenWidth,
+		Height: screenHeight,
+		Fade:   fadeAni.Value,
+	}
+	sf.Clear()
+	sf.Draw(sf.Templete())
+	screen.DrawImage(sf.Src, nil)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
