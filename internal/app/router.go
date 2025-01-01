@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -22,6 +23,10 @@ func Route(mux *http.ServeMux) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.Handle("/", http.FileServer(http.FS(public)))
+	if os.Getenv("ENV") == "local" {
+		mux.Handle("/", http.FileServer(http.Dir("/workspaces/submarine-game/internal/app/public")))
+	} else {
+		mux.Handle("/", http.FileServer(http.FS(public)))
+	}
 	mux.Handle("/api/", api)
 }
