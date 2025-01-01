@@ -1,14 +1,19 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
+	"image/color"
+	"log"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/qmuntal/stateless"
 	"github.com/yyyoichi/submarine-game/internal/app/animation"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
+	"github.com/yyyoichi/submarine-game/internal/app/fonts"
 )
 
 const (
@@ -29,10 +34,27 @@ const (
 	Init Trigger = "Init"
 )
 
-var fadeAni = animation.Animation{
-	TPS:          60,
-	ByPercentage: [][2]float32{{0, 0}, {0.1, 1}, {0.8, 1}, {1, 0}},
-	Duration:     time.Duration(time.Millisecond * 1200),
+var (
+	fadeAni = animation.Animation{
+		TPS:          60,
+		ByPercentage: [][2]float32{{0, 0}, {0.1, 1}, {0.8, 1}, {1, 0}},
+		Duration:     time.Duration(time.Millisecond * 1200),
+	}
+	swipAni = animation.Animation{
+		TPS:          60,
+		ByPercentage: [][2]float32{{0, -10}, {1, 0}},
+		Duration:     time.Duration(time.Millisecond * 300),
+	}
+)
+
+var titleFontSource *text.GoTextFaceSource
+
+func init() {
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.TrainOneRegular))
+	if err != nil {
+		log.Fatal(err)
+	}
+	titleFontSource = s
 }
 
 type Game struct {
@@ -50,6 +72,7 @@ func New() *Game {
 func (g *Game) Update() error {
 	if g.count%(60*4) == 0 {
 		fadeAni.Clear()
+		swipAni.Clear()
 	}
 	g.count++
 	if g.count/60%10 == 0 {
@@ -59,6 +82,7 @@ func (g *Game) Update() error {
 		g.state.Fire(Init, GameStart)
 	}
 	fadeAni.Update()
+	swipAni.Update()
 	return nil
 }
 
@@ -86,7 +110,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		Fade:   fadeAni.Value,
 	}
 	sf.Clear()
-	sf.Draw(sf.Templete())
+	img := sf.Templete()
+	{
+		op := &text.DrawOptions{}
+		op.GeoM.Translate(20, float64(swipAni.Value()))
+		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 255, uint8(255 * fadeAni.Value())})
+		text.Draw(img, "相手のターン", &text.GoTextFace{
+			Source: titleFontSource,
+			Size:   48,
+		}, op)
+	}
+	sf.Draw(img)
 	screen.DrawImage(sf.Src, nil)
 }
 
