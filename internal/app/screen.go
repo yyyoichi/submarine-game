@@ -7,11 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/qmuntal/stateless"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
-)
-
-const (
-	screenWidth  = 1280
-	screenHeight = 720
+	"github.com/yyyoichi/submarine-game/internal/app/config"
 )
 
 type (
@@ -57,12 +53,12 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for img, options := range components.BackgoundImage(screenWidth, screenHeight) {
+	for img, options := range components.BackgoundImage(float64(config.ScreenWidth), float64(config.ScreenHeight)) {
 		screen.DrawImage(img, options)
 	}
 	m := components.OceanMap{
-		Width:  screenHeight - 20,
-		Height: screenHeight - 20,
+		Width:  float64(config.ScreenWidth) - 20,
+		Height: float64(config.ScreenHeight) - 20,
 		W:      6,
 		H:      6,
 		P:      8,
@@ -78,11 +74,5 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
-}
-
-func Draw(screen *ebiten.Image) {
-	for img, options := range components.BackgoundImage(screenWidth, screenHeight) {
-		screen.DrawImage(img, options)
-	}
+	return config.ScreenWidth, config.ScreenHeight
 }
