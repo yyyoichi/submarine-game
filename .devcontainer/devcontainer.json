@@ -10,15 +10,15 @@
       "target": "/workspaces/submarine-game/web/node_modules"
     },
     {
-			"type": "bind",
-			"source": "${localEnv:HOME}/.ssh",
-			"target": "/root/.ssh"
-		}
+      "type": "bind",
+      "source": "${localEnv:HOME}/.ssh",
+      "target": "/root/.ssh"
+    }
   ],
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
-			"version": "1.23.1"
-		},
+      "version": "1.23.1"
+    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "v20.16"
     },
@@ -38,5 +38,8 @@
     "PORT": "8080",
     "ENV": "local"
   },
-  "forwardPorts": [8085]
+  "forwardPorts": [
+    8085
+  ],
+  "remoteUser": "root"
 }
