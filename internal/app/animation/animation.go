@@ -31,6 +31,9 @@ func (a *Animation) Zero() {
 }
 
 func (a *Animation) Value() float32 {
+	if len(a.ByPercentage) == 0 {
+		return 0
+	}
 	for i := range len(a.ByPercentage) - 1 {
 		current := a.ByPercentage[i]
 		next := a.ByPercentage[i+1]
@@ -47,6 +50,9 @@ func (a *Animation) Value() float32 {
 
 // 現在のパーセンテージを取得する
 func (a *Animation) nowPercentage() float32 {
+	if a.Duration == 0 {
+		return 0
+	}
 	sub := time.Since(a.itime)
 	return float32(sub) / float32(a.Duration)
 }
