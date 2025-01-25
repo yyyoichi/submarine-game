@@ -57,7 +57,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(img, options)
 	}
 	m := components.OceanMap{
-		Width:  float64(config.ScreenWidth) - 20,
+		Width:  float64(config.ScreenHeight) - 20,
 		Height: float64(config.ScreenHeight) - 20,
 		W:      6,
 		H:      6,
