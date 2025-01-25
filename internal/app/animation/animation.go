@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+var (
+	DefaultFade = func() *Animation {
+		return &Animation{
+			ByPercentage: [][2]float32{{0, 0}, {0.1, 1}, {0.8, 1}, {1, 0}},
+			Duration:     time.Duration(time.Millisecond * 1200),
+		}
+	}
+)
+
 type Animation struct {
 	itime time.Time // 初期化時間
 	// レンダリング設定。[0]がパーセンテージ、[1]が値。0と1パーセンテージは必須。
@@ -15,6 +24,10 @@ type Animation struct {
 
 func (a *Animation) Clear() {
 	a.itime = time.Now()
+}
+
+func (a *Animation) Zero() {
+	a.itime = time.Now().Add(-a.Duration)
 }
 
 func (a *Animation) Value() float32 {

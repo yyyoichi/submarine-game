@@ -23,31 +23,39 @@ const (
 	Init Trigger = "Init"
 )
 
-var tc = components.TrunChanging{}
-
 type Game struct {
-	state *stateless.StateMachine
-	count int
+	state   *stateless.StateMachine
+	count   int
+	overlay *components.Overlay
 }
 
 func New() *Game {
 	state := stateless.NewStateMachine(GameStart)
 	state.Configure(GameStart).Permit(Play, GamePlay)
 	state.Configure(GamePlay).Permit(Init, GameStart)
-	return &Game{state: state}
+
+	o := components.SimpleTrunOverlay(components.SimpleTrunOverlayConfig{
+		TrunTextConfig: components.TrunTextConfig{IsMe: true},
+	})
+	o.Zero()
+
+	return &Game{state: state, overlay: o}
 }
 
 func (g *Game) Update() error {
-	if g.count%(60*4) == 0 {
-		tc.Clear(g.count/(60*4)%2 == 0)
+	if g.count%120 == 1 {
+		g.overlay = components.SimpleTrunOverlay(components.SimpleTrunOverlayConfig{
+			TrunTextConfig: components.TrunTextConfig{IsMe: true},
+		})
+		g.overlay.Clear()
+	}
+	if g.count%120 == 61 {
+		g.overlay = components.SimpleTrunOverlay(components.SimpleTrunOverlayConfig{
+			TrunTextConfig: components.TrunTextConfig{IsMe: false},
+		})
+		g.overlay.Clear()
 	}
 	g.count++
-	if g.count/60%10 == 0 {
-		g.state.Fire(Play, GamePlay)
-	}
-	if g.count/60%10 == 5 {
-		g.state.Fire(Init, GameStart)
-	}
 	return nil
 }
 
@@ -69,7 +77,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(m.Src, op)
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("count: %d, state: %s", g.count, g.state.String()))
 
-	screen.DrawImage(tc.Image(), nil)
+	screen.DrawImage(g.overlay.Image(), g.overlay.DrawImageOptions())
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
