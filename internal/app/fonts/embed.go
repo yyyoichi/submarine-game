@@ -10,14 +10,22 @@ import (
 
 var (
 	//go:embed TrainOne-Regular.ttf
-	trainOneRegular       []byte
-	TrainOneRegularSource *text.GoTextFaceSource
+	trainOneRegular []byte
+	//go:embed DotGothic16-Regular.ttf
+	dotGothic16Regular       []byte
+	TrainOneRegularSource    *text.GoTextFaceSource
+	DotGothic16RegularSource *text.GoTextFaceSource
 )
 
-func init() {
-	s, err := text.NewGoTextFaceSource(bytes.NewReader(trainOneRegular))
+func new(ttf []byte) *text.GoTextFaceSource {
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(ttf))
 	if err != nil {
 		log.Fatal(err)
 	}
-	TrainOneRegularSource = s
+	return s
+}
+
+func init() {
+	TrainOneRegularSource = new(trainOneRegular)
+	DotGothic16RegularSource = new(dotGothic16Regular)
 }
