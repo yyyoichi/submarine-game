@@ -1,17 +1,16 @@
 package gameinit
 
 import (
-	"fmt"
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
 	"github.com/yyyoichi/submarine-game/internal/app/config"
 )
 
 type sectorScreen struct {
 	demo *components.Overlay
+	cw   *components.CommandWindow
+
+	count int
 }
 
 func NewSec() *sectorScreen {
@@ -28,23 +27,27 @@ func newSectorScreen() *sectorScreen {
 	o := components.SimpleLeadOverlay(components.SimpleLeadOverlayConfig{
 		LeadText: "作戦開始海域の選定",
 	})
+	cw := components.NewCommandWindow("機雷", "魚雷", "潜航")
+	cw.Clear()
 	o.Clear()
 	return &sectorScreen{
 		demo: o,
+		cw:   cw,
 	}
 }
 
 func (s *sectorScreen) Update() error {
+	s.count++
+	if s.count%100 == 0 {
+		s.cw.Up()
+	}
 	return nil
 }
 
 func (s *sectorScreen) Draw(screen *ebiten.Image) {
-	img := ebiten.NewImage(100, 100)
-	img.Fill(color.RGBA{0, 0, 0, 0xff})
-	op := s.demo.DrawImageOptions()
 	screen.DrawImage(s.demo.Image(), s.demo.DrawImageOptions())
-	screen.DrawImage(img, nil)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("op: %v", op.ColorScale))
+
+	screen.DrawImage(s.cw.Image(), nil)
 }
 
 func (s *sectorScreen) Layout(outsideWidth, outsideHeight int) (int, int) {
