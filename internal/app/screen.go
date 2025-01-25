@@ -48,7 +48,6 @@ func (g *Game) Update() error {
 	if g.count/60%10 == 5 {
 		g.state.Fire(Init, GameStart)
 	}
-	tc.Update()
 	return nil
 }
 

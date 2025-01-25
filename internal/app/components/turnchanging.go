@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
@@ -12,12 +13,10 @@ import (
 )
 
 var fade = &animation.Animation{
-	TPS:          float32(config.TPS),
 	ByPercentage: [][2]float32{{0, 0}, {0.1, 1}, {0.8, 1}, {1, 0}},
 	Duration:     time.Duration(time.Millisecond * 1200),
 }
 var textAnime = &animation.Animation{
-	TPS:          float32(config.TPS),
 	ByPercentage: [][2]float32{{0, -10}, {1, 0}},
 	Duration:     time.Duration(time.Millisecond * 300),
 }
@@ -30,11 +29,6 @@ func (tc *TrunChanging) Clear(isMe bool) {
 	fade.Clear()
 	textAnime.Clear()
 	tc.isMe = isMe
-}
-
-func (tc *TrunChanging) Update() {
-	fade.Update()
-	textAnime.Update()
 }
 
 func (tc *TrunChanging) Image() *ebiten.Image {
@@ -61,4 +55,8 @@ func (tc *TrunChanging) Image() *ebiten.Image {
 		sf.Draw(img)
 	}
 	return sf.Src
+}
+
+func (tc *TrunChanging) Value() string {
+	return fmt.Sprintf("TurnChanging{isMe: %v, fade: %s, textAnim}", tc.isMe, fade.String(), textAnime.String())
 }

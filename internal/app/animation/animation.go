@@ -1,18 +1,20 @@
 package animation
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Animation struct {
-	TPS float32 // 1 秒あたりの描画回数
+	itime time.Time // 初期化時間
 	// レンダリング設定。[0]がパーセンテージ、[1]が値。0と1パーセンテージは必須。
 	// パーセンテージの昇順で設定すること。
 	ByPercentage [][2]float32
 	Duration     time.Duration // アニメーション時間
-	count        float32       // カウント
 }
 
 func (a *Animation) Clear() {
-	a.count = 0
+	a.itime = time.Now()
 }
 
 func (a *Animation) Value() float32 {
@@ -30,18 +32,13 @@ func (a *Animation) Value() float32 {
 	return a.ByPercentage[len(a.ByPercentage)-1][1]
 }
 
-// 描画
-func (a *Animation) Update() {
-	a.count++
-}
-
 // 現在のパーセンテージを取得する
 func (a *Animation) nowPercentage() float32 {
-	// 1. 経過時間を計算
-	// 1countあたりの経過時間
-	t := float32(time.Duration(time.Second*1)) / a.TPS
-	// 現在の経過時間
-	epi := t * a.count
-	// 2. 経過時間に対する全体の時間に対する割合を計算
-	return epi / float32(a.Duration)
+	sub := time.Since(a.itime)
+	return float32(sub) / float32(a.Duration)
+}
+
+func (a *Animation) String() string {
+	sub := time.Since(a.itime)
+	return fmt.Sprintf("Animation{ByPercentage: %v, Duration: %v, sub: %v, Value: %f}", a.ByPercentage, a.Duration, sub, float32(sub)/float32(a.Duration))
 }
