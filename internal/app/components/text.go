@@ -104,5 +104,8 @@ func (t *Text) translates() (tx float64, ty float64) {
 }
 
 func (t *Text) color() color.NRGBA {
+	if t.Animeation.Fade == nil {
+		return t.Color
+	}
 	return color.NRGBA{R: t.Color.R, G: t.Color.G, B: t.Color.B, A: uint8(float32(t.Color.A) * t.Animeation.Fade.Value())}
 }
