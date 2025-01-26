@@ -12,7 +12,26 @@ var (
 			Duration:     time.Duration(time.Millisecond * 1200),
 		}
 	}
+	DefaultLoop = func() *LoopAnimation {
+		return &LoopAnimation{
+			Animation: Animation{
+				ByPercentage: [][2]float32{{0, 0.1}, {0.3, 0.3}, {1, 0.1}},
+				Duration:     time.Duration(time.Millisecond * 900),
+			},
+		}
+	}
 )
+
+type LoopAnimation struct {
+	Animation
+}
+
+func (a *LoopAnimation) Value() float32 {
+	if i := a.Animation.step(); i == len(a.Animation.ByPercentage)-1 {
+		a.Clear()
+	}
+	return a.Animation.Value()
+}
 
 type Animation struct {
 	itime time.Time // 初期化時間
@@ -34,18 +53,28 @@ func (a *Animation) Value() float32 {
 	if len(a.ByPercentage) == 0 {
 		return 0
 	}
+	p := a.nowPercentage()
+	i := a.step()
+	if i == len(a.ByPercentage)-1 {
+		return a.ByPercentage[i][1]
+	}
+	current := a.ByPercentage[i]
+	next := a.ByPercentage[i+1]
+	// current <= p < next
+	// 増加分に比例して値を計算
+	return current[1] + (next[1]-current[1])*(p-current[0])/(next[0]-current[0])
+}
+
+func (a *Animation) step() int {
+	p := a.nowPercentage()
 	for i := range len(a.ByPercentage) - 1 {
-		current := a.ByPercentage[i]
 		next := a.ByPercentage[i+1]
-		p := a.nowPercentage()
 		if next[0] <= p {
 			continue
 		}
-		// current <= p < next
-		// 増加分に比例して値を計算
-		return current[1] + (next[1]-current[1])*(p-current[0])/(next[0]-current[0])
+		return i
 	}
-	return a.ByPercentage[len(a.ByPercentage)-1][1]
+	return len(a.ByPercentage) - 1
 }
 
 // 現在のパーセンテージを取得する
