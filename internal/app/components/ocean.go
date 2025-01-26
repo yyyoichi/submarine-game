@@ -18,6 +18,7 @@ var (
 			P:             5,
 			IslandSectors: c.IslandSectors,
 			BorderColor:   color.Black,
+			SectorImages:  make(map[int]*SectorImage),
 		}
 		o.init()
 		o.IslandImage = ebiten.NewImage(int(o.fillW), int(o.fillH))
@@ -43,6 +44,8 @@ type Ocean struct {
 	IslandSectors []int
 	IslandImage   *ebiten.Image
 
+	SectorImages map[int]*SectorImage // セクターのイメージ
+
 	BorderColor color.Color   // 枠線の色
 	BorderImage *ebiten.Image // 枠線の画像
 
@@ -56,6 +59,12 @@ func (o *Ocean) Image() *ebiten.Image {
 	img := ebiten.NewImage(int(o.Width), int(o.Height))
 	o.drawBorder(img)
 	o.drawIsland(img)
+	// draw SectorImages
+	for sector, i := range o.SectorImages {
+		op := i.DrawImageOptions()
+		op.GeoM.Translate(o.translates(sector))
+		img.DrawImage(i.Image(), op)
+	}
 	return img
 }
 
@@ -63,6 +72,12 @@ func (o *Ocean) DrawImageGeoM() ebiten.GeoM {
 	gm := ebiten.GeoM{}
 	gm.Translate(o.SelfTranslateX, o.SelfTranslateY)
 	return gm
+}
+
+func (o *Ocean) SectorImage() (img *ebiten.Image, w, h int) {
+	w, h = int(o.fillW), int(o.fillH)
+	img = ebiten.NewImage(w, h)
+	return
 }
 
 func (o *Ocean) drawBorder(src *ebiten.Image) {
