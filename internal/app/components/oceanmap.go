@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/yyyoichi/submarine-game/internal/app/images"
 )
 
 type OceanMap struct {
@@ -25,7 +26,7 @@ func (m *OceanMap) ClearOceanMap(islands ...int) {
 
 	// scrを黒いブロック画像で埋める
 	m.Src = ebiten.NewImage(int(m.Width), int(m.Height))
-	for img, op := range getFillImageParams(m.Width, m.Height, path_maptile_ranga_black_02) {
+	for img, op := range FillWithImage(m.Width, m.Height, images.MaptileRangaBlack02) {
 		m.Src.DrawImage(img, op)
 	}
 	// 各セクターごとにBlendして穴を開ける。
