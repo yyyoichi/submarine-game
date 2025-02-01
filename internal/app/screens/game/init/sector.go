@@ -31,10 +31,20 @@ func newSectorScreen() *sectorScreen {
 		Width:  w,
 		Height: h,
 	})
+	red := components.RedSectorImage(components.SectorImageConfig{
+		Width:  w,
+		Height: h,
+	})
+	green := components.GreenSectorImage(components.SectorImageConfig{
+		Width:  w,
+		Height: h,
+	})
 	orange.Clear()
+	red.Clear()
+	green.Clear()
 	ocean.SectorImages[7] = orange
-	ocean.SectorImages[12] = orange
-	ocean.SectorImages[14] = orange
+	ocean.SectorImages[12] = green
+	ocean.SectorImages[14] = red
 	ocean.SectorImages[19] = orange
 	return &sectorScreen{
 		demo:  o,

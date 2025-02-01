@@ -18,7 +18,31 @@ var (
 			Width:  c.Width,
 			Height: c.Height,
 			// Orange
-			Color: color.RGBA{236, 123, 10, 1},
+			Color: color.RGBA{226, 123, 10, 1},
+			Animation: SectorAnimation{
+				Flashing: animation.DefaultLoop(),
+			},
+		}
+		return &si
+	}
+	RedSectorImage = func(c SectorImageConfig) *SectorImage {
+		si := SectorImage{
+			Width:  c.Width,
+			Height: c.Height,
+			// 濃い赤
+			Color: color.RGBA{190, 40, 22, 1},
+			Animation: SectorAnimation{
+				Flashing: animation.DefaultLoop(),
+			},
+		}
+		return &si
+	}
+	GreenSectorImage = func(c SectorImageConfig) *SectorImage {
+		si := SectorImage{
+			Width:  c.Width,
+			Height: c.Height,
+			// 濃い緑
+			Color: color.RGBA{22, 150, 63, 1},
 			Animation: SectorAnimation{
 				Flashing: animation.DefaultLoop(),
 			},
