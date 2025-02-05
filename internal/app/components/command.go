@@ -3,20 +3,76 @@ package components
 import (
 	"image/color"
 	"time"
+	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/yyyoichi/submarine-game/internal/app/animation"
+	"github.com/yyyoichi/submarine-game/internal/app/config"
 	"github.com/yyyoichi/submarine-game/internal/app/fonts"
 )
 
 var (
-	commandWindowWidth  = 250
-	commandWindowHeight = 80
+	MineCommandText = func() Text {
+		return Text{
+			Text:  "機雷",
+			Color: Red,
+			Font:  fonts.DotGothic16RegularSource,
+		}
+	}
+	TorpedoCommandText = func() Text {
+		return Text{
+			Text:  "魚雷",
+			Color: Orange,
+			Font:  fonts.DotGothic16RegularSource,
+		}
+	}
+	MoveCommandText = func() Text {
+		return Text{
+			Text:  "潜航",
+			Color: Green,
+			Font:  fonts.DotGothic16RegularSource,
+		}
+	}
+)
+
+type (
+	CommandWindowConfig struct {
+		Commands []Text
+	}
+)
+
+var (
+	DefaultCommandWindow = func(c CommandWindowConfig) *CommandWindow {
+		cw := &CommandWindow{
+			Commands:               c.Commands,
+			Width:                  config.ScreenWidth / 6,
+			Height:                 config.ScreenHeight / 10,
+			SelfTranslateX:         float64(config.ScreenWidth) * 15 / 20,
+			SelfTranslateY:         float64(config.ScreenHeight) * (1 - 0.6) / 2,
+			commandWindowViewPoint: newCommandWindowViewPoint(len(c.Commands)),
+		}
+		for i, command := range cw.Commands {
+			switch l := utf8.RuneCountInString(command.Text); l {
+			case 1, 2:
+				cw.Commands[i].Size = 55
+			case 3:
+				cw.Commands[i].Size = 45
+			case 4:
+				cw.Commands[i].Size = 35
+			default:
+				cw.Commands[i].Size = 24
+			}
+		}
+		return cw
+	}
 )
 
 type CommandWindow struct {
-	Commands []Text
+	Commands                       []Text
+	Width                          int
+	Height                         int
+	SelfTranslateX, SelfTranslateY float64 // 自身を描画するときの位置
 	commandWindowViewPoint
 }
 
@@ -25,8 +81,18 @@ func NewCommandWindow(texts ...string) *CommandWindow {
 	for i, t := range texts {
 		commands[i] = Text{Text: t, Font: fonts.DotGothic16RegularSource, Size: 24 * 3, Color: color.NRGBA{R: 0, G: 0, B: 0, A: 255}}
 	}
+	commands = append(commands, Text{
+		Text:  "機雷",
+		Size:  24 * 3,
+		Color: color.NRGBA{226, 123, 10, 255},
+		Font:  fonts.DotGothic16RegularSource,
+	})
 	return &CommandWindow{
 		Commands:               commands,
+		Width:                  config.ScreenWidth / 6,
+		Height:                 config.ScreenHeight / 10,
+		SelfTranslateX:         float64(config.ScreenWidth) * 15 / 20,
+		SelfTranslateY:         float64(config.ScreenHeight) * (1 - 0.6) / 2,
 		commandWindowViewPoint: newCommandWindowViewPoint(len(commands)),
 	}
 }
@@ -46,27 +112,27 @@ func (cw *CommandWindow) Image() *ebiten.Image {
 		cw.max = len(cw.Commands)
 	}
 
-	parent := ebiten.NewImage(commandWindowWidth, commandWindowHeight*len(cw.Commands))
+	parent := ebiten.NewImage(cw.Width, cw.Height*len(cw.Commands))
 	for i, cmd := range cw.Commands {
-		cimg := ebiten.NewImage(commandWindowWidth, commandWindowHeight)
+		cimg := ebiten.NewImage(cw.Width, cw.Height)
 		cimg.Fill(color.White)
 		op := cmd.DrawOptions()
 		op.PrimaryAlign = text.AlignCenter
 		op.SecondaryAlign = text.AlignCenter
 		// 気持ち上に描画
-		op.GeoM.Translate(float64(commandWindowWidth)/2, float64(commandWindowHeight)*0.95/2)
+		op.GeoM.Translate(float64(cw.Width)/2, float64(cw.Height)*0.95/2)
 		text.Draw(cimg, cmd.Text, cmd.GoTextFace(), op)
 		// parentに描画
 		iop := &ebiten.DrawImageOptions{}
-		iop.GeoM.Translate(0, float64(commandWindowHeight*i))
+		iop.GeoM.Translate(0, float64(cw.Height*i))
 		parent.DrawImage(cimg, iop)
 	}
 
 	// parentをimgに描画
-	img := ebiten.NewImage(commandWindowWidth, commandWindowHeight)
+	img := ebiten.NewImage(cw.Width, cw.Height)
 	img.Fill(color.Black)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(cw.translates())
+	op.GeoM.Translate(cw.translates(cw.Height))
 	img.DrawImage(parent, op)
 	// 枠に薄い黒を描画する
 
@@ -124,6 +190,12 @@ func (cw *CommandWindow) Image() *ebiten.Image {
 	return img
 }
 
+func (cw *CommandWindow) DrawImageOptions() *ebiten.DrawImageOptions {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(cw.SelfTranslateX, cw.SelfTranslateY)
+	return op
+}
+
 type commandWindowViewPoint struct {
 	max             int
 	point           int
@@ -160,7 +232,7 @@ func (p *commandWindowViewPoint) Down() {
 	p.scrollAnimation.Clear()
 }
 
-func (p *commandWindowViewPoint) translates() (tx float64, ty float64) {
-	ty = -float64(commandWindowHeight*p.point) + float64(p.scrollAnimation.Value()*float32(commandWindowHeight))
+func (p *commandWindowViewPoint) translates(height int) (tx float64, ty float64) {
+	ty = -float64(height*p.point) + float64(p.scrollAnimation.Value()*float32(height))
 	return
 }
