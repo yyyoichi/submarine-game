@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/qmuntal/stateless"
+	"github.com/yyyoichi/submarine-game/internal/app/actions"
 	"github.com/yyyoichi/submarine-game/internal/app/state"
 )
 
@@ -55,7 +55,7 @@ func (s *Screen) Update() error {
 	s.Game.Update()
 
 	ctx := context.Background()
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+	if actions.IsKeyAJustPressed() {
 		switch st, _ := s.stateMachine.State(ctx); st {
 		case pstate_sector:
 			if err := s.stateMachine.Fire(trigger_mines); err == nil {
@@ -69,7 +69,7 @@ func (s *Screen) Update() error {
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+	if actions.IsKeyBJustPressed() {
 		switch st, _ := s.stateMachine.State(ctx); st {
 		case pstate_mines:
 			if err := s.stateMachine.Fire(trigger_sector); err == nil {
