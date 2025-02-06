@@ -55,13 +55,13 @@ var (
 		for i, command := range cw.Commands {
 			switch l := utf8.RuneCountInString(command.Text); l {
 			case 1, 2:
-				cw.Commands[i].Size = 55
+				cw.Commands[i].Size = 65
 			case 3:
-				cw.Commands[i].Size = 45
+				cw.Commands[i].Size = 55
 			case 4:
-				cw.Commands[i].Size = 35
+				cw.Commands[i].Size = 50
 			default:
-				cw.Commands[i].Size = 24
+				cw.Commands[i].Size = 35
 			}
 		}
 		return cw
