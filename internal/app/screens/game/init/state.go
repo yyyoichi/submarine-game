@@ -19,17 +19,18 @@ const (
 
 type (
 	istate struct {
-		selectedSector *uint8
-		selectedMines  []uint8
+		selectedSector *int
+		selectedMines  []int
 		config         IStateConfig
 	}
 	IStateConfig struct {
-		MineCount uint8
+		MineCount     int
+		IslandSectors []int
 	}
 )
 
 func newState(config IStateConfig) istate {
 	is := istate{config: config}
-	is.selectedMines = make([]uint8, 0, config.MineCount)
+	is.selectedMines = make([]int, 0, config.MineCount)
 	return is
 }

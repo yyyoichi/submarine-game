@@ -45,7 +45,7 @@ func New(config Config) *Screen {
 		return true
 	})
 
-	s.Game = newSectorScreen()
+	s.Game = s.newSectorScreen()
 
 	return &s
 }
@@ -73,13 +73,30 @@ func (s *Screen) Update() error {
 		switch st, _ := s.stateMachine.State(ctx); st {
 		case pstate_mines:
 			if err := s.stateMachine.Fire(trigger_sector); err == nil {
-				s.Game = newSectorScreen()
+				s.Game = s.newSectorScreen()
 			}
 
 		}
 	}
 
 	return nil
+}
+
+func (s *Screen) newSectorScreen() *sectorScreen {
+	return newSectorScreen(initSectorConfig{
+		w:             6,
+		h:             6,
+		islandSectors: []int{10, 29},
+		setSelectedSector: func(i int) {
+			ns := istate{
+				selectedSector: &i,
+				selectedMines:  s.istate.selectedMines,
+				config:         s.istate.config,
+			}
+			_ = s.setIstate(ns)
+		},
+		selectedSector: s.istate.selectedSector,
+	})
 }
 
 // func (s *Screen) Draw(screen *ebiten.Image) {
