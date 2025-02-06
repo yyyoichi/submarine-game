@@ -12,6 +12,12 @@ var (
 			Duration:     time.Duration(time.Millisecond * 1200),
 		}
 	}
+	DefaultFadeOut = func() *Animation {
+		return &Animation{
+			ByPercentage: [][2]float32{{0, 1}, {0.8, 1}, {1, 0}},
+			Duration:     time.Duration(time.Millisecond * 1200),
+		}
+	}
 	DefaultLoop = func() *LoopAnimation {
 		return &LoopAnimation{
 			Animation: Animation{
