@@ -50,7 +50,7 @@ var (
 				},
 			},
 			Animation: OverlayAnimation{
-				Fade: animation.DefaultFade(),
+				Fade: animation.DefaultFadeOut(),
 			},
 		}
 		return o
