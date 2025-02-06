@@ -24,7 +24,13 @@ func Route(mux *http.ServeMux) {
 		log.Fatal(err)
 	}
 	if os.Getenv("ENV") == "local" {
-		mux.Handle("/", http.FileServer(http.Dir("/workspaces/submarine-game/internal/app/public")))
+		s := http.FileServer(http.Dir("/workspaces/submarine-game/internal/app/public"))
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+			s.ServeHTTP(w, r)
+		})
 	} else {
 		mux.Handle("/", http.FileServer(http.FS(public)))
 	}
