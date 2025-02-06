@@ -36,7 +36,7 @@ var (
 				Text:  config.LeadText,
 				Font:  fonts.DotGothic16RegularSource,
 				Size:  48,
-				Color: color.NRGBA{R: 100, G: 100, B: 0, A: 255},
+				Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
 				Animeation: TextAmimation{
 					TranslatesX: &animation.Animation{
 						ByPercentage: [][2]float32{{0, -10}, {1, 0}},
@@ -94,7 +94,7 @@ func (o *Overlay) Zero() {
 
 func (o *Overlay) Image() *ebiten.Image {
 	img := ebiten.NewImage(config.ScreenWidth, config.ScreenHeight)
-	img.Fill(color.RGBA{0xff, 0, 0, 0xff})
+	img.Fill(color.Black)
 
 	o.drawRBText(img)
 	o.drawCText(img)
