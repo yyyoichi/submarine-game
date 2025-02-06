@@ -2,12 +2,15 @@ package gameinit
 
 import (
 	"image/color"
+	"math/rand/v2"
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
 	"github.com/yyyoichi/submarine-game/internal/app/config"
 	"github.com/yyyoichi/submarine-game/internal/app/fonts"
+	"github.com/yyyoichi/submarine-game/internal/app/images"
+	"github.com/yyyoichi/submarine-game/internal/app/state"
 )
 
 type initSectorConfig struct {
@@ -21,6 +24,9 @@ type sectorScreen struct {
 	overlay *components.Overlay
 	cw      *components.CommandWindow
 	ocean   *components.Ocean
+
+	cursol    *int
+	setCursol state.SetStateFunc[int]
 }
 
 func newSectorScreen(c initSectorConfig) *sectorScreen {
@@ -54,10 +60,24 @@ func newSectorScreen(c initSectorConfig) *sectorScreen {
 		ocean.SectorImages[sector] = green
 	}
 
+	var initCursol int
+	for {
+		i := rand.IntN(c.w * c.h)
+		if !slices.Contains(c.islandSectors, i) {
+			initCursol = i
+			break
+		}
+	}
+
+	cursol, setCursol := state.UseState(state.WithInitialValue(initCursol))
+
 	return &sectorScreen{
 		overlay: overlay,
 		cw:      cw,
 		ocean:   ocean,
+
+		cursol:    cursol,
+		setCursol: setCursol,
 	}
 }
 
@@ -75,7 +95,13 @@ func (s *sectorScreen) Draw(screen *ebiten.Image) {
 	op.GeoM.Concat(s.ocean.DrawImageGeoM())
 	screen.DrawImage(s.ocean.Image(), op)
 
-	screen.DrawImage(s.cw.Image(), s.cw.DrawImageOptions())
+	_, w, _ := s.ocean.SectorImage()
+	c := images.CenterImage{
+		Size:  w,
+		P:     float64(w) / 0.2,
+		Image: images.MyLocation,
+	}
+	screen.DrawImage(c.Image, c.DrawImageOptions())
 
 	screen.DrawImage(s.overlay.Image(), s.overlay.DrawImageOptions())
 }
