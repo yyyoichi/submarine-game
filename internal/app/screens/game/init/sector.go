@@ -6,27 +6,34 @@ import (
 	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/yyyoichi/submarine-game/internal/app/actions"
 	"github.com/yyyoichi/submarine-game/internal/app/components"
 	"github.com/yyyoichi/submarine-game/internal/app/config"
 	"github.com/yyyoichi/submarine-game/internal/app/fonts"
 	"github.com/yyyoichi/submarine-game/internal/app/images"
 	"github.com/yyyoichi/submarine-game/internal/app/state"
+	"github.com/yyyoichi/submarine-game/internal/core"
 )
 
 type initSectorConfig struct {
 	w, h              int // ボード数
 	islandSectors     []int
-	setSelectedSector func(int)
+	enableCursor      func(int, core.Direction) (int, bool)
+	setSelectedSector func(*int)
 	selectedSector    *int
 }
 
 type sectorScreen struct {
+	// views
 	overlay *components.Overlay
 	cw      *components.CommandWindow
 	ocean   *components.Ocean
 
+	// local state
 	cursol    *int
 	setCursol state.SetStateFunc[int]
+
+	config initSectorConfig
 }
 
 func newSectorScreen(c initSectorConfig) *sectorScreen {
@@ -61,11 +68,15 @@ func newSectorScreen(c initSectorConfig) *sectorScreen {
 	}
 
 	var initCursol int
-	for {
-		i := rand.IntN(c.w * c.h)
-		if !slices.Contains(c.islandSectors, i) {
-			initCursol = i
-			break
+	if c.selectedSector != nil {
+		initCursol = *c.selectedSector
+	} else {
+		for {
+			i := rand.IntN(c.w * c.h)
+			if !slices.Contains(c.islandSectors, i) {
+				initCursol = i
+				break
+			}
 		}
 	}
 
@@ -78,10 +89,37 @@ func newSectorScreen(c initSectorConfig) *sectorScreen {
 
 		cursol:    cursol,
 		setCursol: setCursol,
+
+		config: c,
 	}
 }
 
 func (s *sectorScreen) Update() error {
+	var moveTo *core.Direction
+	if actions.IsKeyUpJustPressed() {
+		moveTo = &core.North
+	}
+	if actions.IsKeyDownJustPressed() {
+		moveTo = &core.South
+	}
+	if actions.IsKeyRightJustPressed() {
+		moveTo = &core.East
+	}
+	if actions.IsKeyLeftJustPressed() {
+		moveTo = &core.West
+	}
+	if moveTo != nil {
+		// 移動可能なら選択中を解除して、カーソルを動かす
+		if i, ok := s.config.enableCursor(*s.cursol, *moveTo); ok {
+			s.config.setSelectedSector(nil)
+			s.setCursol(i)
+		}
+	}
+
+	// 選択
+	if actions.IsKeyAJustPressed() {
+		s.config.setSelectedSector(s.cursol)
+	}
 	return nil
 }
 
@@ -92,6 +130,7 @@ func (s *sectorScreen) Draw(screen *ebiten.Image) {
 	screen.DrawImage(bg, nil)
 
 	if s.cursol != nil {
+		s.ocean.ClearOverSectorImage()
 		_, w, _ := s.ocean.SectorImage()
 		s.ocean.OverSectorImage(*s.cursol, &images.CenterImage{Size: w, P: float64(w) * 0.2, Img: images.MyLocation})
 	}

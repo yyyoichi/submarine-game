@@ -101,9 +101,13 @@ func (o *Ocean) SectroImageSelf() *ebiten.Image {
 }
 
 // sectorに画像を重ねる。
-func (o Ocean) OverSectorImage(sector int, imgs ...OceanSectorImage) {
+func (o *Ocean) OverSectorImage(sector int, imgs ...OceanSectorImage) {
 	o.AddedSectorImages[sector] = make([]OceanSectorImage, 0, len(imgs))
 	o.AddedSectorImages[sector] = append(o.AddedSectorImages[sector], imgs...)
+}
+
+func (o *Ocean) ClearOverSectorImage() {
+	o.AddedSectorImages = make(map[int][]OceanSectorImage)
 }
 
 func (o *Ocean) drawBorder(src *ebiten.Image) {
