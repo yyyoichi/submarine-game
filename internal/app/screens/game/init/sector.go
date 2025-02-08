@@ -91,17 +91,16 @@ func (s *sectorScreen) Draw(screen *ebiten.Image) {
 	bg.Fill(color.RGBA{28, 25, 37, 255})
 	screen.DrawImage(bg, nil)
 
+	if s.cursol != nil {
+		_, w, _ := s.ocean.SectorImage()
+		s.ocean.OverSectorImage(*s.cursol, &images.CenterImage{Size: w, P: float64(w) * 0.2, Img: images.MyLocation})
+	}
+
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Concat(s.ocean.DrawImageGeoM())
 	screen.DrawImage(s.ocean.Image(), op)
 
-	_, w, _ := s.ocean.SectorImage()
-	c := images.CenterImage{
-		Size:  w,
-		P:     float64(w) / 0.2,
-		Image: images.MyLocation,
-	}
-	screen.DrawImage(c.Image, c.DrawImageOptions())
+	screen.DrawImage(s.cw.Image(), s.cw.DrawImageOptions())
 
 	screen.DrawImage(s.overlay.Image(), s.overlay.DrawImageOptions())
 }

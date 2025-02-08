@@ -35,17 +35,21 @@ func init() {
 type CenterImage struct {
 	Size int     // 一片の長さ。正方形前提
 	P    float64 // 余白
-	*ebiten.Image
+	Img  *ebiten.Image
+}
+
+func (ci *CenterImage) Image() *ebiten.Image {
+	return ci.Img
 }
 
 func (ci *CenterImage) DrawImageOptions() *ebiten.DrawImageOptions {
-	size := float64(ci.Size)
-	b := ci.Image.Bounds()
+	size := float64(ci.Size) - ci.P
+	b := ci.Img.Bounds()
 	x, y := float64(b.Dx()), float64(b.Dy())
 	sx, sy := size/x, size/y
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(ci.P/2, ci.P/2)
+	op.GeoM.Translate(ci.P, ci.P)
 	op.GeoM.Scale(sx, sy)
 	return op
 }

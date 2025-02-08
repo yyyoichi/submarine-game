@@ -11,14 +11,15 @@ var (
 	DefaultOcean = func(c OceanConfig) *Ocean {
 		r := 0.6
 		o := &Ocean{
-			Width:         float64(config.ScreenHeight) * r,
-			Height:        float64(config.ScreenHeight) * r,
-			W:             6,
-			H:             6,
-			P:             5,
-			IslandSectors: c.IslandSectors,
-			BorderColor:   color.Black,
-			SectorImages:  make(map[int]*SectorImage),
+			Width:             float64(config.ScreenHeight) * r,
+			Height:            float64(config.ScreenHeight) * r,
+			W:                 6,
+			H:                 6,
+			P:                 5,
+			IslandSectors:     c.IslandSectors,
+			BorderColor:       color.Black,
+			SectorImages:      make(map[int]OceanSectorImage),
+			AddedSectorImages: make(map[int][]OceanSectorImage),
 		}
 		o.init()
 		o.IslandImage = ebiten.NewImage(int(o.fillW), int(o.fillH))
@@ -44,7 +45,8 @@ type Ocean struct {
 	IslandSectors []int
 	IslandImage   *ebiten.Image
 
-	SectorImages map[int]*SectorImage // セクターのイメージ
+	SectorImages      map[int]OceanSectorImage   // セクターのイメージ
+	AddedSectorImages map[int][]OceanSectorImage // セクターの重層イメージ
 
 	BorderColor color.Color   // 枠線の色
 	BorderImage *ebiten.Image // 枠線の画像
@@ -53,6 +55,11 @@ type Ocean struct {
 
 	sectW, sectH float64 // セクタの幅、高さ
 	fillW, fillH float64 // セクタのFillの幅、高さ
+}
+
+type OceanSectorImage interface {
+	Image() *ebiten.Image
+	DrawImageOptions() *ebiten.DrawImageOptions
 }
 
 func (o *Ocean) Image() *ebiten.Image {
@@ -64,6 +71,14 @@ func (o *Ocean) Image() *ebiten.Image {
 		op := i.DrawImageOptions()
 		op.GeoM.Translate(o.translates(sector))
 		img.DrawImage(i.Image(), op)
+	}
+	// draw AddedSectorImages
+	for sector, imgs := range o.AddedSectorImages {
+		for _, i := range imgs {
+			op := i.DrawImageOptions()
+			op.GeoM.Translate(o.translates(sector))
+			img.DrawImage(i.Image(), op)
+		}
 	}
 	return img
 }
@@ -78,6 +93,17 @@ func (o *Ocean) SectorImage() (img *ebiten.Image, w, h int) {
 	w, h = int(o.fillW), int(o.fillH)
 	img = ebiten.NewImage(w, h)
 	return
+}
+
+func (o *Ocean) SectroImageSelf() *ebiten.Image {
+	w, h := int(o.sectW), int(o.sectH)
+	return ebiten.NewImage(w, h)
+}
+
+// sectorに画像を重ねる。
+func (o Ocean) OverSectorImage(sector int, imgs ...OceanSectorImage) {
+	o.AddedSectorImages[sector] = make([]OceanSectorImage, 0, len(imgs))
+	o.AddedSectorImages[sector] = append(o.AddedSectorImages[sector], imgs...)
 }
 
 func (o *Ocean) drawBorder(src *ebiten.Image) {
