@@ -67,6 +67,20 @@ func (g Game) ActionResult(at Sector, to Sector) ActionResult {
 	return FullSpeedAhead
 }
 
+// atの位置からdirection方向に1つ移動したときの移動先と移動可能か
+func (g Game) Move(at Sector, direction Direction) (Sector, bool) {
+	// 移動先があるか
+	sectors := g.OceanMap.EnableSectors(at, direction.Vector())
+	if len(sectors) == 0 {
+		return at, false
+	}
+	// 島か
+	if slices.Contains(g.Islands, sectors[0]) {
+		return at, false
+	}
+	return sectors[0], true
+}
+
 func (g Game) Direction(from, to Sector) Direction {
 	if ss := g.OceanMap.EnableSectors(from, [][2]int8{{00, -1}}); slices.Contains(ss, to) {
 		return North

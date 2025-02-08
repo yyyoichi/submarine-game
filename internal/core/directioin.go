@@ -28,3 +28,17 @@ type (
 func (d Direction) Rotate(r Rotation) Direction {
 	return Direction((int8(d) + int8(r)) % 4)
 }
+
+func (d Direction) Vector() RelativeSectors {
+	switch d {
+	case North:
+		return [][2]int8{{0, -1}}
+	case East:
+		return [][2]int8{{1, 0}}
+	case South:
+		return [][2]int8{{0, 1}}
+	case West:
+		return [][2]int8{{-1, 0}}
+	}
+	return nil
+}
