@@ -2,46 +2,15 @@ package app
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/qmuntal/stateless"
-	"github.com/yyyoichi/submarine-game/internal/app/components"
 	gameinit "github.com/yyyoichi/submarine-game/internal/app/screens/game/init"
 )
 
-type (
-	State   string
-	Trigger string
-)
-
-const (
-	GameStart State = "GameStart"
-	GamePlay  State = "GamePlay"
-
-	Play Trigger = "Play"
-	Init Trigger = "Init"
-)
-
 type Game struct {
-	state   *stateless.StateMachine
-	count   int
-	overlay *components.Overlay
 	ebiten.Game
 }
 
 func New() *Game {
-	state := stateless.NewStateMachine(GameStart)
-	state.Configure(GameStart).Permit(Play, GamePlay)
-	state.Configure(GamePlay).Permit(Init, GameStart)
-
-	o := components.SimpleTrunOverlay(components.SimpleTrunOverlayConfig{
-		TrunTextConfig: components.TrunTextConfig{IsMe: true},
-	})
-	o.Clear()
-
-	return &Game{state: state, overlay: o, Game: gameinit.New(
-		gameinit.Config{
-			IStateConfig: gameinit.IStateConfig{MineCount: 2},
-		},
-	)}
+	return &Game{Game: gameinit.New()}
 }
 
 // var gs = gameinit.NewSec()

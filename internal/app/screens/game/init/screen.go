@@ -16,13 +16,10 @@ type Screen struct {
 
 	ebiten.Game
 }
-type Config struct {
-	IStateConfig
-}
 
-func New(config Config) *Screen {
+func New() *Screen {
 	var s Screen
-	s.istate, s.setIstate = state.UseState(state.WithInitialValue(newState(config.IStateConfig)))
+	s.istate, s.setIstate = state.UseState[istate]()
 	s.stateMachine = stateless.NewStateMachine(pstate_sector)
 	// 開始海域選定 <-> 機雷設置 -> 待機
 
@@ -91,7 +88,6 @@ func (s *Screen) newSectorScreen() *sectorScreen {
 			ns := istate{
 				selectedSector: &i,
 				selectedMines:  s.istate.selectedMines,
-				config:         s.istate.config,
 			}
 			_ = s.setIstate(ns)
 		},

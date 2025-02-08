@@ -17,20 +17,7 @@ const (
 	trigger_pending trigger = "pending"
 )
 
-type (
-	istate struct {
-		selectedSector *int
-		selectedMines  []int
-		config         IStateConfig
-	}
-	IStateConfig struct {
-		MineCount     int
-		IslandSectors []int
-	}
-)
-
-func newState(config IStateConfig) istate {
-	is := istate{config: config}
-	is.selectedMines = make([]int, 0, config.MineCount)
-	return is
+type istate struct {
+	selectedSector *int
+	selectedMines  []int
 }
