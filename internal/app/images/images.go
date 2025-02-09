@@ -15,6 +15,7 @@ var (
 	MaptileUmi01        *ebiten.Image
 	MaptileRangaBlack02 *ebiten.Image
 	MyLocation          *ebiten.Image
+	Mine                *ebiten.Image
 )
 
 func new(path string) *ebiten.Image {
@@ -30,6 +31,8 @@ func init() {
 	MaptileRangaBlack02 = new("src/maptile_renga_black_02.png")
 	// https://fonts.google.com/icons?selected=Material+Symbols+Outlined:my_location:FILL@0;wght@400;GRAD@0;opsz@24&icon.query=location&icon.size=24&icon.color=%23e8eaed
 	MyLocation = new("src/my_location_24dp_E8EAED_FILL0_wght400_GRAD0_opsz24.png")
+	// https://fonts.google.com/icons?selected=Material+Symbols+Outlined:disabled_by_default:FILL@0;wght@400;GRAD@0;opsz@24&icon.size=24&icon.color=%23e8eaed
+	Mine = new("src/disabled_by_default_24dp_E8EAED_FILL0_wght400_GRAD0_opsz24.png")
 }
 
 type CenterImage struct {
