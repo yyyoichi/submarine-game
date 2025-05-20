@@ -13,6 +13,7 @@
   "dependencies": {
     "@connectrpc/connect": "^1.4.0",
     "@connectrpc/connect-web": "^1.4.0",
+    "@radix-ui/react-slot": "^1.2.2",
     "@react-router/node": "^7.6.0",
     "@react-router/serve": "^7.6.0",
     "@tailwindcss/vite": "^4.1.7",
