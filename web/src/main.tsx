@@ -1,7 +1,7 @@
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router";
 import ErrorPage from "./routers/error";
 import Home, { action as homeAction } from "./routers/home";
 import Playground, {

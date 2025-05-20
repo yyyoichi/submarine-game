@@ -14,7 +14,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
-import { Form, Link, useLoaderData } from "react-router-dom";
+import { Form, Link, useLoaderData } from "react-router";
 import {
   ActionType,
   GameOverReason,

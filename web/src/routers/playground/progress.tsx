@@ -1,6 +1,6 @@
 import { Progress } from "@chakra-ui/react";
 import { useCallback, useEffect, useState } from "react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from "react-router";
 import type { LogsResponse } from "../../gen/api/v2/game_pb";
 
 type ProgressBarProps = {

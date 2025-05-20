@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { ConnectError } from "@connectrpc/connect";
 import { useState } from "react";
-import { type ActionFunctionArgs, Form, redirect } from "react-router-dom";
+import { type ActionFunctionArgs, Form, redirect } from "react-router";
 import { matchingClient } from "../api/connect";
 import { WaitEnemyRequest } from "../gen/api/v2/game_pb";
 

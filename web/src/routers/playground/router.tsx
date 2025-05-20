@@ -17,7 +17,7 @@ import {
   type LoaderFunctionArgs,
   useLoaderData,
   useSubmit,
-} from "react-router-dom";
+} from "react-router";
 import { battleClient } from "../../api/connect";
 import {
   ActionRequest,

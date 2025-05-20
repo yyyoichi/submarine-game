@@ -11,7 +11,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { type ComponentProps, useState } from "react";
-import { Form, useLoaderData } from "react-router-dom";
+import { Form, useLoaderData } from "react-router";
 import { ActionType, type LogsResponse } from "../../../gen/api/v2/game_pb";
 import { IconMine, IconMyLocation } from "../components/icon";
 import { OceanMap } from "../components/ocean";

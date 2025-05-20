@@ -7,7 +7,7 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData } from "react-router";
 import {
   ActionResult,
   ActionType,
