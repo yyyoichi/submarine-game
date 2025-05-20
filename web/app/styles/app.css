@@ -118,6 +118,8 @@
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
+  --font-train-one: 'Train One', sans-serif;
+
   @keyframes accordion-down {
     from {
       height: 0;

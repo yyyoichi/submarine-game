@@ -56,10 +56,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
 
         <meta name="theme-color" content="var(--background)" />
+
+        <meta name="description" content="潜水艦ゲーム！通信対戦。" />
+        <title>潜水艦ゲーム</title>
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="bg-background text-foreground lg:px-60">
         {children}
         <ScrollRestoration />
         <Scripts />
