@@ -1,3 +1,6 @@
+nvm install --lts
+uvm use --lts
+npm install -g typescript
 
 npm config set @buf:registry https://buf.build/gen/npm/v1 && \
 npm install -g @buf/connectrpc_eliza.connectrpc_es@1.4.0-20230913231627-233fca715f49.3 @connectrpc/connect@"^v1.0.0" @connectrpc/connect-web@"^v1.0.0" \
