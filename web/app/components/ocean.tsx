@@ -1,7 +1,7 @@
 import { sector } from "@/lib/utils";
 import { cn } from "src/lib/utils";
 
-type OceanComponentProps = {
+type Props = {
   displaySectorName: boolean;
   sectorCount: number; // 1辺のセクター数
   Sectors: Record<number, Omit<OceanSectorProps, "sectorName">>;
@@ -11,7 +11,7 @@ export const OceanComponent = ({
   Sectors,
   displaySectorName,
   sectorCount,
-}: OceanComponentProps) => {
+}: Props) => {
   return (
     <div className="grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-muted-foreground rounded-xs">
       {new Array(sectorCount * sectorCount).fill("").map((_, i) => {
