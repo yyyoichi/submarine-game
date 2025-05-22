@@ -29,9 +29,15 @@ export default function Playground() {
       displaySectorName: viewGuide,
       sectorCount: 6,
       Sectors: {
-        1: { color: "embed" },
-        16: { color: "embed" },
+        1: { embed: true },
+        16: { embed: true },
       },
+    },
+    OverlayedOcean: {
+      gapSector: 17,
+      sectorCount: 6,
+      title: "魚雷発射",
+      titlePosition: "right",
     },
     Controller: {
       Direction: {

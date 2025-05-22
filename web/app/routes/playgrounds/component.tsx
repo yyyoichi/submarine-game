@@ -3,12 +3,13 @@ import {
   LeadingComponent,
   OverlayedLeadingComponent,
 } from "@/components/leading";
-import { OceanComponent } from "@/components/ocean";
+import { OceanComponent, OverlayedOceanComponent } from "@/components/ocean";
 import type React from "react";
 
 type PreparingPageProps = {
   Leading: React.ComponentProps<typeof LeadingComponent>;
   Ocean: React.ComponentProps<typeof OceanComponent>;
+  OverlayedOcean: React.ComponentProps<typeof OverlayedOceanComponent>;
   Controller: React.ComponentProps<typeof ControllerComponent>;
 };
 
@@ -19,8 +20,10 @@ export const PreparingPage = (props: PreparingPageProps) => {
         <LeadingComponent {...props.Leading} />
         <OverlayedLeadingComponent />
       </div>
-
-      <OceanComponent {...props.Ocean} />
+      <div className="relative w-full">
+        <OceanComponent {...props.Ocean} />
+        <OverlayedOceanComponent {...props.OverlayedOcean} />
+      </div>
       <ControllerComponent {...props.Controller} />
       <div className="w-[200px] h-[200px]" />
     </div>
