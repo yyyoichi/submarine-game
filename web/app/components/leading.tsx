@@ -64,23 +64,23 @@ const Alerm = (props: AlermProps) => {
         return;
       }
       if (sec < 2) {
-        console.log("stageup 4");
         setIntervaStage(4);
         return;
       }
       const p = sec / (props.startPingSec - 2);
-      console.log("p", p, "sec", sec);
       if (p < 0.2) {
-        console.log("stageup 3");
         setIntervaStage(3);
-      } else if (p < 0.4) {
-        console.log("stageup 2");
-        setIntervaStage(2);
-      } else if (p < 1) {
-        console.log("stageup 1");
-        setIntervaStage(1);
+        return;
       }
-    }, 500);
+      if (p < 0.4) {
+        setIntervaStage(2);
+        return;
+      }
+      if (p < 1) {
+        setIntervaStage(1);
+        return;
+      }
+    }, 100);
 
     return () => clearInterval(interval);
   });
