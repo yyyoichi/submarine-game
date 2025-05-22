@@ -13,6 +13,9 @@ export default function Playground() {
         startPingSec: 30,
         finishDatetime: new Date(Date.now() + 1000 * 30),
       },
+      GuideLine: {
+        children: "敵魚雷A1に着弾！接近しています。",
+      },
     },
     Ocean: {
       displaySectorName: viewGuide,

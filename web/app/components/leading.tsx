@@ -1,23 +1,93 @@
 import { cn } from "@/lib/utils";
 import type { ClassValue } from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   inMyTrun: boolean;
   Alerm: AlermProps;
+  GuideLine: GuideLineProps;
 };
 
 export const LeadingComponent = (props: Props) => {
-  const children = props.inMyTrun ? "あなたのターン" : "あいてのターン";
   return (
     <div className="w-full">
-      <div className="w-full bg-foreground px-1 py-2 mb-5">
-        <p className="text-background">text</p>
+      <div className="">
+        <GuideLine {...props.GuideLine} />
       </div>
-      <div className="relative w-fit px-3">
-        <p className="">{children}</p>
-        <Alerm {...props.Alerm} />
+      <div className="relative w-full">
+        {/* ターンメッセージとアラーム */}
+        {/* this content 2.75rem = 1.25rem top margin + 1.5rem p hight */}
+        <div className="w-fit px-3 mt-5">
+          <p className="">
+            {props.inMyTrun ? "あなたのターン" : "あいてのターン"}
+          </p>
+          <div className="absolute top-[.2rem] left-[.5rem] opacity-75">
+            <div className="relative z-20">
+              <Alerm {...props.Alerm} />
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+};
+
+type GuideLineProps = Pick<React.PropsWithChildren, "children">;
+
+const GuideLine = (props: GuideLineProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [animationDuration, setAnimationDuration] = useState(0); // <= 0 でアニメーションしない
+  const shouldAnimate = animationDuration > 0;
+  const speed = 100; // px/s
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!containerRef.current || !contentRef.current) {
+      return;
+    }
+
+    const contentWidth = contentRef.current.scrollWidth;
+    const containerWidth = containerRef.current.clientWidth;
+
+    // コンテンツがコンテナより広い場合のみアニメーション
+    if (contentWidth > containerWidth) {
+      // 速度（px/秒）に基づいて所要時間を計算
+      // 全体の移動距離は (contentWidth+containerWidth)
+      const duration = (contentWidth + containerWidth) / speed;
+      setAnimationDuration(duration);
+    } else {
+      setAnimationDuration(0);
+    }
+  }, [containerRef.current?.clientWidth, contentRef.current?.scrollWidth]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full bg-foreground px-1 py-2 relative overflow-hidden"
+    >
+      <div
+        ref={contentRef}
+        className="text-background inline-block whitespace-nowrap text-lg"
+        style={
+          shouldAnimate
+            ? {
+                animation: `marquee ${animationDuration * 1000}ms linear infinite`,
+              }
+            : {}
+        }
+        {...props}
+      />
+      <style>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(${containerRef.current?.clientWidth || 0}px);
+          }
+          100% {
+            transform: translateX(-${contentRef.current?.scrollWidth || 0}px);
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -89,16 +159,14 @@ const Alerm = (props: AlermProps) => {
     return <></>;
   }
   return (
-    <span className="absolute top-[.2rem] left-[.5rem] opacity-75">
-      <span className="relative z-20">
-        <span
-          className={cn(
-            "absolute inline-flex bg-red-500  w-4 h-4 rounded-full opacity-75 transform -translate-x-1/2 -translate-y-1/2 ",
-            ...addedCn,
-          )}
-        />
-        <span className="absolute bg-red-500 w-4 h-4 rounded-full opacity-75 transform -translate-x-1/2 -translate-y-1/2 " />
-      </span>
-    </span>
+    <>
+      <span
+        className={cn(
+          "absolute inline-flex bg-red-500  w-4 h-4 rounded-full opacity-75 transform -translate-x-1/2 -translate-y-1/2 ",
+          ...addedCn,
+        )}
+      />
+      <span className="absolute bg-red-500 w-4 h-4 rounded-full opacity-75 transform -translate-x-1/2 -translate-y-1/2 " />
+    </>
   );
 };
