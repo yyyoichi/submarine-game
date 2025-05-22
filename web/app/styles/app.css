@@ -120,6 +120,17 @@
 
   --font-train-one: 'Train One', sans-serif;
 
+  /* delay 1000ms */
+  --animate-fadeout: fadeout 500ms ease-out 1000ms forwards;
+  @keyframes fadeout {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
   @keyframes accordion-down {
     from {
       height: 0;

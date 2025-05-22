@@ -9,19 +9,21 @@ type Props = {
 };
 
 export const LeadingComponent = (props: Props) => {
+  // Content hight = 22(5.5rem)
   return (
     <div className="w-full">
-      <div className="">
+      {/* 計算の結果、GuideLineはh-11になるが、Overlayedとの整合性のため、明示する。 */}
+      <div className="h-11">
         <GuideLine {...props.GuideLine} />
       </div>
       <div className="relative w-full">
         {/* ターンメッセージとアラーム */}
-        {/* this content 2.75rem = 1.25rem top margin + 1.5rem p hight */}
-        <div className="w-fit px-3 mt-5">
+        {/* this content hight 11 = 2.75rem = 1.25rem top padding + 1.5rem p hight */}
+        <div className="w-fit px-3 pt-5">
           <p className="">
             {props.inMyTrun ? "あなたのターン" : "あいてのターン"}
           </p>
-          <div className="absolute top-[.2rem] left-[.5rem] opacity-75">
+          <div className="absolute top-[1.45rem] left-[.5rem] opacity-75">
             <div className="relative z-20">
               <Alerm {...props.Alerm} />
             </div>
@@ -29,6 +31,12 @@ export const LeadingComponent = (props: Props) => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const OverlayedLeadingComponent = () => {
+  return (
+    <div className="w-full h-[5.5rem] absolute z-100 top-0 left-0 animate-fadeout bg-foreground" />
   );
 };
 

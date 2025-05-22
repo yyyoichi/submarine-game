@@ -1,5 +1,8 @@
 import { ControllerComponent } from "@/components/controller";
-import { LeadingComponent } from "@/components/leading";
+import {
+  LeadingComponent,
+  OverlayedLeadingComponent,
+} from "@/components/leading";
 import { OceanComponent } from "@/components/ocean";
 import type React from "react";
 
@@ -12,7 +15,11 @@ type PreparingPageProps = {
 export const PreparingPage = (props: PreparingPageProps) => {
   return (
     <div className="flex flex-col">
-      <LeadingComponent {...props.Leading} />
+      <div>
+        <LeadingComponent {...props.Leading} />
+        <OverlayedLeadingComponent />
+      </div>
+
       <OceanComponent {...props.Ocean} />
       <ControllerComponent {...props.Controller} />
       <div className="w-[200px] h-[200px]" />

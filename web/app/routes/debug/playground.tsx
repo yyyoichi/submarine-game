@@ -1,10 +1,18 @@
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PreparingPage } from "../playgrounds/component";
 
 export default function Playground() {
   const [viewGuide, setViewGuide] = useState(false);
-  const time30secAgo = new Date(Date.now() - 1000 * 30);
+  const [message, setMessage] = useState("敵魚雷A1に着弾！接近しています。");
+  useEffect(() => {
+    const interval = setTimeout(() => {
+      setMessage("魚雷B1に着弾！付近から反響音！");
+    }, 7000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
   const props: React.ComponentProps<typeof PreparingPage> = {
     Leading: {
       inMyTrun: true,
@@ -14,7 +22,7 @@ export default function Playground() {
         finishDatetime: new Date(Date.now() + 1000 * 30),
       },
       GuideLine: {
-        children: "敵魚雷A1に着弾！接近しています。",
+        children: message,
       },
     },
     Ocean: {
