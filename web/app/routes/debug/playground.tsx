@@ -25,6 +25,12 @@ export default function Playground() {
         children: message,
       },
     },
+    OverlayedLeading: {
+      fadeout: true,
+      GuideLine: {
+        children: "魚雷A1に着弾！接近しています。",
+      },
+    },
     Ocean: {
       displaySectorName: viewGuide,
       sectorCount: 6,
@@ -34,6 +40,7 @@ export default function Playground() {
       },
     },
     OverlayedOcean: {
+      fadeout: true,
       gapSector: 17,
       ringSector: 17,
       sectorCount: 6,

@@ -34,9 +34,25 @@ export const LeadingComponent = (props: Props) => {
   );
 };
 
-export const OverlayedLeadingComponent = () => {
+type OverlayedLeadingProps = {
+  fadeout?: boolean;
+  GuideLine?: GuideLineProps;
+};
+
+export const OverlayedLeadingComponent = (props: OverlayedLeadingProps) => {
   return (
-    <div className="w-full h-[5.5rem] absolute z-100 top-0 left-0 animate-fadeout bg-foreground" />
+    <div
+      className={cn(
+        "w-full h-[5.5rem] absolute z-100 top-0 left-0 bg-foreground",
+        props.fadeout ? "animate-fadeout" : "",
+      )}
+    >
+      {props.GuideLine && (
+        <div className="h-11">
+          <GuideLine {...props.GuideLine} />
+        </div>
+      )}
+    </div>
   );
 };
 
