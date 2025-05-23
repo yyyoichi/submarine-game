@@ -45,10 +45,6 @@ export default function Playground() {
         South: {},
         East: {},
       },
-      Compass: {
-        onClick: () => setViewGuide((v) => !v),
-      },
-      visibleDirection: viewGuide,
     },
   };
   return <PreparingPage {...props} />;

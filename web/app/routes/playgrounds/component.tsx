@@ -25,10 +25,14 @@ type PreparingPageProps = {
   MinesOcean: {
     sectors: number[];
   };
-  Controller: React.ComponentProps<typeof ControllerComponent>;
+  Controller: Pick<
+    React.ComponentProps<typeof ControllerComponent>,
+    "Direction"
+  >;
 };
 
 export const PreparingPage = (props: PreparingPageProps) => {
+  const [viewGuide, setViewGuide] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
   useEffect(() => {
     if (!api) return;
@@ -86,7 +90,7 @@ export const PreparingPage = (props: PreparingPageProps) => {
       },
       { ...islandSectors },
     ),
-    displaySectorName: false,
+    displaySectorName: viewGuide,
   };
 
   const minesLeadingProps: React.ComponentProps<typeof LeadingComponent> = {
@@ -108,7 +112,7 @@ export const PreparingPage = (props: PreparingPageProps) => {
       },
       { ...islandSectors },
     ),
-    displaySectorName: false,
+    displaySectorName: viewGuide,
   };
 
   const waitingOceanProps: React.ComponentProps<
@@ -118,6 +122,17 @@ export const PreparingPage = (props: PreparingPageProps) => {
     fadeout: false,
     title: "待機中",
     titlePosition: "right",
+  };
+
+  const controllerPrpos: React.ComponentProps<typeof ControllerComponent> = {
+    ...props.Controller,
+    Compass: {
+      onClick: () => {
+        setViewGuide((v) => !v);
+      },
+      onKeyDown: () => {}, // TODO
+    },
+    visibleDirection: viewGuide,
   };
 
   return (
@@ -152,7 +167,7 @@ export const PreparingPage = (props: PreparingPageProps) => {
         </CarouselContent>
       </Carousel>
       <div>
-        <ControllerComponent {...props.Controller} />
+        <ControllerComponent {...controllerPrpos} />
       </div>
     </div>
   );
