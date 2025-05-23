@@ -33,6 +33,7 @@ export const OceanComponent = ({
 
 type OverlayProps = {
   fadeout?: boolean; // フェードアウトするか
+  absolute?: boolean; // 絶対位置にするか
   gapSector?: number; // 唯一空けるセクター
   ringSector?: number; // ソナーを出すセクター
   sectorCount: number; // 1辺のセクター数
@@ -59,9 +60,14 @@ export const OverlayedOceanComponent = (props: OverlayProps) => {
       titleCn.push("items-end");
     }
   }
-  const wrapCn: ClassValue = `grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground absolute w-full top-0 left-0 z-100 ${props.fadeout ? "animate-fadeout" : ""}`;
   return (
-    <div className={wrapCn}>
+    <div
+      className={cn(
+        "grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground ",
+        props.fadeout ? "animate-fadeout" : "",
+        props.absolute ? "absolute w-full top-0 left-0 z-100" : "",
+      )}
+    >
       {[...Array(props.sectorCount * props.sectorCount)].map((_, i) => {
         const sname = sector(props.sectorCount, i);
         const p: OceanSectorProps = {

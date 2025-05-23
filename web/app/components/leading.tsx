@@ -36,6 +36,7 @@ export const LeadingComponent = (props: Props) => {
 
 type OverlayedLeadingProps = {
   fadeout?: boolean;
+  absolute?: boolean;
   GuideLine?: GuideLineProps;
 };
 
@@ -43,8 +44,9 @@ export const OverlayedLeadingComponent = (props: OverlayedLeadingProps) => {
   return (
     <div
       className={cn(
-        "w-full h-[5.5rem] absolute z-100 top-0 left-0 bg-foreground",
+        "w-full h-[5.5rem] bg-foreground",
         props.fadeout ? "animate-fadeout" : "",
+        props.absolute ? "absolute z-100 top-0 left-0 " : "",
       )}
     >
       {props.GuideLine && (

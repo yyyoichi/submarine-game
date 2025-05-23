@@ -4,52 +4,39 @@ import { PreparingPage } from "../playgrounds/component";
 
 export default function Playground() {
   const [viewGuide, setViewGuide] = useState(false);
-  const [message, setMessage] = useState("敵魚雷A1に着弾！接近しています。");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   useEffect(() => {
-    const interval = setTimeout(() => {
-      setMessage("魚雷B1に着弾！付近から反響音！");
-    }, 7000);
+    const interval = setInterval(() => {
+      setStep((v) => {
+        if (v === 3) {
+          return 1;
+        }
+        return (v + 1) as 2 | 3;
+      });
+    }, 10000);
     return () => {
       clearInterval(interval);
     };
   }, []);
   const props: React.ComponentProps<typeof PreparingPage> = {
+    // @ts-ignore
+    preparingStep: ["me", "mines", "done"][step - 1],
     Leading: {
-      inMyTrun: true,
       Alerm: {
         useAlerm: true,
         startPingSec: 30,
         finishDatetime: new Date(Date.now() + 1000 * 30),
       },
-      GuideLine: {
-        children: message,
-      },
-    },
-    OverlayedLeading: {
-      fadeout: true,
-      GuideLine: {
-        children: "魚雷A1に着弾！接近しています。",
-      },
     },
     Ocean: {
-      displaySectorName: viewGuide,
       sectorCount: 6,
-      Sectors: {
-        1: { embed: true },
-        16: { embed: true },
-        17: { icon: "torpedo" },
-        11: { icon: "me" },
-        34: { icon: "mine" },
-        13: { icon: "move" },
-      },
+      islands: [10, 28],
     },
-    OverlayedOcean: {
-      fadeout: true,
-      gapSector: 17,
-      ringSector: 17,
-      sectorCount: 6,
-      title: "魚雷発射",
-      titlePosition: "right",
+    MeOcean: {
+      sectors: [12],
+    },
+    MinesOcean: {
+      sectors: [18, 32],
     },
     Controller: {
       Direction: {
