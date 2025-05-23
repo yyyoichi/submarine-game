@@ -13,7 +13,7 @@ export default function Playground() {
         }
         return (v + 1) as 2 | 3;
       });
-    }, 10000);
+    }, 1000 * 10);
     return () => {
       clearInterval(interval);
     };

@@ -10,8 +10,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type PreparingPageProps = {
   preparingStep: "me" | "mines" | "done";
@@ -34,16 +33,45 @@ type PreparingPageProps = {
 export const PreparingPage = (props: PreparingPageProps) => {
   const [viewGuide, setViewGuide] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
+  const [leadingApi, setLeadingApi] = useState<CarouselApi>();
+  const [oceanApi, setOceanApi] = useState<CarouselApi>();
+  const meGuideRef = React.useRef<HTMLDivElement>(null);
+  const minesGuideRef = React.useRef<HTMLDivElement>(null);
+  const [guideContentWidth, setGuideContentWidth] = useState<
+    number | undefined
+  >(undefined);
   useEffect(() => {
-    if (!api) return;
-    const p =
-      props.preparingStep === "me"
-        ? 0
-        : props.preparingStep === "mines"
-          ? 1
-          : 2;
-    api.scrollTo(p);
-  }, [api, props.preparingStep]);
+    if (!api || !leadingApi || !oceanApi) return;
+    switch (props.preparingStep) {
+      case "me":
+        api.scrollTo(0);
+        leadingApi.scrollTo(0);
+        oceanApi.scrollTo(0);
+        break;
+      case "mines":
+        leadingApi.scrollTo(1);
+        oceanApi.scrollTo(1);
+        break;
+      case "done":
+        api.scrollTo(1);
+        break;
+    }
+  }, [api, leadingApi, oceanApi, props.preparingStep]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!meGuideRef.current || !minesGuideRef.current) return;
+    switch (props.preparingStep) {
+      case "me":
+        setGuideContentWidth(meGuideRef.current.scrollWidth);
+        break;
+      case "mines":
+        setGuideContentWidth(minesGuideRef.current.scrollWidth);
+        break;
+      case "done":
+        setGuideContentWidth(undefined);
+        break;
+    }
+  }, [meGuideRef.current, minesGuideRef.current, props.preparingStep]);
   const islandSectors: React.ComponentProps<typeof OceanComponent>["Sectors"] =
     {};
   for (const i of props.Ocean.islands) {
@@ -57,9 +85,7 @@ export const PreparingPage = (props: PreparingPageProps) => {
   > = {
     fadeout: true,
     absolute: true,
-    GuideLine: {
-      children: "敵作戦海域に到達しました！",
-    },
+    children: "敵作戦海域に到達しました！",
   };
   const overlayedOceanProps: React.ComponentProps<
     typeof OverlayedOceanComponent
@@ -71,12 +97,10 @@ export const PreparingPage = (props: PreparingPageProps) => {
     titlePosition: "right",
   };
 
-  const meLeadingProps: React.ComponentProps<typeof LeadingComponent> = {
+  const leadingProps: React.ComponentProps<typeof LeadingComponent> = {
     ...props.Leading,
     inMyTrun: true,
-    GuideLine: {
-      children: "行動を開始する海域を決定してください。",
-    },
+    contentWidth: guideContentWidth,
   };
   const meOceanProps: React.ComponentProps<typeof OceanComponent> = {
     ...props.Ocean,
@@ -93,13 +117,6 @@ export const PreparingPage = (props: PreparingPageProps) => {
     displaySectorName: viewGuide,
   };
 
-  const minesLeadingProps: React.ComponentProps<typeof LeadingComponent> = {
-    inMyTrun: true,
-    GuideLine: {
-      children: "制御機雷を敷設してください。",
-    },
-    ...props.Leading,
-  };
   const minesOceanProps: React.ComponentProps<typeof OceanComponent> = {
     ...props.Ocean,
     Sectors: props.MinesOcean.sectors.reduce(
@@ -139,23 +156,48 @@ export const PreparingPage = (props: PreparingPageProps) => {
     <div className="flex flex-col">
       <Carousel setApi={setApi} opts={opts}>
         <CarouselContent className="mx-0 px-0">
-          {/* 0 行動開始位置 */}
+          {/* api.0 行動開始位置 */}
           <CarouselItem className="pl-0">
+            {/* Leading */}
             <div className="relative w-full">
-              <LeadingComponent {...meLeadingProps} />
+              <Carousel setApi={setLeadingApi} opts={{ ...opts }}>
+                <LeadingComponent {...leadingProps}>
+                  <CarouselContent className="mx-0 px-0">
+                    {/* leadingApi.0 */}
+                    <CarouselItem className="pl-0">
+                      <div className="w-fit" ref={meGuideRef}>
+                        {"行動開始海域を決定してください。"}
+                      </div>
+                    </CarouselItem>
+                    {/* oceanApi.1 */}
+                    <CarouselItem className="pl-0">
+                      <div className="w-fit" ref={minesGuideRef}>
+                        {"制御機雷を敷設してください。"}
+                      </div>
+                    </CarouselItem>
+                  </CarouselContent>
+                </LeadingComponent>
+              </Carousel>
               <OverlayedLeadingComponent {...overlayedLeadingProps} />
             </div>
+            {/* Ocean */}
             <div className="relative w-full">
-              <OceanComponent {...meOceanProps} />
+              <Carousel setApi={setOceanApi} opts={opts}>
+                <CarouselContent className="mx-0 px-0">
+                  {/* oceanApi.1 */}
+                  <CarouselItem className="pl-0">
+                    <OceanComponent {...meOceanProps} />
+                  </CarouselItem>
+                  {/* oceanApi.2 */}
+                  <CarouselItem className="pl-0">
+                    <OceanComponent {...minesOceanProps} />
+                  </CarouselItem>
+                </CarouselContent>
+              </Carousel>
               <OverlayedOceanComponent {...overlayedOceanProps} />
             </div>
           </CarouselItem>
-          {/* 1 制御機雷敷設*/}
-          <CarouselItem className="pl-0">
-            <LeadingComponent {...minesLeadingProps} />
-            <OceanComponent {...minesOceanProps} />
-          </CarouselItem>
-          {/* 2 待機*/}
+          {/* api.1 待機*/}
           <CarouselItem className="pl-0">
             <div className="relative w-full">
               <OverlayedLeadingComponent />

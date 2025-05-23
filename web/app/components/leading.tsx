@@ -1,31 +1,32 @@
 import { cn } from "@/lib/utils";
 import type { ClassValue } from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 type Props = {
   inMyTrun: boolean;
   Alerm: AlermProps;
-  GuideLine: GuideLineProps;
-};
+} & GuideLineProps;
 
-export const LeadingComponent = (props: Props) => {
+export const LeadingComponent = ({
+  inMyTrun,
+  Alerm: alermProps,
+  ...props
+}: Props) => {
   // Content hight = 22(5.5rem)
   return (
     <div className="w-full">
       {/* 計算の結果、GuideLineはh-11になるが、Overlayedとの整合性のため、明示する。 */}
       <div className="h-11">
-        <GuideLine {...props.GuideLine} />
+        <GuideLine {...props} />
       </div>
       <div className="relative w-full">
         {/* ターンメッセージとアラーム */}
         {/* this content hight 11 = 2.75rem = 1.25rem top padding + 1.5rem p hight */}
         <div className="w-fit px-3 pt-5">
-          <p className="">
-            {props.inMyTrun ? "あなたのターン" : "あいてのターン"}
-          </p>
+          <p className="">{inMyTrun ? "あなたのターン" : "あいてのターン"}</p>
           <div className="absolute top-[1.45rem] left-[.5rem] opacity-75">
             <div className="relative z-20">
-              <Alerm {...props.Alerm} />
+              <Alerm {...alermProps} />
             </div>
           </div>
         </div>
@@ -37,43 +38,50 @@ export const LeadingComponent = (props: Props) => {
 type OverlayedLeadingProps = {
   fadeout?: boolean;
   absolute?: boolean;
-  GuideLine?: GuideLineProps;
-};
+} & GuideLineProps;
 
-export const OverlayedLeadingComponent = (props: OverlayedLeadingProps) => {
+export const OverlayedLeadingComponent = ({
+  fadeout,
+  absolute,
+  ...props
+}: OverlayedLeadingProps) => {
   return (
     <div
       className={cn(
         "w-full h-[5.5rem] bg-foreground",
-        props.fadeout ? "animate-fadeout" : "",
-        props.absolute ? "absolute z-100 top-0 left-0 " : "",
+        fadeout ? "animate-fadeout" : "",
+        absolute ? "absolute z-100 top-0 left-0 " : "",
       )}
     >
-      {props.GuideLine && (
+      {props.children && (
         <div className="h-11">
-          <GuideLine {...props.GuideLine} />
+          <GuideLine {...props} />
         </div>
       )}
     </div>
   );
 };
 
-type GuideLineProps = Pick<React.PropsWithChildren, "children">;
+type GuideLineProps = Pick<React.PropsWithChildren, "children"> & {
+  contentWidth?: number;
+};
 
 const GuideLine = (props: GuideLineProps) => {
+  const id = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const contentWidth =
+    props.contentWidth || contentRef.current?.scrollWidth || 0;
   const [animationDuration, setAnimationDuration] = useState(0); // <= 0 でアニメーションしない
   const shouldAnimate = animationDuration > 0;
   const speed = 100; // px/s
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!containerRef.current || !contentRef.current) {
+    if (!containerRef.current) {
       return;
     }
 
-    const contentWidth = contentRef.current.scrollWidth;
     const containerWidth = containerRef.current.clientWidth;
 
     // コンテンツがコンテナより広い場合のみアニメーション
@@ -85,12 +93,12 @@ const GuideLine = (props: GuideLineProps) => {
     } else {
       setAnimationDuration(0);
     }
-  }, [containerRef.current?.clientWidth, contentRef.current?.scrollWidth]);
+  }, [containerRef.current?.clientWidth, contentWidth]);
 
   return (
     <div
       ref={containerRef}
-      className="w-full bg-foreground px-1 py-2 relative overflow-hidden"
+      className="w-full bg-foreground px-1 py-2 h-[2.75rem] relative overflow-hidden"
     >
       <div
         ref={contentRef}
@@ -98,22 +106,24 @@ const GuideLine = (props: GuideLineProps) => {
         style={
           shouldAnimate
             ? {
-                animation: `marquee ${animationDuration * 1000}ms linear infinite`,
+                animation: `marquee-${id} ${animationDuration * 1000}ms linear infinite`,
               }
             : {}
         }
         {...props}
       />
-      <style>{`
-        @keyframes marquee {
+      {shouldAnimate && (
+        <style>{`
+        @keyframes marquee-${id} {
           0% {
             transform: translateX(${containerRef.current?.clientWidth || 0}px);
           }
           100% {
-            transform: translateX(-${contentRef.current?.scrollWidth || 0}px);
+            transform: translateX(-${contentWidth}px);
           }
         }
       `}</style>
+      )}
     </div>
   );
 };
