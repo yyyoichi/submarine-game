@@ -1,6 +1,7 @@
 import { sector } from "@/lib/utils";
 import type { ClassValue } from "clsx";
 import { cn } from "src/lib/utils";
+import { ConcentricRingsComponent } from "./rings";
 
 type Props = {
   displaySectorName: boolean;
@@ -29,6 +30,7 @@ export const OceanComponent = ({
 
 type OverlayProps = {
   gapSector?: number; // 唯一空けるセクター
+  ringSector?: number; // ソナーを出すセクター
   sectorCount: number; // 1辺のセクター数
 } & (
   | {
@@ -41,15 +43,11 @@ type OverlayProps = {
     }
 );
 
-export const OverlayedOceanComponent = ({
-  sectorCount,
-  gapSector,
-  ...props
-}: OverlayProps) => {
+export const OverlayedOceanComponent = (props: OverlayProps) => {
   const titleCn: ClassValue[] = [];
   if (props.title) {
     const topOrBottom =
-      (gapSector || 0) < sectorCount ** 2 / 2 ? "bottom" : "top";
+      (props.gapSector || 0) < props.sectorCount ** 2 / 2 ? "bottom" : "top";
     if (props.titlePosition === "right") {
       titleCn.push("justify-end");
     }
@@ -59,12 +57,18 @@ export const OverlayedOceanComponent = ({
   }
   return (
     <div className="grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground absolute w-full top-0 left-0 z-100 animate-fadeout">
-      {new Array(sectorCount * sectorCount).fill("").map((_, i) => {
-        const sname = sector(sectorCount, i);
+      {[...Array(props.sectorCount * props.sectorCount)].map((_, i) => {
+        const sname = sector(props.sectorCount, i);
         const p: OceanSectorProps = {
-          type: gapSector !== i ? "overlay" : undefined,
+          type: props.gapSector !== i ? "overlay" : undefined,
+          sectorName: props.gapSector === i ? sname : undefined,
         };
-        return <OceanSector key={sname} {...p} />;
+        return (
+          <div key={sname} className="relative">
+            {props.ringSector === i && <ConcentricRingsComponent />}
+            <OceanSector {...p} />
+          </div>
+        );
       })}
       {props.title && (
         <div

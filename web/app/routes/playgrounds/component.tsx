@@ -16,7 +16,7 @@ type PreparingPageProps = {
 export const PreparingPage = (props: PreparingPageProps) => {
   return (
     <div className="flex flex-col">
-      <div>
+      <div className="relative w-full">
         <LeadingComponent {...props.Leading} />
         <OverlayedLeadingComponent />
       </div>

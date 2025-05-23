@@ -35,6 +35,7 @@ export default function Playground() {
     },
     OverlayedOcean: {
       gapSector: 17,
+      ringSector: 17,
       sectorCount: 6,
       title: "魚雷発射",
       titlePosition: "right",
