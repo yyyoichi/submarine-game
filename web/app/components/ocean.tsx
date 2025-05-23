@@ -1,12 +1,13 @@
 import { sector } from "@/lib/utils";
 import type { ClassValue } from "clsx";
+import { ChevronsRight, CircleDot, CircleX, SquareSquare } from "lucide-react";
 import { cn } from "src/lib/utils";
 import { ConcentricRingsComponent } from "./rings";
 
 type Props = {
   displaySectorName: boolean;
   sectorCount: number; // 1辺のセクター数
-  Sectors: Record<number, { embed?: boolean }>;
+  Sectors: Record<number, { embed?: boolean } & Pick<OceanSectorProps, "icon">>;
 };
 
 export const OceanComponent = ({
@@ -18,9 +19,11 @@ export const OceanComponent = ({
     <div className="grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-muted-foreground rounded-xs">
       {new Array(sectorCount * sectorCount).fill("").map((_, i) => {
         const sname = sector(sectorCount, i);
+        const { embed, ...ps } = Sectors[i] || {};
         const p: OceanSectorProps = {
-          type: Sectors[i]?.embed ? "embed" : undefined,
+          type: embed ? "embed" : undefined,
           sectorName: displaySectorName ? sname : undefined,
+          ...ps,
         };
         return <OceanSector key={sname} {...p} />;
       })}
@@ -88,6 +91,7 @@ export const OverlayedOceanComponent = (props: OverlayProps) => {
 
 type OceanSectorProps = {
   type?: "embed" | "overlay";
+  icon?: "move" | "torpedo" | "mine" | "me";
   sectorName?: string;
 };
 
@@ -108,6 +112,18 @@ const OceanSector = (props: OceanSectorProps) => {
       addedClass.push("border-backgraund", "bg-background");
       break;
   }
+  const SectorIcon = () => {
+    switch (props.icon) {
+      case "move":
+        return <ChevronsRight className="w-1/2 h-1/2 stroke-[3]" />;
+      case "torpedo":
+        return <CircleX className="stroke-[3]" />;
+      case "mine":
+        return <SquareSquare className="stroke-[3]" />;
+      case "me":
+        return <CircleDot className="text-foreground" />;
+    }
+  };
   return (
     <div
       className={cn(
@@ -116,13 +132,19 @@ const OceanSector = (props: OceanSectorProps) => {
       )}
     >
       {/* iconとセクター位置補助をレイヤーする */}
-      <div className={"absolete w-full h-full text-muted-foreground z-10"}>
-        <div className=" flex justify-center items-center">{""}</div>
-      </div>
+      {props.icon && (
+        <div
+          className={
+            "absolute w-full h-full top-0 left-0 z-10 flex justify-center items-center bg-background"
+          }
+        >
+          <SectorIcon />
+        </div>
+      )}
       {props.sectorName && (
         <div
           className={
-            "absolute top-0 w-full h-full flex justify-center items-center text-muted-foreground z-0"
+            "absolute top-0 w-full h-full flex justify-center items-center text-muted-foreground/50 z-0"
           }
         >
           {props.sectorName}

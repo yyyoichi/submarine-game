@@ -37,6 +37,10 @@ export default function Playground() {
       Sectors: {
         1: { embed: true },
         16: { embed: true },
+        17: { icon: "torpedo" },
+        11: { icon: "me" },
+        34: { icon: "mine" },
+        13: { icon: "move" },
       },
     },
     OverlayedOcean: {
