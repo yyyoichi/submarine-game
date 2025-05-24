@@ -6,7 +6,7 @@ type Props = {
   duration?: number; // duration for showing children component
   fadein?: number; // duration for fadein
   fadeout?: number; // duration for fadeout
-} & Pick<React.ComponentProps<"div">, "children">;
+} & Pick<React.ComponentProps<"div">, "children" | "className">;
 
 export const FadeInOutTrigger = (props: Props) => {
   const id = useId();
@@ -45,7 +45,7 @@ export const FadeInOutTrigger = (props: Props) => {
   return (
     <>
       <div
-        className=""
+        className={props.className}
         style={{
           animation: `fadeinout-${id} ${Math.floor(animationDuration)}ms linear ${Math.floor(delay)}ms forwards`,
         }}

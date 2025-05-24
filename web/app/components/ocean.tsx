@@ -48,6 +48,9 @@ type OverlayProps = {
     }
 );
 
+export const OverlayedOceanComponentAbsoluteClassName =
+  "absolute top-0 left-0 z-100";
+
 export const OverlayedOceanComponent = (props: OverlayProps) => {
   const titleCn: ClassValue[] = [];
   if (props.title) {
@@ -63,9 +66,9 @@ export const OverlayedOceanComponent = (props: OverlayProps) => {
   return (
     <div
       className={cn(
-        "grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground ",
+        "grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground w-full",
         props.fadeout ? "animate-fadeout" : "",
-        props.absolute ? "absolute w-full top-0 left-0 z-100" : "",
+        props.absolute ? OverlayedOceanComponentAbsoluteClassName : "",
       )}
     >
       {[...Array(props.sectorCount * props.sectorCount)].map((_, i) => {

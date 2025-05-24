@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSubmit } from "react-router";
 import { PlayingPage } from "../playgrounds/component";
 import { usePreparingPageProps } from "../playgrounds/props";
@@ -27,8 +28,9 @@ export default function Playground() {
       submit({ deployAt, mines }, { method: "post" });
     },
   });
+  const [turn, setTurn] = useState(1);
   const playingPageProps: React.ComponentProps<typeof PlayingPage> = {
-    turn: 1,
+    turn: turn,
     Leading: {
       inMyTrun: true,
       Alerm: {
@@ -53,12 +55,20 @@ export default function Playground() {
         East: {},
         West: {},
       },
-      AButton: {},
+      AButton: {
+        onClick: () => setTurn((v) => v + 1),
+      },
       BButton: {},
       CommandWindow: {
         commands: ["move", "fire-torpedo", "trigger-mine"],
         use: "fire-torpedo",
       },
+    },
+    OverlayedOcean: {
+      gapSector: 2,
+      ringSector: 2,
+      title: "魚雷攻撃",
+      titlePosition: "left",
     },
   };
   return (

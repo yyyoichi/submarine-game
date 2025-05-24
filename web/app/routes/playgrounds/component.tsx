@@ -1,15 +1,22 @@
 import { ControllerComponent } from "@/components/controller";
+import { FadeInOutTrigger } from "@/components/fadeinout";
 import {
   LeadingComponent,
   OverlayedLeadingComponent,
+  OverlayedLeadingComponentAbsoluteClassName,
 } from "@/components/leading";
-import { OceanComponent, OverlayedOceanComponent } from "@/components/ocean";
+import {
+  OceanComponent,
+  OverlayedOceanComponent,
+  OverlayedOceanComponentAbsoluteClassName,
+} from "@/components/ocean";
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 
 type PreparingPageProps = {
@@ -226,6 +233,7 @@ export const PreparingPage = (props: PreparingPageProps) => {
 
 type PlayingPageProps = {
   turn: number;
+  // ゲーム中のガイドはUIの責務対象外。
   Leading: React.ComponentProps<typeof LeadingComponent>;
   Ocean: Pick<React.ComponentProps<typeof OceanComponent>, "sectorCount"> & {
     islands: number[];
@@ -234,6 +242,11 @@ type PlayingPageProps = {
     sector?: number;
     type: "torpedo" | "mine" | "move";
   };
+  // ターン切替時表示。タイトル、アニメーションはUIの責務対象外。
+  OverlayedOcean: Pick<
+    React.ComponentProps<typeof OverlayedOceanComponent>,
+    "ringSector" | "gapSector" | "title" | "titlePosition"
+  >;
   Controller: Pick<
     React.ComponentProps<typeof ControllerComponent>,
     "Direction" | "AButton" | "BButton" | "CommandWindow"
@@ -270,13 +283,46 @@ export const PlayingPage = (props: PlayingPageProps) => {
     },
     visibleDirection: viewGuide,
   };
+
+  const overlayedLeadingProps: React.ComponentProps<
+    typeof OverlayedLeadingComponent
+  > = {};
+  const overlayedOceanProps: React.ComponentProps<
+    typeof OverlayedOceanComponent
+  > = {
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    title: props.OverlayedOcean.title!,
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    titlePosition: props.OverlayedOcean.titlePosition!,
+    ...props.OverlayedOcean,
+    absolute: true,
+    fadeout: false, // FadeInOutTriggerで制御する
+    sectorCount: props.Ocean.sectorCount,
+  };
+  const fadeInOutTriggerProps: React.ComponentProps<typeof FadeInOutTrigger> = {
+    trigger: `${props.turn}-${props.Leading.inMyTrun}`,
+    fadein: 50,
+    fadeout: 1000,
+  };
   return (
     <div className="flex flex-col">
       <div className="relative w-full">
         <LeadingComponent {...props.Leading} />
+        <FadeInOutTrigger
+          {...fadeInOutTriggerProps}
+          className={cn(OverlayedLeadingComponentAbsoluteClassName, "w-full")}
+        >
+          <OverlayedLeadingComponent {...overlayedLeadingProps} />
+        </FadeInOutTrigger>
       </div>
       <div className="relative w-full">
         <OceanComponent {...oceanProps} />
+        <FadeInOutTrigger
+          {...fadeInOutTriggerProps}
+          className={cn(OverlayedOceanComponentAbsoluteClassName, "w-full")}
+        >
+          <OverlayedOceanComponent {...overlayedOceanProps} />
+        </FadeInOutTrigger>
       </div>
       <div>
         <ControllerComponent {...controllerPrpos} />

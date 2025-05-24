@@ -40,6 +40,9 @@ type OverlayedLeadingProps = {
   absolute?: boolean;
 } & GuideLineProps;
 
+export const OverlayedLeadingComponentAbsoluteClassName =
+  "absolute top-0 left-0 z-100";
+
 export const OverlayedLeadingComponent = ({
   fadeout,
   absolute,
@@ -50,7 +53,7 @@ export const OverlayedLeadingComponent = ({
       className={cn(
         "w-full h-[5.5rem] bg-foreground",
         fadeout ? "animate-fadeout" : "",
-        absolute ? "absolute z-100 top-0 left-0 " : "",
+        absolute ? OverlayedLeadingComponentAbsoluteClassName : "",
       )}
     >
       {props.children && (
