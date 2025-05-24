@@ -151,6 +151,15 @@ export const PreparingPage = (props: PreparingPageProps) => {
       onKeyDown: () => {}, // TODO
     },
     visibleDirection: viewGuide,
+    CommandWindow: {
+      commands: ["deploy-me", "deploy-mines", "deploy-wait"],
+      use:
+        props.preparingStep === "me"
+          ? "deploy-me"
+          : props.preparingStep === "mines"
+            ? "deploy-mines"
+            : "deploy-wait",
+    },
   };
 
   return (
