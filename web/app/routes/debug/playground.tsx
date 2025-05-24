@@ -1,5 +1,5 @@
 import { useSubmit } from "react-router";
-import { PreparingPage } from "../playgrounds/component";
+import { PlayingPage, PreparingPage } from "../playgrounds/component";
 import { usePreparingPageProps } from "../playgrounds/props";
 
 const islands = [
@@ -27,7 +27,12 @@ export default function Playground() {
       submit({ deployAt, mines }, { method: "post" });
     },
   });
-  return <PreparingPage {...props} />;
+  return (
+    <>
+      <PreparingPage {...props} />
+      <PlayingPage />
+    </>
+  );
 }
 
 export async function clientAction() {

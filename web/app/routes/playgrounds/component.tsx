@@ -1,4 +1,5 @@
 import { ControllerComponent } from "@/components/controller";
+import { FadeInOutTrigger } from "@/components/fadeinout";
 import {
   LeadingComponent,
   OverlayedLeadingComponent,
@@ -216,7 +217,22 @@ export const PreparingPage = (props: PreparingPageProps) => {
 };
 
 export const PlayingPage = () => {
-  return <div className="w-full h-10 bg-red-500" />;
+  const [trigger, setTrigger] = useState("i");
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTrigger(String(Math.random() * 100));
+    }, 4000);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+  return (
+    <>
+      <FadeInOutTrigger trigger={trigger} duration={1000}>
+        <div className="w-full h-10 bg-red-500" />
+      </FadeInOutTrigger>
+    </>
+  );
 };
 
 export const FinishedPage = () => {};
