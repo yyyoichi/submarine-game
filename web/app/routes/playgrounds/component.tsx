@@ -242,6 +242,11 @@ type PlayingPageProps = {
     sector?: number;
     type: "torpedo" | "mine" | "move";
   };
+  // ターン切替時表示。ガイドはUIの責務対象外。
+  OverlayedLeading: Pick<
+    React.ComponentProps<typeof OverlayedLeadingComponent>,
+    "children"
+  >;
   // ターン切替時表示。タイトル、アニメーションはUIの責務対象外。
   OverlayedOcean: Pick<
     React.ComponentProps<typeof OverlayedOceanComponent>,
@@ -286,7 +291,11 @@ export const PlayingPage = (props: PlayingPageProps) => {
 
   const overlayedLeadingProps: React.ComponentProps<
     typeof OverlayedLeadingComponent
-  > = {};
+  > = {
+    ...props.OverlayedLeading,
+    absolute: true,
+    fadeout: false, // FadeInOutTriggerで制御する
+  };
   const overlayedOceanProps: React.ComponentProps<
     typeof OverlayedOceanComponent
   > = {

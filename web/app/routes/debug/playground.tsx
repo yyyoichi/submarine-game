@@ -38,7 +38,7 @@ export default function Playground() {
         startPingMilliSec: 1000 * 30, // 30s
         finishDatetime: new Date(Date.now() + 1000 * 30), // 30s
       },
-      children: "TODO gen message with game logs",
+      children: "C1に敵艦魚雷着弾！ヨーソロー！C1付近の敵艦を攻撃せよ！",
     },
     Ocean: {
       sectorCount: 6,
@@ -63,6 +63,9 @@ export default function Playground() {
         commands: ["move", "fire-torpedo", "trigger-mine"],
         use: "fire-torpedo",
       },
+    },
+    OverlayedLeading: {
+      children: "C1に敵艦魚雷着弾！ヨーソロー！",
     },
     OverlayedOcean: {
       gapSector: 2,

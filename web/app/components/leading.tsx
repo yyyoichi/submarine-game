@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ClassValue } from "clsx";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 type Props = {
   inMyTrun: boolean;
@@ -69,19 +69,31 @@ type GuideLineProps = Pick<React.PropsWithChildren, "children"> & {
   contentWidth?: number;
 };
 
-const GuideLine = (props: GuideLineProps) => {
+const GuideLine = ({ contentWidth: cw, ...props }: GuideLineProps) => {
   const id = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const contentWidth =
-    props.contentWidth || contentRef.current?.scrollWidth || 0;
+  // const contentWidth =
+  //   props.contentWidth || contentRef.current?.scrollWidth || 0;
+  const [contentWidth, setContentWidth] = useState<number | undefined>(
+    undefined,
+  );
   const [animationDuration, setAnimationDuration] = useState(0); // <= 0 でアニメーションしない
   const shouldAnimate = animationDuration > 0;
   const speed = 100; // px/s
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useLayoutEffect(() => {
+    if (cw) {
+      setContentWidth(cw);
+    } else if (contentRef.current) {
+      setContentWidth(contentRef.current.scrollWidth);
+    }
+  }, [contentRef, props.children]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!containerRef.current) {
+    if (!containerRef.current || !contentWidth) {
       return;
     }
 
@@ -96,7 +108,7 @@ const GuideLine = (props: GuideLineProps) => {
     } else {
       setAnimationDuration(0);
     }
-  }, [containerRef.current?.clientWidth, contentWidth]);
+  }, [containerRef.current?.clientWidth, contentWidth, props.children]);
 
   return (
     <div
