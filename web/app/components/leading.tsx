@@ -131,7 +131,7 @@ const GuideLine = (props: GuideLineProps) => {
 type AlermProps =
   | {
       useAlerm: true;
-      startPingSec: number;
+      startPingMilliSec: number;
       finishDatetime: Date;
     }
   | {
@@ -165,15 +165,15 @@ const Alerm = (props: AlermProps) => {
     const interval = setInterval(() => {
       const now = new Date();
       const diff = props.finishDatetime.getTime() - now.getTime();
-      const sec = Math.floor(diff / 1000);
-      if (sec < 0) {
+      const msec = Math.floor(diff);
+      if (msec < 0) {
         return;
       }
-      if (sec < 2) {
+      if (msec < 2000) {
         setIntervaStage(4);
         return;
       }
-      const p = sec / (props.startPingSec - 2);
+      const p = msec / (props.startPingMilliSec - 2000);
       if (p < 0.2) {
         setIntervaStage(3);
         return;
