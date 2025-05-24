@@ -8,6 +8,8 @@ type Props = {
   visibleDirection: boolean;
   Direction: Record<TDirection, Pick<DirectionProps, "onClick" | "onKeyDown">>;
   Compass: Pick<React.ComponentProps<"div">, "onClick" | "onKeyDown">;
+  AButton: Pick<React.ComponentProps<"svg">, "onClick" | "onKeyDown">;
+  BButton: Pick<React.ComponentProps<"svg">, "onClick" | "onKeyDown">;
 };
 
 export const ControllerComponent = (props: Props) => {
@@ -59,10 +61,16 @@ export const ControllerComponent = (props: Props) => {
         {/* A,Bボタン */}
         <div className="flex flex-col justify-around w-full">
           <div className="w-full flex justify-end">
-            <Circle className="w-12 h-12 stroke-4" />
+            <Circle
+              className="w-12 h-12 stroke-4 cursor-pointer"
+              {...props.AButton}
+            />
           </div>
           <div className="w-full flex justify-center">
-            <Circle className="w-12 h-12 stroke-4" />
+            <Circle
+              className="w-12 h-12 stroke-4 cursor-pointer"
+              {...props.BButton}
+            />
           </div>
         </div>
       </div>

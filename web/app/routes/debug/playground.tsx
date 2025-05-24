@@ -1,8 +1,10 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useSubmit } from "react-router";
 import { PreparingPage } from "../playgrounds/component";
 
 export default function Playground() {
+  const submit = useSubmit();
   const [viewGuide, setViewGuide] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   useEffect(() => {
@@ -45,7 +47,23 @@ export default function Playground() {
         South: {},
         East: {},
       },
+      AButton: {
+        onClick: () => {
+          submit({}, { method: "POST" });
+        },
+      },
+      BButton: {},
     },
   };
   return <PreparingPage {...props} />;
+}
+
+export async function clientAction() {
+  console.log("deploy action");
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("deploy action done");
+      resolve(true);
+    }, 1000);
+  });
 }

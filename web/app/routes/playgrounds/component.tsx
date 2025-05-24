@@ -26,7 +26,7 @@ type PreparingPageProps = {
   };
   Controller: Pick<
     React.ComponentProps<typeof ControllerComponent>,
-    "Direction"
+    "Direction" | "AButton" | "BButton"
   >;
 };
 
