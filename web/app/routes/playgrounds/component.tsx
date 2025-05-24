@@ -1,5 +1,4 @@
 import { ControllerComponent } from "@/components/controller";
-import { FadeInOutTrigger } from "@/components/fadeinout";
 import {
   LeadingComponent,
   OverlayedLeadingComponent,
@@ -225,22 +224,64 @@ export const PreparingPage = (props: PreparingPageProps) => {
   );
 };
 
-export const PlayingPage = () => {
-  const [trigger, setTrigger] = useState("i");
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTrigger(String(Math.random() * 100));
-    }, 4000);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
+type PlayingPageProps = {
+  turn: number;
+  Leading: React.ComponentProps<typeof LeadingComponent>;
+  Ocean: Pick<React.ComponentProps<typeof OceanComponent>, "sectorCount"> & {
+    islands: number[];
+    me: number;
+    enables: number[];
+    sector?: number;
+    type: "torpedo" | "mine" | "move";
+  };
+  Controller: Pick<
+    React.ComponentProps<typeof ControllerComponent>,
+    "Direction" | "AButton" | "BButton" | "CommandWindow"
+  >;
+};
+
+export const PlayingPage = (props: PlayingPageProps) => {
+  const [viewGuide, setViewGuide] = useState(false);
+  const oceanProps: React.ComponentProps<typeof OceanComponent> = {
+    displaySectorName: viewGuide,
+    sectorCount: props.Ocean.sectorCount,
+    Sectors: {},
+  };
+  for (let i = 0; i < props.Ocean.sectorCount ** 2; i++) {
+    const sct = oceanProps.Sectors[i] || {};
+    if (props.Ocean.islands.includes(i) || !props.Ocean.enables.includes(i)) {
+      sct.embed = true;
+    }
+    if (props.Ocean.me === i) {
+      sct.icon = "me";
+    }
+    if (props.Ocean.sector === i) {
+      sct.icon = props.Ocean.type;
+    }
+    oceanProps.Sectors[i] = sct;
+  }
+  const controllerPrpos: React.ComponentProps<typeof ControllerComponent> = {
+    ...props.Controller,
+    Compass: {
+      onClick: () => {
+        setViewGuide((v) => !v);
+      },
+      onKeyDown: () => {}, // TODO
+    },
+    visibleDirection: viewGuide,
+  };
   return (
-    <>
-      <FadeInOutTrigger trigger={trigger} duration={1000}>
-        <div className="w-full h-10 bg-red-500" />
-      </FadeInOutTrigger>
-    </>
+    <div className="flex flex-col">
+      <div className="relative w-full">
+        <LeadingComponent {...props.Leading} />
+      </div>
+      <div className="relative w-full">
+        <OceanComponent {...oceanProps} />
+      </div>
+      <div>
+        <ControllerComponent {...controllerPrpos} />
+      </div>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useSubmit } from "react-router";
-import { PlayingPage, PreparingPage } from "../playgrounds/component";
+import { PlayingPage } from "../playgrounds/component";
 import { usePreparingPageProps } from "../playgrounds/props";
 
 const islands = [
@@ -27,10 +27,44 @@ export default function Playground() {
       submit({ deployAt, mines }, { method: "post" });
     },
   });
+  const playingPageProps: React.ComponentProps<typeof PlayingPage> = {
+    turn: 1,
+    Leading: {
+      inMyTrun: true,
+      Alerm: {
+        useAlerm: true,
+        startPingMilliSec: 1000 * 30, // 30s
+        finishDatetime: new Date(Date.now() + 1000 * 30), // 30s
+      },
+      children: "TODO gen message with game logs",
+    },
+    Ocean: {
+      sectorCount: 6,
+      islands: islands,
+      me: 10,
+      enables: enables,
+      sector: 11,
+      type: "torpedo",
+    },
+    Controller: {
+      Direction: {
+        North: {},
+        South: {},
+        East: {},
+        West: {},
+      },
+      AButton: {},
+      BButton: {},
+      CommandWindow: {
+        commands: ["move", "fire-torpedo", "trigger-mine"],
+        use: "fire-torpedo",
+      },
+    },
+  };
   return (
     <>
-      <PreparingPage {...props} />
-      <PlayingPage />
+      {/* <PreparingPage {...props} /> */}
+      <PlayingPage {...playingPageProps} />
     </>
   );
 }
