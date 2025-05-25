@@ -1,7 +1,9 @@
-import { useState } from "react";
 import { useSubmit } from "react-router";
 import { PlayingPage } from "../playgrounds/component";
-import { usePreparingPageProps } from "../playgrounds/props";
+import {
+  usePlayingPageProps,
+  usePreparingPageProps,
+} from "../playgrounds/props";
 
 const islands = [
   Math.floor(Math.random() * 6 ** 2),
@@ -28,52 +30,28 @@ export default function Playground() {
       submit({ deployAt, mines }, { method: "post" });
     },
   });
-  const [turn, setTurn] = useState(1);
-  const playingPageProps: React.ComponentProps<typeof PlayingPage> = {
-    turn: turn,
-    Leading: {
-      inMyTrun: true,
-      Alerm: {
-        useAlerm: true,
-        startPingMilliSec: 1000 * 30, // 30s
-        finishDatetime: new Date(Date.now() + 1000 * 30), // 30s
-      },
-      children: "C1に敵艦魚雷着弾！ヨーソロー！C1付近の敵艦を攻撃せよ！",
+  const playingPageProps = usePlayingPageProps({
+    timeout: new Date(Date.now() + 1000 * 60), // 60s,
+    milliSecondPerTurn: 1000 * 30, // 30s
+    boardWidth: 6,
+    turn: 3,
+    inMyTurn: true,
+    at: 10,
+    islandSectors: islands,
+    enableMoveSectors: [10, 17, 13],
+    enableTorpedoSectors: [10, 11, 12, 16, 17, 18],
+    enableMineSectors: [11, 17],
+    prevAction: {
+      me: false,
+      mode: "show",
+      type: "fire-torpedo",
+      at: 11,
+      result: "hard-to-starboard",
     },
-    Ocean: {
-      sectorCount: 6,
-      islands: islands,
-      me: 10,
-      enables: enables,
-      sector: 11,
-      type: "torpedo",
+    action: ({ at, type }) => {
+      submit({ at, type }, { method: "post" });
     },
-    Controller: {
-      Direction: {
-        North: {},
-        South: {},
-        East: {},
-        West: {},
-      },
-      AButton: {
-        onClick: () => setTurn((v) => v + 1),
-      },
-      BButton: {},
-      CommandWindow: {
-        commands: ["move", "fire-torpedo", "trigger-mine"],
-        use: "fire-torpedo",
-      },
-    },
-    OverlayedLeading: {
-      children: "C1に敵艦魚雷着弾！ヨーソロー！",
-    },
-    OverlayedOcean: {
-      gapSector: 2,
-      ringSector: 2,
-      title: "魚雷攻撃",
-      titlePosition: "left",
-    },
-  };
+  });
   return (
     <>
       {/* <PreparingPage {...props} /> */}
