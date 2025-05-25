@@ -14,9 +14,7 @@ interface PreparingPageParams {
   deployAction: (param: { deployAt: number; mines: number[] }) => void;
 }
 
-type Props = React.ComponentProps<typeof PreparingPage>;
-
-type SectorStates =
+type PreparingPageSctState =
   | {
       state: "selectme";
       cursorSct: number;
@@ -38,7 +36,7 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     p.enableDeploySectors[
       Math.floor(Math.random() * p.enableDeploySectors.length)
     ];
-  const [sctState, setSctState] = useState<SectorStates>({
+  const [sctState, setSctState] = useState<PreparingPageSctState>({
     state: "selectme",
     cursorSct: randSct(),
   });
@@ -157,7 +155,7 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     }
   };
 
-  const props: Props = {
+  const props: React.ComponentProps<typeof PreparingPage> = {
     preparingStep:
       sctState.state === "selectme"
         ? "me"
