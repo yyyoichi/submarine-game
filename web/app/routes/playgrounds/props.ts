@@ -14,6 +14,7 @@ interface PreparingPageParams {
   enableMineSectors: number[];
 
   deployAction: (param: { deployAt: number; mines: number[] }) => void;
+  loading: boolean;
 }
 
 type PreparingPageSctState =
@@ -44,6 +45,9 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
   });
 
   const directionAction = (dir: InputDirection) => {
+    if (p.loading) {
+      return;
+    }
     switch (sctState.state) {
       case "selectme": {
         console.log("me move to", dir);
@@ -56,6 +60,9 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     }
   };
   const aAction = () => {
+    if (p.loading) {
+      return;
+    }
     if (sctState.state === "done") {
       return;
     }
@@ -103,6 +110,9 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     });
   };
   const bAction = () => {
+    if (p.loading) {
+      return;
+    }
     if (sctState.state === "done") {
       return;
     }
@@ -156,7 +166,7 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
         return sctState.selectedMineScts;
     }
   };
-
+  const enableAction = !p.loading && sctState.state !== "done";
   const props: React.ComponentProps<typeof PreparingPage> = {
     preparingStep:
       sctState.state === "selectme"
@@ -184,23 +194,23 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     Controller: {
       Direction: {
         North: {
-          onClick: () => directionAction("North"),
+          onClick: enableAction ? () => directionAction("North") : undefined,
         },
         West: {
-          onClick: () => directionAction("West"),
+          onClick: enableAction ? () => directionAction("West") : undefined,
         },
         South: {
-          onClick: () => directionAction("South"),
+          onClick: enableAction ? () => directionAction("South") : undefined,
         },
         East: {
-          onClick: () => directionAction("East"),
+          onClick: enableAction ? () => directionAction("East") : undefined,
         },
       },
       AButton: {
-        onClick: sctState.state === "done" ? undefined : aAction,
+        onClick: enableAction ? aAction : undefined,
       },
       BButton: {
-        onClick: sctState.state === "done" ? undefined : bAction,
+        onClick: enableAction ? bAction : undefined,
       },
     },
   };
@@ -247,6 +257,7 @@ interface PlayingPageParams {
     at: number;
     type: PlayingActionType;
   }) => void;
+  loading: boolean;
 }
 
 type PlayingPageActionState =
@@ -274,6 +285,9 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
   });
 
   const directionAction = (dir: InputDirection) => {
+    if (p.loading) {
+      return;
+    }
     if (!p.inMyTurn) {
       return;
     }
@@ -317,6 +331,9 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
     });
   };
   const aAction = () => {
+    if (p.loading) {
+      return;
+    }
     if (!p.inMyTurn) {
       return;
     }
@@ -346,6 +363,9 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
     });
   };
   const bAction = () => {
+    if (p.loading) {
+      return;
+    }
     if (!p.inMyTurn) {
       return;
     }
@@ -362,7 +382,7 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
     });
   };
 
-  const enableAction = p.inMyTurn && actState.state !== "done";
+  const enableAction = !p.loading && p.inMyTurn && actState.state !== "done";
   const props: React.ComponentProps<typeof PlayingPage> = {
     turn: p.turn,
     Leading: {

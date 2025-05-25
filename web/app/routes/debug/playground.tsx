@@ -1,5 +1,5 @@
-import { useSubmit } from "react-router";
-import { PlayingPage } from "../playgrounds/component";
+import { useFetcher } from "react-router";
+import { PlayingPage, PreparingPage } from "../playgrounds/component";
 import {
   usePlayingPageProps,
   usePreparingPageProps,
@@ -10,7 +10,7 @@ const islands = [
   Math.floor(Math.random() * 6 ** 2),
 ];
 export default function Playground() {
-  const submit = useSubmit();
+  const fetcher = useFetcher();
   const enables: number[] = [];
   for (let i = 0; i < 6 ** 2; i++) {
     if (islands.includes(i)) {
@@ -18,7 +18,7 @@ export default function Playground() {
     }
     enables.push(i);
   }
-  const props = usePreparingPageProps({
+  const prepareingPageProps = usePreparingPageProps({
     timeout: new Date(Date.now() + 1000 * 60), // 60s
     milliSecondPerTurn: 1000 * 30, // 30s
     boardWidth: 6,
@@ -27,8 +27,9 @@ export default function Playground() {
     enableDeploySectors: enables,
     enableMineSectors: enables,
     deployAction: ({ deployAt, mines }) => {
-      submit({ deployAt, mines }, { method: "post" });
+      fetcher.submit({ deployAt, mines }, { method: "post" });
     },
+    loading: fetcher.state !== "idle",
   });
   const playingPageProps = usePlayingPageProps({
     timeout: new Date(Date.now() + 1000 * 60), // 60s,
@@ -49,12 +50,13 @@ export default function Playground() {
       result: "hard-to-starboard",
     },
     action: ({ at, type }) => {
-      submit({ at, type }, { method: "post" });
+      fetcher.submit({ at, type }, { method: "post" });
     },
+    loading: fetcher.state !== "idle",
   });
   return (
     <>
-      {/* <PreparingPage {...props} /> */}
+      <PreparingPage {...prepareingPageProps} />
       <PlayingPage {...playingPageProps} />
     </>
   );
