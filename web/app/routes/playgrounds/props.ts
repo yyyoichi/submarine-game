@@ -1,5 +1,7 @@
+import { sector } from "@/lib/utils";
+import type React from "react";
 import { useState } from "react";
-import type { PlayingPage, PreparingPage } from "./component";
+import type { FinishedPage, PlayingPage, PreparingPage } from "./component";
 
 type InputDirection = "North" | "West" | "South" | "East";
 
@@ -477,6 +479,231 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
                       ? "西に潜航"
                       : "",
       titlePosition: p.prevAction.me ? "right" : "left",
+    },
+  };
+
+  return props;
+};
+
+interface FinishedPageParams {
+  winner: "me" | "enemy";
+  boardWidth: number;
+  islandSectors: number[];
+
+  firstAction: "me" | "enemy";
+  gameOverReason: "torpedo-hit" | "mine-hit" | "timeout";
+  myActionLogs: Array<FinishedPageParamsActionLog>;
+  enemyActionLogs: Array<FinishedPageParamsActionLog>;
+
+  exit: () => void;
+}
+type FinishedPageParamsActionLog =
+  | {
+      mode: "attack";
+      me: number; // 艦位置
+      sector: number; // 行動先
+      type: "fire-torpedo" | "trigger-mine";
+      result: "full-speed-ahead" | "hard-to-starboard" | "hit";
+    }
+  | {
+      mode: "move";
+      me: number; // 艦位置
+      sector: number; // 行動先
+      type: "move";
+    }
+  | {
+      mode: "dummy";
+    };
+export const useFinishedPageProps = (p: FinishedPageParams) => {
+  type Props = React.ComponentProps<typeof FinishedPage>;
+  // 初期表示は最後の行動
+  const [showSt, setShowSt] = useState<{
+    show: "top" | "bottom";
+    showIndex: number;
+  }>({
+    show:
+      (p.winner === "me" && p.firstAction === "me") ||
+      (p.winner === "enemy" && p.firstAction === "enemy")
+        ? "top"
+        : "bottom",
+    showIndex: p.myActionLogs.length - 1,
+  });
+  const [commandUse, setCommandUse] = useState<"win" | "lose" | "exit">(
+    p.winner === "me" ? "win" : "lose",
+  );
+
+  const makeOceanProps = (
+    log: FinishedPageParamsActionLog,
+  ): Props["TopOcean"][number] => {
+    if (log.mode === "dummy") return { mode: "dummy" };
+    return {
+      mode: "action",
+      me: log.me,
+      sector: log.sector,
+      type: log.type,
+    };
+  };
+
+  const directionAction = (dir: InputDirection) => {
+    setShowSt((prev) => {
+      switch (dir) {
+        case "North": {
+          if (prev.show === "bottom") {
+            return { ...prev, show: "top" };
+          }
+          return prev;
+        }
+        case "South": {
+          if (prev.show === "top") {
+            return { ...prev, show: "bottom" };
+          }
+          return prev;
+        }
+        case "West": {
+          if (prev.showIndex > 0) {
+            return { ...prev, showIndex: prev.showIndex - 1 };
+          }
+          return { ...prev, showIndex: p.myActionLogs.length - 1 };
+        }
+        case "East": {
+          if (prev.showIndex < p.myActionLogs.length - 1) {
+            return { ...prev, showIndex: prev.showIndex + 1 };
+          }
+          return { ...prev, showIndex: 0 };
+        }
+      }
+    });
+  };
+
+  const makeOverlayedLoadingChildren = (
+    index: number,
+    log: FinishedPageParamsActionLog,
+  ) => {
+    switch (log.mode) {
+      case "dummy":
+        return "";
+      case "attack": {
+        const sct = sector(p.boardWidth, log.sector);
+        const actTxt =
+          log.type === "fire-torpedo" ? "魚雷が着弾" : "制御機雷が作動";
+        switch (log.result) {
+          case "full-speed-ahead":
+            return `${index + 1}. ${actTxt}しました。${sct}`;
+          case "hard-to-starboard":
+            return `${index + 1}. 相手艦の至近に${actTxt}しました。${sct}`;
+          default:
+            return `${index + 1}. ${sct}に${actTxt}し、敵艦を撃沈しました。${sct}`;
+        }
+      }
+      case "move": {
+        const sct = sector(p.boardWidth, log.sector);
+        return `${index + 1}. ${sct}に潜航しました。`;
+      }
+    }
+  };
+  let hitSector: number | undefined;
+  for (const l of [...p.myActionLogs, ...p.enemyActionLogs]) {
+    if (l.mode === "attack" && l.result === "hit") {
+      hitSector = l.sector;
+      break;
+    }
+  }
+
+  const props: Props = {
+    Leading: {
+      inMyTrun:
+        (showSt.show === "top" && p.firstAction === "me") ||
+        (showSt.show === "bottom" && p.firstAction === "enemy"),
+      children:
+        (showSt.show === "top" && p.firstAction === "me") ||
+        (showSt.show === "bottom" && p.firstAction === "enemy")
+          ? makeOverlayedLoadingChildren(
+              showSt.showIndex,
+              p.myActionLogs[showSt.showIndex],
+            )
+          : makeOverlayedLoadingChildren(
+              showSt.showIndex,
+              p.enemyActionLogs[showSt.showIndex],
+            ),
+    },
+    Ocean: {
+      sectorCount: p.boardWidth,
+      islands: p.islandSectors,
+      show: showSt.show,
+      showIndex: showSt.showIndex,
+    },
+    OverlayedLeading: {
+      children:
+        p.winner === "me"
+          ? makeOverlayedLoadingChildren(
+              showSt.showIndex,
+              p.myActionLogs[showSt.showIndex],
+            )
+          : makeOverlayedLoadingChildren(
+              showSt.showIndex,
+              p.enemyActionLogs[showSt.showIndex],
+            ),
+    },
+    OverlayedOcean: {
+      ringSector: hitSector,
+      gapSector: hitSector,
+      title:
+        p.gameOverReason === "torpedo-hit"
+          ? "魚雷着弾"
+          : p.gameOverReason === "mine-hit"
+            ? "機雷直撃"
+            : "逃走",
+      titlePosition:
+        // timeoutした方にtitle表示、その他攻撃の場合は勝者に表示
+        p.gameOverReason === "timeout" && p.winner === "me"
+          ? "left"
+          : p.gameOverReason === "timeout" && p.winner === "enemy"
+            ? "right"
+            : p.winner === "me"
+              ? "right"
+              : "left",
+    },
+    TopOcean: (p.firstAction === "me" ? p.myActionLogs : p.enemyActionLogs).map(
+      makeOceanProps,
+    ),
+    BottomOcean: (p.firstAction === "me"
+      ? p.enemyActionLogs
+      : p.myActionLogs
+    ).map(makeOceanProps),
+    Controller: {
+      AButton: {
+        onClick: () => {
+          setCommandUse((prev) => {
+            if (prev === "exit") {
+              p.exit();
+            }
+            return "exit";
+          });
+        },
+      },
+      BButton: {
+        onClick: () => {
+          setCommandUse(p.winner === "me" ? "win" : "lose");
+        },
+      },
+      CommandWindow: {
+        commands: [p.winner === "me" ? "win" : "lose", "exit"],
+        use: commandUse,
+      },
+      Direction: {
+        North: {
+          onClick: () => directionAction("North"),
+        },
+        South: {
+          onClick: () => directionAction("South"),
+        },
+        East: {
+          onClick: () => directionAction("East"),
+        },
+        West: {
+          onClick: () => directionAction("West"),
+        },
+      },
     },
   };
 

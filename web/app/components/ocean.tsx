@@ -1,6 +1,7 @@
 import { sector } from "@/lib/utils";
 import type { ClassValue } from "clsx";
 import { ChevronsRight, CircleDot, CircleX, SquareSquare } from "lucide-react";
+import type React from "react";
 import { cn } from "src/lib/utils";
 import { ConcentricRingsComponent } from "./rings";
 
@@ -46,17 +47,28 @@ type OverlayProps = {
       title: string;
       titlePosition: "right" | "left";
     }
-);
+) &
+  React.ComponentProps<"div">;
 
 export const OverlayedOceanComponentAbsoluteClassName =
   "absolute top-0 left-0 z-100";
 
-export const OverlayedOceanComponent = (props: OverlayProps) => {
+export const OverlayedOceanComponent = ({
+  fadeout,
+  absolute,
+  gapSector,
+  ringSector,
+  sectorCount,
+  title,
+  titlePosition,
+  className,
+  ...props
+}: OverlayProps) => {
   const titleCn: ClassValue[] = [];
-  if (props.title) {
+  if (title) {
     const topOrBottom =
-      (props.gapSector || 0) < props.sectorCount ** 2 / 2 ? "bottom" : "top";
-    if (props.titlePosition === "right") {
+      (gapSector || 0) < sectorCount ** 2 / 2 ? "bottom" : "top";
+    if (titlePosition === "right") {
       titleCn.push("justify-end");
     }
     if (topOrBottom === "bottom") {
@@ -67,31 +79,33 @@ export const OverlayedOceanComponent = (props: OverlayProps) => {
     <div
       className={cn(
         "grid grid-cols-6 py-2 px-3 gap-2 aspect-square bg-foreground w-full",
-        props.fadeout ? "animate-fadeout" : "",
-        props.absolute ? OverlayedOceanComponentAbsoluteClassName : "",
+        fadeout ? "animate-fadeout" : "",
+        absolute ? OverlayedOceanComponentAbsoluteClassName : "",
+        className,
       )}
+      {...props}
     >
-      {[...Array(props.sectorCount * props.sectorCount)].map((_, i) => {
-        const sname = sector(props.sectorCount, i);
+      {[...Array(sectorCount * sectorCount)].map((_, i) => {
+        const sname = sector(sectorCount, i);
         const p: OceanSectorProps = {
-          type: props.gapSector !== i ? "overlay" : undefined,
-          sectorName: props.gapSector === i ? sname : undefined,
+          type: gapSector !== i ? "overlay" : undefined,
+          sectorName: gapSector === i ? sname : undefined,
         };
         return (
           <div key={sname} className="relative">
-            {props.ringSector === i && <ConcentricRingsComponent />}
+            {ringSector === i && <ConcentricRingsComponent />}
             <OceanSector {...p} />
           </div>
         );
       })}
-      {props.title && (
+      {title && (
         <div
           className={cn(
             "absolute w-full h-full top-0 left-0 flex text-background text-4xl",
             ...titleCn,
           )}
         >
-          {props.title}
+          {title}
         </div>
       )}
     </div>

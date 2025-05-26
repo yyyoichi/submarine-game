@@ -17,7 +17,7 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 
 type PreparingPageProps = {
   preparingStep: "me" | "mines" | "done";
@@ -340,7 +340,192 @@ export const PlayingPage = (props: PlayingPageProps) => {
   );
 };
 
-export const FinishedPage = () => {};
+type FinishedPageProps = {
+  Leading: Pick<
+    React.ComponentProps<typeof LeadingComponent>,
+    "inMyTrun" | "children"
+  >;
+  Ocean: Pick<React.ComponentProps<typeof OceanComponent>, "sectorCount"> & {
+    islands: number[];
+    show: "top" | "bottom";
+    showIndex: number;
+  };
+  OverlayedLeading: Pick<
+    React.ComponentProps<typeof OverlayedLeadingComponent>,
+    "children"
+  >;
+  OverlayedOcean: Pick<
+    React.ComponentProps<typeof OverlayedOceanComponent>,
+    "ringSector" | "gapSector" | "title" | "titlePosition"
+  >;
+  TopOcean: Array<FinishedPageOceanProps>;
+  BottomOcean: Array<FinishedPageOceanProps>;
+  Controller: Pick<
+    React.ComponentProps<typeof ControllerComponent>,
+    "Direction" | "AButton" | "BButton" | "CommandWindow"
+  >;
+};
+type FinishedPageOceanProps =
+  | {
+      mode: "action";
+      me: number;
+      sector: number;
+      type: "fire-torpedo" | "trigger-mine" | "move";
+    }
+  | {
+      mode: "dummy";
+    };
+
+export const FinishedPage = (props: FinishedPageProps) => {
+  const [viewGuide, setViewGuide] = useState(false);
+  const [verticalApi, setVerticalApi] = useState<CarouselApi>();
+  const [topOceanApi, setTopOceanApi] = useState<CarouselApi>();
+  const [bottomOceanApi, setBottomOceanApi] = useState<CarouselApi>();
+  const oceanRef = React.useRef<HTMLDivElement>(null);
+  const [oceanContentHight, setOceanContentHeight] = useState(0);
+  useEffect(() => {
+    if (!verticalApi || !topOceanApi || !bottomOceanApi) return;
+    if (props.Ocean.show === "top") {
+      verticalApi.scrollTo(0);
+    } else {
+      verticalApi.scrollTo(1);
+    }
+    topOceanApi.scrollTo(props.Ocean.showIndex);
+    bottomOceanApi.scrollTo(props.Ocean.showIndex);
+  }, [
+    verticalApi,
+    topOceanApi,
+    bottomOceanApi,
+    props.Ocean.show,
+    props.Ocean.showIndex,
+  ]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useLayoutEffect(() => {
+    if (!oceanRef.current) return;
+    setOceanContentHeight(oceanRef.current.scrollHeight);
+  }, [oceanRef.current]);
+  const leadingProps: React.ComponentProps<typeof LeadingComponent> = {
+    ...props.Leading,
+    Alerm: {
+      useAlerm: false,
+    },
+  };
+  const overlayedLeadingProps: React.ComponentProps<
+    typeof OverlayedLeadingComponent
+  > = {
+    ...props.OverlayedLeading,
+    fadeout: true,
+    absolute: true,
+  };
+  const overlayedOceanProps: React.ComponentProps<
+    typeof OverlayedOceanComponent
+  > = {
+    ...props.OverlayedOcean,
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    title: props.OverlayedOcean.title!,
+    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    titlePosition: props.OverlayedOcean.titlePosition!,
+    absolute: true,
+    fadeout: true,
+    sectorCount: props.Ocean.sectorCount,
+  };
+  const controllerPrpos: React.ComponentProps<typeof ControllerComponent> = {
+    ...props.Controller,
+    Compass: {
+      onClick: () => {
+        setViewGuide((v) => !v);
+      },
+      onKeyDown: () => {}, // TODO
+    },
+    visibleDirection: viewGuide,
+  };
+  // Ocean
+  const islandSectors: React.ComponentProps<typeof OceanComponent>["Sectors"] =
+    {};
+  for (const i of props.Ocean.islands) {
+    islandSectors[i] = {
+      embed: true,
+    };
+  }
+  const makeOceans = (
+    p: FinishedPageOceanProps,
+  ): React.ComponentProps<typeof OceanComponent> => {
+    const sectors: React.ComponentProps<typeof OceanComponent>["Sectors"] = {
+      ...islandSectors,
+    };
+    if (p.mode === "action") {
+      sectors[p.me] = {
+        embed: false,
+        icon: "me",
+      };
+      sectors[p.sector] = {
+        embed: false,
+        icon:
+          p.type === "fire-torpedo"
+            ? "torpedo"
+            : p.type === "trigger-mine"
+              ? "mine"
+              : "move",
+      };
+    }
+    return {
+      displaySectorName: viewGuide,
+      sectorCount: props.Ocean.sectorCount,
+      Sectors: sectors,
+    };
+  };
+  return (
+    <div className="flex flex-col">
+      <div className="relative w-full">
+        <LeadingComponent {...leadingProps} />
+        <OverlayedLeadingComponent {...overlayedLeadingProps} />
+      </div>
+      <div className="relative w-full">
+        {/* 縦方向 */}
+        <Carousel setApi={setVerticalApi} orientation="vertical" opts={opts}>
+          <CarouselContent
+            className="mt-0"
+            style={{ height: `${oceanContentHight}px` }}
+          >
+            <CarouselItem className="pt-0">
+              {/* 1. Top */}
+              <Carousel setApi={setTopOceanApi} opts={opts}>
+                <CarouselContent className="mx-0 px-0">
+                  {props.TopOcean.map(makeOceans).map((ocean, index) => (
+                    <CarouselItem
+                      className="relative w-full pl-0 h-fit"
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                      key={index}
+                    >
+                      <OceanComponent {...ocean} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </CarouselItem>
+            <CarouselItem className="pt-0">
+              {/* 2. Bottom */}
+              <Carousel setApi={setBottomOceanApi} opts={opts}>
+                <CarouselContent className="mx-0 px-0">
+                  {props.BottomOcean.map(makeOceans).map((ocean, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    <CarouselItem className="relative w-full pl-0" key={index}>
+                      <OceanComponent {...ocean} />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+        <OverlayedOceanComponent {...overlayedOceanProps} ref={oceanRef} />
+      </div>
+      <div>
+        <ControllerComponent {...controllerPrpos} />
+      </div>
+    </div>
+  );
+};
 
 const opts: React.ComponentProps<typeof Carousel>["opts"] = {
   duration: 20,

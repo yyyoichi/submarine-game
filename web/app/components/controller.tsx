@@ -12,7 +12,10 @@ type TCommand =
   | "fire-torpedo"
   | "trigger-mine"
   | "move"
-  | "wait";
+  | "wait"
+  | "win"
+  | "lose"
+  | "exit";
 
 type Props = {
   visibleDirection: boolean;
@@ -100,6 +103,9 @@ const commandProps: Record<TCommand, React.ComponentProps<"div">> = {
   "deploy-wait": { children: "..." },
   move: { children: "潜航" },
   wait: { children: "待機" },
+  win: { children: "勝利" }, // 勝利
+  lose: { children: "敗北" }, // 敗北
+  exit: { children: "終了" },
 };
 const CommandWindow = (props: CommandWindowProps) => {
   const [api, setApi] = useState<CarouselApi>();
