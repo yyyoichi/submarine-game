@@ -49,7 +49,7 @@ func main() {
 	}
 }
 
-//go:embed all:web/dist
+//go:embed all:web/build/client
 var assets embed.FS
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,9 +61,9 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tryRead(requestedPath string, w http.ResponseWriter) error {
-	reqPath := path.Join("web/dist", requestedPath)
-	if reqPath == "web/dist" {
-		reqPath = "web/dist/index.html"
+	reqPath := path.Join("web/build/client", requestedPath)
+	if reqPath == "web/build/client" {
+		reqPath = "web/build/client/index.html"
 	}
 
 	if extension := strings.LastIndex(reqPath, "."); extension == -1 {

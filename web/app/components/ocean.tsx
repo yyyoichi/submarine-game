@@ -1,8 +1,7 @@
-import { sector } from "@/lib/utils";
+import { cn, sector } from "@/lib/utils";
 import type { ClassValue } from "clsx";
 import { ChevronsRight, CircleDot, CircleX, SquareSquare } from "lucide-react";
 import type React from "react";
-import { cn } from "src/lib/utils";
 import { ConcentricRingsComponent } from "./rings";
 
 type Props = {
