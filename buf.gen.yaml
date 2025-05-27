@@ -7,9 +7,6 @@ plugins:
     out: internal/gen
     opt: paths=source_relative
 
-  - local: protoc-gen-es
-    out: web/app/gen
-    opt: target=ts
-  - local: protoc-gen-connect-es
+  - remote: buf.build/bufbuild/es:v2.5.0
     out: web/app/gen
     opt: target=ts

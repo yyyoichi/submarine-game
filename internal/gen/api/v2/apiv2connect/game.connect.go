@@ -48,17 +48,6 @@ const (
 	BattleServiceWaitProcedure = "/api.v2.BattleService/Wait"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	matchingServiceServiceDescriptor         = v2.File_api_v2_game_proto.Services().ByName("MatchingService")
-	matchingServiceWaitEnemyMethodDescriptor = matchingServiceServiceDescriptor.Methods().ByName("WaitEnemy")
-	battleServiceServiceDescriptor           = v2.File_api_v2_game_proto.Services().ByName("BattleService")
-	battleServiceLogsMethodDescriptor        = battleServiceServiceDescriptor.Methods().ByName("Logs")
-	battleServiceDeployMethodDescriptor      = battleServiceServiceDescriptor.Methods().ByName("Deploy")
-	battleServiceActionMethodDescriptor      = battleServiceServiceDescriptor.Methods().ByName("Action")
-	battleServiceWaitMethodDescriptor        = battleServiceServiceDescriptor.Methods().ByName("Wait")
-)
-
 // MatchingServiceClient is a client for the api.v2.MatchingService service.
 type MatchingServiceClient interface {
 	// 対戦相手を待つ。signalキルで離脱する
@@ -74,11 +63,12 @@ type MatchingServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewMatchingServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) MatchingServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	matchingServiceMethods := v2.File_api_v2_game_proto.Services().ByName("MatchingService").Methods()
 	return &matchingServiceClient{
 		waitEnemy: connect.NewClient[v2.WaitEnemyRequest, v2.WaitEnemyResponse](
 			httpClient,
 			baseURL+MatchingServiceWaitEnemyProcedure,
-			connect.WithSchema(matchingServiceWaitEnemyMethodDescriptor),
+			connect.WithSchema(matchingServiceMethods.ByName("WaitEnemy")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -106,10 +96,11 @@ type MatchingServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewMatchingServiceHandler(svc MatchingServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	matchingServiceMethods := v2.File_api_v2_game_proto.Services().ByName("MatchingService").Methods()
 	matchingServiceWaitEnemyHandler := connect.NewServerStreamHandler(
 		MatchingServiceWaitEnemyProcedure,
 		svc.WaitEnemy,
-		connect.WithSchema(matchingServiceWaitEnemyMethodDescriptor),
+		connect.WithSchema(matchingServiceMethods.ByName("WaitEnemy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v2.MatchingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,29 +141,30 @@ type BattleServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewBattleServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) BattleServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	battleServiceMethods := v2.File_api_v2_game_proto.Services().ByName("BattleService").Methods()
 	return &battleServiceClient{
 		logs: connect.NewClient[v2.LogsRequest, v2.LogsResponse](
 			httpClient,
 			baseURL+BattleServiceLogsProcedure,
-			connect.WithSchema(battleServiceLogsMethodDescriptor),
+			connect.WithSchema(battleServiceMethods.ByName("Logs")),
 			connect.WithClientOptions(opts...),
 		),
 		deploy: connect.NewClient[v2.DeployRequest, v2.DeployResponse](
 			httpClient,
 			baseURL+BattleServiceDeployProcedure,
-			connect.WithSchema(battleServiceDeployMethodDescriptor),
+			connect.WithSchema(battleServiceMethods.ByName("Deploy")),
 			connect.WithClientOptions(opts...),
 		),
 		action: connect.NewClient[v2.ActionRequest, v2.ActionResponse](
 			httpClient,
 			baseURL+BattleServiceActionProcedure,
-			connect.WithSchema(battleServiceActionMethodDescriptor),
+			connect.WithSchema(battleServiceMethods.ByName("Action")),
 			connect.WithClientOptions(opts...),
 		),
 		wait: connect.NewClient[v2.WaitRequest, v2.WaitResponse](
 			httpClient,
 			baseURL+BattleServiceWaitProcedure,
-			connect.WithSchema(battleServiceWaitMethodDescriptor),
+			connect.WithSchema(battleServiceMethods.ByName("Wait")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -224,28 +216,29 @@ type BattleServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewBattleServiceHandler(svc BattleServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	battleServiceMethods := v2.File_api_v2_game_proto.Services().ByName("BattleService").Methods()
 	battleServiceLogsHandler := connect.NewUnaryHandler(
 		BattleServiceLogsProcedure,
 		svc.Logs,
-		connect.WithSchema(battleServiceLogsMethodDescriptor),
+		connect.WithSchema(battleServiceMethods.ByName("Logs")),
 		connect.WithHandlerOptions(opts...),
 	)
 	battleServiceDeployHandler := connect.NewUnaryHandler(
 		BattleServiceDeployProcedure,
 		svc.Deploy,
-		connect.WithSchema(battleServiceDeployMethodDescriptor),
+		connect.WithSchema(battleServiceMethods.ByName("Deploy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	battleServiceActionHandler := connect.NewUnaryHandler(
 		BattleServiceActionProcedure,
 		svc.Action,
-		connect.WithSchema(battleServiceActionMethodDescriptor),
+		connect.WithSchema(battleServiceMethods.ByName("Action")),
 		connect.WithHandlerOptions(opts...),
 	)
 	battleServiceWaitHandler := connect.NewServerStreamHandler(
 		BattleServiceWaitProcedure,
 		svc.Wait,
-		connect.WithSchema(battleServiceWaitMethodDescriptor),
+		connect.WithSchema(battleServiceMethods.ByName("Wait")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v2.BattleService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

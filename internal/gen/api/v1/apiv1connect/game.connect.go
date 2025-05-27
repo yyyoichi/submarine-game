@@ -51,19 +51,6 @@ const (
 	HelloServiceSayProcedure = "/api.v1.HelloService/Say"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	gameServiceServiceDescriptor           = v1.File_api_v1_game_proto.Services().ByName("GameService")
-	gameServiceJoinMethodDescriptor        = gameServiceServiceDescriptor.Methods().ByName("Join")
-	gameServiceLeaveMethodDescriptor       = gameServiceServiceDescriptor.Methods().ByName("Leave")
-	gameServiceHistoryMethodDescriptor     = gameServiceServiceDescriptor.Methods().ByName("History")
-	gameServiceFirstActionMethodDescriptor = gameServiceServiceDescriptor.Methods().ByName("FirstAction")
-	gameServiceActionMethodDescriptor      = gameServiceServiceDescriptor.Methods().ByName("Action")
-	gameServiceWaitMethodDescriptor        = gameServiceServiceDescriptor.Methods().ByName("Wait")
-	helloServiceServiceDescriptor          = v1.File_api_v1_game_proto.Services().ByName("HelloService")
-	helloServiceSayMethodDescriptor        = helloServiceServiceDescriptor.Methods().ByName("Say")
-)
-
 // GameServiceClient is a client for the api.v1.GameService service.
 type GameServiceClient interface {
 	// 対戦する
@@ -89,41 +76,42 @@ type GameServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GameServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	gameServiceMethods := v1.File_api_v1_game_proto.Services().ByName("GameService").Methods()
 	return &gameServiceClient{
 		join: connect.NewClient[v1.JoinRequest, v1.JoinResponse](
 			httpClient,
 			baseURL+GameServiceJoinProcedure,
-			connect.WithSchema(gameServiceJoinMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("Join")),
 			connect.WithClientOptions(opts...),
 		),
 		leave: connect.NewClient[v1.LeaveRequest, v1.LeaveResponse](
 			httpClient,
 			baseURL+GameServiceLeaveProcedure,
-			connect.WithSchema(gameServiceLeaveMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("Leave")),
 			connect.WithClientOptions(opts...),
 		),
 		history: connect.NewClient[v1.HistoryRequest, v1.HistoryResponse](
 			httpClient,
 			baseURL+GameServiceHistoryProcedure,
-			connect.WithSchema(gameServiceHistoryMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("History")),
 			connect.WithClientOptions(opts...),
 		),
 		firstAction: connect.NewClient[v1.FirstActionRequest, v1.FirstActionResponse](
 			httpClient,
 			baseURL+GameServiceFirstActionProcedure,
-			connect.WithSchema(gameServiceFirstActionMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("FirstAction")),
 			connect.WithClientOptions(opts...),
 		),
 		action: connect.NewClient[v1.ActionRequest, v1.ActionResponse](
 			httpClient,
 			baseURL+GameServiceActionProcedure,
-			connect.WithSchema(gameServiceActionMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("Action")),
 			connect.WithClientOptions(opts...),
 		),
 		wait: connect.NewClient[v1.WaitRequest, v1.WaitResponse](
 			httpClient,
 			baseURL+GameServiceWaitProcedure,
-			connect.WithSchema(gameServiceWaitMethodDescriptor),
+			connect.WithSchema(gameServiceMethods.ByName("Wait")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -191,40 +179,41 @@ type GameServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	gameServiceMethods := v1.File_api_v1_game_proto.Services().ByName("GameService").Methods()
 	gameServiceJoinHandler := connect.NewServerStreamHandler(
 		GameServiceJoinProcedure,
 		svc.Join,
-		connect.WithSchema(gameServiceJoinMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("Join")),
 		connect.WithHandlerOptions(opts...),
 	)
 	gameServiceLeaveHandler := connect.NewUnaryHandler(
 		GameServiceLeaveProcedure,
 		svc.Leave,
-		connect.WithSchema(gameServiceLeaveMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("Leave")),
 		connect.WithHandlerOptions(opts...),
 	)
 	gameServiceHistoryHandler := connect.NewUnaryHandler(
 		GameServiceHistoryProcedure,
 		svc.History,
-		connect.WithSchema(gameServiceHistoryMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("History")),
 		connect.WithHandlerOptions(opts...),
 	)
 	gameServiceFirstActionHandler := connect.NewUnaryHandler(
 		GameServiceFirstActionProcedure,
 		svc.FirstAction,
-		connect.WithSchema(gameServiceFirstActionMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("FirstAction")),
 		connect.WithHandlerOptions(opts...),
 	)
 	gameServiceActionHandler := connect.NewUnaryHandler(
 		GameServiceActionProcedure,
 		svc.Action,
-		connect.WithSchema(gameServiceActionMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("Action")),
 		connect.WithHandlerOptions(opts...),
 	)
 	gameServiceWaitHandler := connect.NewServerStreamHandler(
 		GameServiceWaitProcedure,
 		svc.Wait,
-		connect.WithSchema(gameServiceWaitMethodDescriptor),
+		connect.WithSchema(gameServiceMethods.ByName("Wait")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.GameService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -288,11 +277,12 @@ type HelloServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewHelloServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) HelloServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	helloServiceMethods := v1.File_api_v1_game_proto.Services().ByName("HelloService").Methods()
 	return &helloServiceClient{
 		say: connect.NewClient[v1.SayRequest, v1.SayResponse](
 			httpClient,
 			baseURL+HelloServiceSayProcedure,
-			connect.WithSchema(helloServiceSayMethodDescriptor),
+			connect.WithSchema(helloServiceMethods.ByName("Say")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -319,10 +309,11 @@ type HelloServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewHelloServiceHandler(svc HelloServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	helloServiceMethods := v1.File_api_v1_game_proto.Services().ByName("HelloService").Methods()
 	helloServiceSayHandler := connect.NewUnaryHandler(
 		HelloServiceSayProcedure,
 		svc.Say,
-		connect.WithSchema(helloServiceSayMethodDescriptor),
+		connect.WithSchema(helloServiceMethods.ByName("Say")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.HelloService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
