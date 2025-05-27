@@ -551,11 +551,19 @@ export const useFinishedPageProps = (p: FinishedPageParams) => {
           if (prev.show === "bottom") {
             return { ...prev, show: "top" };
           }
+          // 前のページがあればbottomに移動
+          if (prev.showIndex > 0) {
+            return { show: "bottom", showIndex: prev.showIndex - 1 };
+          }
           return prev;
         }
         case "South": {
           if (prev.show === "top") {
             return { ...prev, show: "bottom" };
+          }
+          // 次のページがあればtopに移動
+          if (prev.showIndex < p.myActionLogs.length - 1) {
+            return { show: "top", showIndex: prev.showIndex + 1 };
           }
           return prev;
         }
