@@ -57,7 +57,7 @@ message LogsResponse {
     repeated ActionType enable_actions = 4;
   }
   bool require_action = 1; // 行動必要かどうか
-  bool require_deploy_action = 2; // 初回配置の行動が必要か
+  bool require_deploy_action = 2; // 彼我の初回配置の行動が終了していない
   bool game_is_over = 3; // ゲームが終了しているか
   GameOverReason game_over_reason = 4; // ゲーム終了理由
   bool win = 5; // 勝利したか

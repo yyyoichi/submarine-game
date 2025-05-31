@@ -246,15 +246,14 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 	if len(actions) == 0 || (len(actions) == 1 && actions[0].PlayerId != input.PlayerId) {
 		// 行動がないか、あっても一つで相手の行動のみの場合
 		resp.RequireAction = true
-		resp.RequireDeployAction = true
 	} else {
 		latest := actions[0]
 		resp.RequireAction = latest.PlayerId != input.PlayerId
-		resp.RequireDeployAction = false
 		resp.Timeout = latest.Timestamp.Add(s.timeoutDuration)
 	}
 	if len(actions) < 2 {
 		resp.Timeout = game.Timestamp.Add(s.timeoutDuration)
+		resp.RequireDeployAction = true
 	}
 
 	// 終了時0値

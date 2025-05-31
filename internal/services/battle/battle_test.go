@@ -401,6 +401,18 @@ func TestBattleService(t *testing.T) {
 				RequireAction:       true,
 				RequireDeployAction: true,
 			}},
+			// 自分の初回行動あり
+			{func(b *BattleService) {
+				b.setGame(newGame("31"))
+				b.appendAction(newAction("31", "2"))
+			}, newInput("31", "2"), nil, &GetLogsOutput{
+				RequireAction:       false,
+				RequireDeployAction: true,
+				NumTurn:             1,
+				Actions: []LogAction{
+					{PlayerId: "2", Turn: 0, At: 1, To: 1, From: 0, T: core.MoveAction, Direction: core.East},
+				},
+			}},
 			// 自分に行動なし
 			{func(b *BattleService) {
 				b.setGame(newGame("4"))

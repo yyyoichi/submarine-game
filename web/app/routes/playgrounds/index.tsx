@@ -42,7 +42,7 @@ export default function Playground(props: Route.ComponentProps) {
     if (logs.gameIsOver) {
       return;
     }
-    if (logs.requireDeployAction || logs.requireAction) {
+    if (logs.requireAction) {
       return;
     }
     submit(null, { method: "PATCH" });
@@ -53,7 +53,7 @@ export default function Playground(props: Route.ComponentProps) {
     if (logs.gameIsOver) {
       return;
     }
-    if (!logs.requireDeployAction && !logs.requireAction) {
+    if (!logs.requireAction) {
       return;
     }
     const r = Number(logs.timeout) - Date.now();
