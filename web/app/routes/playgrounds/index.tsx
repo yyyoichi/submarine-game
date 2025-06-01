@@ -200,7 +200,7 @@ export default function Playground(props: Route.ComponentProps) {
           ? "torpedo-hit"
           : "mine-hit",
 
-    firstAction: "me",
+    firstAction: logs.isFirstAction ? "me" : "enemy",
     myActionLogs: myActionLogs.length > 0 ? myActionLogs : [makeHistoryLog()],
     enemyActionLogs:
       enemyActionLogs.length > 0 ? enemyActionLogs : [makeHistoryLog()],

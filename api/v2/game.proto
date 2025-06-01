@@ -65,6 +65,7 @@ message LogsResponse {
   int64 timeout = 7;// 行動期限
   int64 mill_second_per_turn = 8; // 行動可能時間
   int32 board_width = 9; // ボードの横幅
+  bool is_first_action = 12; // 自身が先攻か
   repeated TurnAction action_logs = 10;
   repeated SectorStatus sectors = 11;
 }

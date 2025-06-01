@@ -320,7 +320,7 @@ func (x *LogsRequest) GetPlayerId() string {
 type LogsResponse struct {
 	state               protoimpl.MessageState       `protogen:"open.v1"`
 	RequireAction       bool                         `protobuf:"varint,1,opt,name=require_action,json=requireAction,proto3" json:"require_action,omitempty"`                                 // 行動必要かどうか
-	RequireDeployAction bool                         `protobuf:"varint,2,opt,name=require_deploy_action,json=requireDeployAction,proto3" json:"require_deploy_action,omitempty"`             // 初回配置の行動が必要か
+	RequireDeployAction bool                         `protobuf:"varint,2,opt,name=require_deploy_action,json=requireDeployAction,proto3" json:"require_deploy_action,omitempty"`             // 彼我の初回配置の行動が終了していない
 	GameIsOver          bool                         `protobuf:"varint,3,opt,name=game_is_over,json=gameIsOver,proto3" json:"game_is_over,omitempty"`                                        // ゲームが終了しているか
 	GameOverReason      GameOverReason               `protobuf:"varint,4,opt,name=game_over_reason,json=gameOverReason,proto3,enum=api.v2.GameOverReason" json:"game_over_reason,omitempty"` // ゲーム終了理由
 	Win                 bool                         `protobuf:"varint,5,opt,name=win,proto3" json:"win,omitempty"`                                                                          // 勝利したか
@@ -328,6 +328,7 @@ type LogsResponse struct {
 	Timeout             int64                        `protobuf:"varint,7,opt,name=timeout,proto3" json:"timeout,omitempty"`                                                                  // 行動期限
 	MillSecondPerTurn   int64                        `protobuf:"varint,8,opt,name=mill_second_per_turn,json=millSecondPerTurn,proto3" json:"mill_second_per_turn,omitempty"`                 // 行動可能時間
 	BoardWidth          int32                        `protobuf:"varint,9,opt,name=board_width,json=boardWidth,proto3" json:"board_width,omitempty"`                                          // ボードの横幅
+	IsFirstAction       bool                         `protobuf:"varint,12,opt,name=is_first_action,json=isFirstAction,proto3" json:"is_first_action,omitempty"`                              // 自身が先攻か
 	ActionLogs          []*LogsResponse_TurnAction   `protobuf:"bytes,10,rep,name=action_logs,json=actionLogs,proto3" json:"action_logs,omitempty"`
 	Sectors             []*LogsResponse_SectorStatus `protobuf:"bytes,11,rep,name=sectors,proto3" json:"sectors,omitempty"`
 	unknownFields       protoimpl.UnknownFields
@@ -425,6 +426,13 @@ func (x *LogsResponse) GetBoardWidth() int32 {
 		return x.BoardWidth
 	}
 	return 0
+}
+
+func (x *LogsResponse) GetIsFirstAction() bool {
+	if x != nil {
+		return x.IsFirstAction
+	}
+	return false
 }
 
 func (x *LogsResponse) GetActionLogs() []*LogsResponse_TurnAction {
@@ -968,7 +976,7 @@ const file_api_v2_game_proto_rawDesc = "" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\"C\n" +
 	"\vLogsRequest\x12\x17\n" +
 	"\agame_id\x18\x01 \x01(\tR\x06gameId\x12\x1b\n" +
-	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\"\xcb\a\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\"\xf3\a\n" +
 	"\fLogsResponse\x12%\n" +
 	"\x0erequire_action\x18\x01 \x01(\bR\rrequireAction\x122\n" +
 	"\x15require_deploy_action\x18\x02 \x01(\bR\x13requireDeployAction\x12 \n" +
@@ -980,7 +988,8 @@ const file_api_v2_game_proto_rawDesc = "" +
 	"\atimeout\x18\a \x01(\x03R\atimeout\x12/\n" +
 	"\x14mill_second_per_turn\x18\b \x01(\x03R\x11millSecondPerTurn\x12\x1f\n" +
 	"\vboard_width\x18\t \x01(\x05R\n" +
-	"boardWidth\x12@\n" +
+	"boardWidth\x12&\n" +
+	"\x0fis_first_action\x18\f \x01(\bR\risFirstAction\x12@\n" +
 	"\vaction_logs\x18\n" +
 	" \x03(\v2\x1f.api.v2.LogsResponse.TurnActionR\n" +
 	"actionLogs\x12;\n" +

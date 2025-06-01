@@ -373,6 +373,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("1", "1"), nil, &GetLogsOutput{
 				RequireAction:       true,
 				RequireDeployAction: false,
+				IsFirstAction:       true,
 				NumTurn:             2,
 				Actions: []LogAction{
 					{PlayerId: "2", Turn: 1, At: -1, T: core.MoveAction, To: -1, Direction: core.East},
@@ -388,6 +389,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("2", "1"), nil, &GetLogsOutput{
 				RequireAction:       false,
 				RequireDeployAction: false,
+				IsFirstAction:       true,
 				NumTurn:             2,
 				Actions: []LogAction{
 					{PlayerId: "1", Turn: 1, At: 1, T: core.MoveAction, To: 1, Direction: core.East},
@@ -400,6 +402,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("3", "1"), nil, &GetLogsOutput{
 				RequireAction:       true,
 				RequireDeployAction: true,
+				IsFirstAction:       false,
 			}},
 			// 自分の初回行動あり
 			{func(b *BattleService) {
@@ -408,6 +411,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("31", "2"), nil, &GetLogsOutput{
 				RequireAction:       false,
 				RequireDeployAction: true,
+				IsFirstAction:       true,
 				NumTurn:             1,
 				Actions: []LogAction{
 					{PlayerId: "2", Turn: 0, At: 1, To: 1, From: 0, T: core.MoveAction, Direction: core.East},
@@ -420,6 +424,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("4", "1"), nil, &GetLogsOutput{
 				RequireAction:       true,
 				RequireDeployAction: true,
+				IsFirstAction:       false,
 				NumTurn:             1,
 				Actions: []LogAction{
 					{PlayerId: "2", Turn: 0, At: -1, To: -1, From: -1, T: core.MoveAction, Direction: core.East},
@@ -435,6 +440,7 @@ func TestBattleService(t *testing.T) {
 			}, newInput("5", "2"), nil, &GetLogsOutput{
 				RequireAction:       false,
 				RequireDeployAction: false,
+				IsFirstAction:       true,
 				NumTurn:             1,
 				GameOver: &GameOver{
 					Winner: "1",

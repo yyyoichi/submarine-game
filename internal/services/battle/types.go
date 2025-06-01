@@ -32,6 +32,8 @@ type GetLogsOutput struct {
 	RequireAction bool
 	// 初回の行動要求
 	RequireDeployAction bool
+	// 先攻か
+	IsFirstAction bool
 	// セクターごとに利用可能な行動タイプ
 	SectorActionsMap map[core.Sector][]core.ActionType
 	// ゲーム終了

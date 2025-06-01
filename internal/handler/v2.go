@@ -71,6 +71,7 @@ func (h *V2Handler) Logs(ctx context.Context, req *connect.Request[v2.LogsReques
 		Timeout:             output.Timeout.UnixMilli(),
 		MillSecondPerTurn:   output.TimeoutDurationMSec,
 		BoardWidth:          int32(output.Game.OceanMap.W),
+		IsFirstAction:       output.IsFirstAction,
 		ActionLogs:          make([]*v2.LogsResponse_TurnAction, output.NumTurn),
 		Sectors:             make([]*v2.LogsResponse_SectorStatus, output.Game.OceanMap.H*output.Game.OceanMap.W),
 	}

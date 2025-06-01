@@ -255,7 +255,10 @@ func (s *BattleService) GetLogs(ctx context.Context, input *GetLogsInput) (*GetL
 		resp.Timeout = game.Timestamp.Add(s.timeoutDuration)
 		resp.RequireDeployAction = true
 	}
-
+	if len(actions) > 0 {
+		// 先攻かどうか
+		resp.IsFirstAction = actions[0].PlayerId == input.PlayerId
+	}
 	// 終了時0値
 	if resp.GameOver != nil {
 		resp.RequireAction = false
