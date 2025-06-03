@@ -25,7 +25,7 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "postCreateCommand": "sh /workspaces/submarine-game/.devcontainer/init.sh",
-  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && sh /workspaces/submarine-game/.devcontainer/start.sh",
   "customizations": {
     "vscode": {
       "extensions": [
