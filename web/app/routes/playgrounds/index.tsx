@@ -150,7 +150,19 @@ export default function Playground(props: Route.ComponentProps) {
     enableTorpedoSectors: filterSectors(ActionType.FIIRE_TORPEDO),
     enableMineSectors: filterSectors(ActionType.TRIGGER_MINE),
     action: ({ at, type }) => {
-      fetcher.submit({ type: "action", at: at, act: type }, { method: "POST" });
+      fetcher.submit(
+        {
+          type: "action",
+          at: at,
+          act:
+            type === "move"
+              ? ActionType.MOVE
+              : type === "fire-torpedo"
+                ? ActionType.FIIRE_TORPEDO
+                : ActionType.TRIGGER_MINE,
+        },
+        { method: "POST" },
+      );
     },
     prevAction: getPrevAction(),
     loading: fetcher.state !== "idle",
@@ -278,7 +290,9 @@ export async function clientAction({
           case "action": {
             const at = formData.get("at")?.toString();
             const strActionType = formData.get("act")?.toString();
+            console.log(strActionType);
             const actionType = Number(strActionType);
+            console.log(`actionType: ${actionType}, at: ${at}`);
             await battleClient.action(
               {
                 type: actionType,
