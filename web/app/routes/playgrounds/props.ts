@@ -1,4 +1,4 @@
-import { sector } from "@/lib/utils";
+import { SectorDirection, sector } from "@/lib/utils";
 import type React from "react";
 import { useState } from "react";
 import type { FinishedPage, PlayingPage, PreparingPage } from "./component";
@@ -52,12 +52,44 @@ export const usePreparingPageProps = (p: PreparingPageParams) => {
     }
     switch (sctState.state) {
       case "selectme": {
-        console.log("me move to", dir);
-        break;
+        const d = new SectorDirection(p.boardWidth);
+        const next =
+          dir === "North"
+            ? d.north(sctState.cursorSct, p.enableDeploySectors)
+            : dir === "South"
+              ? d.south(sctState.cursorSct, p.enableDeploySectors)
+              : dir === "East"
+                ? d.east(sctState.cursorSct, p.enableDeploySectors)
+                : d.west(sctState.cursorSct, p.enableDeploySectors);
+        if (next === -1) {
+          return;
+        }
+        console.log("me move to", next);
+        setSctState((prev) => ({
+          ...prev,
+          cursorSct: next,
+        }));
+        return;
       }
       case "selectmines": {
-        console.log("mines move to", dir);
-        break;
+        const d = new SectorDirection(p.boardWidth);
+        const next =
+          dir === "North"
+            ? d.north(sctState.cursorSct, p.enableDeploySectors)
+            : dir === "South"
+              ? d.south(sctState.cursorSct, p.enableDeploySectors)
+              : dir === "East"
+                ? d.east(sctState.cursorSct, p.enableDeploySectors)
+                : d.west(sctState.cursorSct, p.enableDeploySectors);
+        if (next === -1) {
+          return;
+        }
+        console.log("mine move to", next);
+        setSctState((prev) => ({
+          ...prev,
+          cursorSct: next,
+        }));
+        return;
       }
     }
   };
@@ -295,7 +327,7 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
     }
     setActState((prev) => {
       if (prev.state === "done") return prev;
-      if (actState.state === "actiontype") {
+      if (prev.state === "actiontype") {
         const uses: Record<
           InputDirection,
           Record<PlayingActionType, PlayingActionType>
@@ -327,8 +359,32 @@ export const usePlayingPageProps = (p: PlayingPageParams) => {
         };
       }
       // actionat state
-      // TODO
-      console.log("move to", dir);
+      if (prev.state === "actionat") {
+        const d = new SectorDirection(p.boardWidth);
+        const enables =
+          prev.selectedActType === "move"
+            ? p.enableMoveSectors
+            : prev.selectedActType === "fire-torpedo"
+              ? p.enableTorpedoSectors
+              : p.enableMineSectors;
+        const next =
+          dir === "North"
+            ? d.north(prev.selectedSct, enables)
+            : dir === "South"
+              ? d.south(prev.selectedSct, enables)
+              : dir === "East"
+                ? d.east(prev.selectedSct, enables)
+                : d.west(prev.selectedSct, enables);
+        if (next === -1) {
+          return prev;
+        }
+        console.log("move to", dir);
+        return {
+          state: "actionat",
+          selectedActType: prev.selectedActType,
+          selectedSct: next,
+        };
+      }
       return prev;
     });
   };
