@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "name": "Run Vitest on Current File",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/web",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "program": "${workspaceFolder}/web/node_modules/vitest/vitest.mjs",
+      "args": [
+        "run",
+        "${file}"
+      ]
+    }
+  ]
+}

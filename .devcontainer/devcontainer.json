@@ -30,7 +30,8 @@
     "vscode": {
       "extensions": [
         "biomejs.biome",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "vitest.explorer"
       ]
     }
   },
