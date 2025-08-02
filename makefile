@@ -7,6 +7,10 @@ server:
 	@go run main.go
 	echo "🪖 Running Server"
 
+d-server:
+	@echo "🔨 Running Server with no game timeout"
+	@go run main.go -timeout=86400
+
 client:
 	@cd web && npm run dev
 	echo "🪖 Running Client"

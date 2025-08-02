@@ -14,21 +14,14 @@ import (
 )
 
 type V2Handler struct {
-	matchingService *matching.MatchingService
-	battleService   *battle.BattleService
+	MatchingService *matching.MatchingService
+	BattleService   *battle.BattleService
 	apiv2connect.MatchingServiceHandler
 	apiv2connect.BattleServiceHandler
 }
 
-func NewV2() V2Handler {
-	return V2Handler{
-		matchingService: matching.New(),
-		battleService:   battle.New(),
-	}
-}
-
 func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitEnemyRequest], stream *connect.ServerStream[v2.WaitEnemyResponse]) error {
-	ch, err := h.matchingService.Match(ctx)
+	ch, err := h.MatchingService.Match(ctx)
 	if err != nil {
 		return err
 	}
@@ -50,13 +43,13 @@ func (h *V2Handler) WaitEnemy(ctx context.Context, req *connect.Request[v2.WaitE
 			if err := stream.Send(resp); err != nil {
 				return err
 			}
-			return h.battleService.NewGame(out.GameId, [2]string{out.PlayerId, out.EnemyId})
+			return h.BattleService.NewGame(out.GameId, [2]string{out.PlayerId, out.EnemyId})
 		}
 	}
 }
 
 func (h *V2Handler) Logs(ctx context.Context, req *connect.Request[v2.LogsRequest]) (*connect.Response[v2.LogsResponse], error) {
-	output, err := h.battleService.GetLogs(ctx, &battle.GetLogsInput{
+	output, err := h.BattleService.GetLogs(ctx, &battle.GetLogsInput{
 		GameId:   req.Msg.GameId,
 		PlayerId: req.Msg.PlayerId,
 	})
@@ -164,7 +157,7 @@ func (h *V2Handler) Deploy(ctx context.Context, req *connect.Request[v2.DeployRe
 	for i, s := range req.Msg.Mines {
 		input.Mines[i] = int8(s)
 	}
-	err := h.battleService.DeploySubmarineAndMines(ctx, input)
+	err := h.BattleService.DeploySubmarineAndMines(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -181,11 +174,11 @@ func (h *V2Handler) Action(ctx context.Context, req *connect.Request[v2.ActionRe
 	var err error
 	switch req.Msg.Type {
 	case v2.ActionType_ACTION_TYPE_MOVE:
-		err = h.battleService.Move(ctx, input)
+		err = h.BattleService.Move(ctx, input)
 	case v2.ActionType_ACTION_TYPE_FIIRE_TORPEDO:
-		err = h.battleService.FireTorpedo(ctx, input)
+		err = h.BattleService.FireTorpedo(ctx, input)
 	case v2.ActionType_ACTION_TYPE_TRIGGER_MINE:
-		err = h.battleService.TriggerMine(ctx, input)
+		err = h.BattleService.TriggerMine(ctx, input)
 	}
 	if err != nil {
 		return nil, err
@@ -195,7 +188,7 @@ func (h *V2Handler) Action(ctx context.Context, req *connect.Request[v2.ActionRe
 
 // 相手の行動を待機する
 func (h *V2Handler) Wait(ctx context.Context, req *connect.Request[v2.WaitRequest], stream *connect.ServerStream[v2.WaitResponse]) error {
-	done, err := h.battleService.WaitTurn(ctx, &battle.WaitTurnInput{GameId: req.Msg.GameId, PlayerId: req.Msg.PlayerId})
+	done, err := h.BattleService.WaitTurn(ctx, &battle.WaitTurnInput{GameId: req.Msg.GameId, PlayerId: req.Msg.PlayerId})
 	if err != nil {
 		return err
 	}

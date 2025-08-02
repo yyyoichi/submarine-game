@@ -18,8 +18,19 @@ type BattleService struct {
 	timeoutDuration time.Duration
 }
 
-func New() *BattleService {
+type Options func(o *BattleService)
+
+func WithCustomTimeout(sec int64) Options {
+	return func(o *BattleService) {
+		o.timeoutDuration = time.Duration(time.Millisecond*500) + time.Duration(sec)*time.Second
+	}
+}
+
+func New(opts ...Options) *BattleService {
 	var battle BattleService
+	for _, op := range opts {
+		op(&battle)
+	}
 	battle.init()
 	return &battle
 }

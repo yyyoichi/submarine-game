@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -20,12 +21,20 @@ import (
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v1/apiv1connect"
 	"github.com/yyyoichi/submarine-game/internal/gen/api/v2/apiv2connect"
 	"github.com/yyyoichi/submarine-game/internal/handler"
+	"github.com/yyyoichi/submarine-game/internal/services/battle"
+	"github.com/yyyoichi/submarine-game/internal/services/matching"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
+var (
+	timeoutSec = flag.Int64("timeout", 0, "timeout second time")
+)
+
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	flag.Parse()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -34,7 +43,14 @@ func main() {
 	rpc := http.NewServeMux()
 	rpc.Handle(apiv1connect.NewHelloServiceHandler(&Handler{}))
 
-	v2Handler := handler.NewV2()
+	var battleOptions = make([]battle.Options, 0, 1)
+	if timeoutSec != nil {
+		battleOptions = append(battleOptions, battle.WithCustomTimeout(*timeoutSec))
+	}
+	var v2Handler = handler.V2Handler{
+		BattleService:   battle.New(battleOptions...),
+		MatchingService: matching.New(),
+	}
 	gmHandler := handler.NewHandler(context.Background())
 	rpc.Handle(apiv1connect.NewGameServiceHandler(gmHandler))
 	rpc.Handle(apiv2connect.NewMatchingServiceHandler(&v2Handler))
