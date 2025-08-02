@@ -6,8 +6,8 @@ import {
 } from "@/gen/api/v2/game_pb";
 import { battleClient } from "@/lib/connectapi";
 import { ConnectError } from "@connectrpc/connect";
-import { useEffect, useState } from "react";
-import { redirect, useFetcher, useSubmit } from "react-router";
+import { useEffect } from "react";
+import { redirect, useFetcher, useLoaderData, useSubmit } from "react-router";
 import type { Route } from "./+types";
 import { FinishedPage, PlayingPage, PreparingPage } from "./component";
 import {
@@ -16,25 +16,11 @@ import {
   usePreparingPageProps,
 } from "./props";
 
-export default function Playground(props: Route.ComponentProps) {
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
-  const logs = props.loaderData!;
-  const [usePageName, setUsePageName] = useState<"deploy" | "play" | "finish">(
-    "deploy",
-  );
-  useEffect(() => {
-    if (!logs) return;
-    // ページ選定
-    if (logs.gameIsOver) {
-      setUsePageName("finish");
-      return;
-    }
-    if (logs.requireDeployAction) {
-      setUsePageName("deploy");
-      return;
-    }
-    setUsePageName("play");
-  }, [logs]);
+export default function Playground({
+  loaderData,
+  params,
+}: Route.ComponentProps) {
+  const { logs } = loaderData;
   // wait request
   const submit = useSubmit();
   useEffect(() => {
@@ -53,9 +39,6 @@ export default function Playground(props: Route.ComponentProps) {
     if (logs.gameIsOver) {
       return;
     }
-    if (!logs.requireAction) {
-      return;
-    }
     const r = Number(logs.timeout) - Date.now();
     const timeout = setTimeout(() => {
       submit(null, { method: "DELETE" });
@@ -65,176 +48,20 @@ export default function Playground(props: Route.ComponentProps) {
     };
   }, [submit, logs]);
 
-  const islandSectors = logs.sectors
-    .filter((x) => x.island)
-    .map((x) => x.sector);
-  const fetcher = useFetcher();
-  const deployingPageProps = usePreparingPageProps({
-    timeout: new Date(Number(logs.timeout)),
-    milliSecondPerTurn: Number(logs.millSecondPerTurn),
-    boardWidth: logs.boardWidth,
-    mineCount: 2,
-    islandSectors: islandSectors,
-    enableDeploySectors: logs.sectors
-      .filter((x) => !x.island)
-      .map((x) => x.sector),
-    enableMineSectors: logs.sectors
-      .filter((x) => !x.island)
-      .map((x) => x.sector),
-    deployAction: ({ deployAt, mines }) => {
-      fetcher.submit(
-        { type: "deploy", at: deployAt, mines: mines.join(",") },
-        { method: "POST" },
-      );
-    },
-    loading: fetcher.state !== "idle",
-  });
-  const filterSectors = (type: ActionType) => {
-    return logs.sectors
-      .filter((x) => x.enableActions.includes(type))
-      .map((x) => x.sector);
-  };
-  type PrevAction = Parameters<typeof usePlayingPageProps>[0]["prevAction"];
-  const getPrevAction = (): PrevAction => {
-    const me = !logs.requireAction;
-    const latestAction = logs.actionLogs.at(-1);
-    const defaultAction: PrevAction = {
-      mode: "hide",
-      me: me,
-      type: "deploy",
-    };
-    if (!latestAction) return defaultAction;
-    const latestLog = me ? latestAction.me : latestAction.enemy;
-    if (!latestLog) return defaultAction;
-    if (latestLog.type === ActionType.UNSPECIFIED) return defaultAction;
-    if (latestLog.type === ActionType.MOVE)
-      return {
-        mode: "hide",
-        me: me,
-        type: "move",
-        direction:
-          latestLog.direction === 0
-            ? "North"
-            : latestLog.direction === 1
-              ? "East"
-              : latestLog.direction === 2
-                ? "South"
-                : "West",
-      };
-    return {
-      mode: "show",
-      me: me,
-      type:
-        latestLog.type === ActionType.FIIRE_TORPEDO
-          ? "fire-torpedo"
-          : "trigger-mine",
-      at: latestLog.at,
-      result:
-        latestLog.result === ActionResult.HIT
-          ? "hit"
-          : latestLog.result === ActionResult.HARD_TO_STARBOARD
-            ? "hard-to-starboard"
-            : "full-speed-ahead",
-    };
-  };
-  const playingPageProps = usePlayingPageProps({
-    timeout: new Date(Number(logs.timeout)),
-    milliSecondPerTurn: Number(logs.millSecondPerTurn),
-    boardWidth: logs.boardWidth,
-    turn: logs.numTurn,
-    inMyTurn: logs.requireAction,
-
-    at: logs.sectors.filter((x) => x.selfOccupied)[0].sector,
-    islandSectors: islandSectors,
-    enableMoveSectors: filterSectors(ActionType.MOVE),
-    enableTorpedoSectors: filterSectors(ActionType.FIIRE_TORPEDO),
-    enableMineSectors: filterSectors(ActionType.TRIGGER_MINE),
-    action: ({ at, type }) => {
-      fetcher.submit(
-        {
-          type: "action",
-          at: at,
-          act:
-            type === "move"
-              ? ActionType.MOVE
-              : type === "fire-torpedo"
-                ? ActionType.FIIRE_TORPEDO
-                : ActionType.TRIGGER_MINE,
-        },
-        { method: "POST" },
-      );
-    },
-    prevAction: getPrevAction(),
-    loading: fetcher.state !== "idle",
-  });
-
-  type ActionHistoryLog = Parameters<
-    typeof useFinishedPageProps
-  >[0]["myActionLogs"][number];
-  const makeHistoryLog = (a?: LogsResponse_Action): ActionHistoryLog => {
-    const dummy: ActionHistoryLog = {
-      mode: "dummy",
-    };
-    if (!a) return dummy;
-    if (a.type === ActionType.MOVE)
-      return {
-        mode: "move",
-        me: a.form,
-        sector: a.to,
-        type: "move",
-      };
-    return {
-      mode: "attack",
-      me: a.form,
-      sector: a.to,
-      type:
-        a.type === ActionType.FIIRE_TORPEDO ? "fire-torpedo" : "trigger-mine",
-      result:
-        a.result === ActionResult.HIT
-          ? "hit"
-          : a.result === ActionResult.HARD_TO_STARBOARD
-            ? "hard-to-starboard"
-            : "full-speed-ahead",
-    };
-  };
-  const myActionLogs = logs.actionLogs.map((x) => x.me).map(makeHistoryLog);
-  const enemyActionLogs = logs.actionLogs
-    .map((x) => x.enemy)
-    .map(makeHistoryLog);
-  const finishedPageProps = useFinishedPageProps({
-    winner: logs.win ? "me" : "enemy",
-    boardWidth: logs.boardWidth,
-    islandSectors: islandSectors,
-    gameOverReason:
-      logs.gameOverReason === GameOverReason.TIMEOUT
-        ? "timeout"
-        : GameOverReason.TORPEDO_HIT
-          ? "torpedo-hit"
-          : "mine-hit",
-
-    firstAction: logs.isFirstAction ? "me" : "enemy",
-    myActionLogs: myActionLogs.length > 0 ? myActionLogs : [makeHistoryLog()],
-    enemyActionLogs:
-      enemyActionLogs.length > 0 ? enemyActionLogs : [makeHistoryLog()],
-    exit: () => {
-      fetcher.submit({ type: "exit" }, { method: "POST" });
-    },
-  });
-
   if (!logs) {
     window.alert("Unexpected Error! Please reload.");
     setTimeout(() => {
-      redirect(`/playgrounds/${props.params.gameId}/${props.params.playerId}`);
+      redirect(`/playgrounds/${params.gameId}/${params.playerId}`);
     }, 1000 * 3);
     return <></>;
   }
-  switch (usePageName) {
-    case "deploy":
-      return <PreparingPage {...deployingPageProps} />;
-    case "play":
-      return <PlayingPage {...playingPageProps} />;
+  switch (loaderData.stage) {
+    case "preparing":
+      return <PreparingPageContainer />;
+    case "playing":
+      return <PlayingPageContainer />;
     default:
-      return <FinishedPage {...finishedPageProps} />;
+      return <FinishedPageContainer />;
   }
 }
 
@@ -245,7 +72,12 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
       gameId: gameId,
       playerId: playerId,
     });
-    return logs;
+    const stage: "finished" | "playing" | "preparing" = logs.gameIsOver
+      ? "finished"
+      : logs.requireDeployAction
+        ? "preparing"
+        : "playing";
+    return { logs, stage };
   } catch (e) {
     if (e instanceof ConnectError) {
       console.error(e.message);
@@ -255,7 +87,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
     } else {
       console.error(e);
     }
-    return null;
+    return { logs: null, stage: null };
   }
 }
 
@@ -339,4 +171,184 @@ export async function clientAction({
     }
   }
   return null;
+}
+
+function PreparingPageContainer() {
+  const { logs } = useLoaderData<Route.ComponentProps["loaderData"]>();
+  if (!logs) return null;
+  const islandSectors = logs.sectors
+    .filter((x) => x.island)
+    .map((x) => x.sector);
+  const fetcher = useFetcher();
+  const props = usePreparingPageProps({
+    timeout: new Date(Number(logs.timeout)),
+    milliSecondPerTurn: Number(logs.millSecondPerTurn),
+    boardWidth: logs.boardWidth,
+    mineCount: 2,
+    islandSectors: islandSectors,
+    enableDeploySectors: logs.sectors
+      .filter((x) => !x.island)
+      .map((x) => x.sector),
+    enableMineSectors: logs.sectors
+      .filter((x) => !x.island)
+      .map((x) => x.sector),
+    deployAction: ({ deployAt, mines }) => {
+      fetcher.submit(
+        { type: "deploy", at: deployAt, mines: mines.join(",") },
+        { method: "POST" },
+      );
+    },
+    loading: fetcher.state !== "idle",
+  });
+  return <PreparingPage {...props} />;
+}
+
+function PlayingPageContainer() {
+  const { logs } = useLoaderData<Route.ComponentProps["loaderData"]>();
+  if (!logs) return null;
+  const islandSectors = logs.sectors
+    .filter((x) => x.island)
+    .map((x) => x.sector);
+  const fetcher = useFetcher();
+  const filterSectors = (type: ActionType) => {
+    return logs.sectors
+      .filter((x) => x.enableActions.includes(type))
+      .map((x) => x.sector);
+  };
+  type PrevAction = Parameters<typeof usePlayingPageProps>[0]["prevAction"];
+  const getPrevAction = (): PrevAction => {
+    const me = !logs.requireAction;
+    const latestAction = logs.actionLogs.at(-1);
+    const defaultAction: PrevAction = {
+      mode: "hide",
+      me: me,
+      type: "deploy",
+    };
+    if (!latestAction) return defaultAction;
+    const latestLog = me ? latestAction.me : latestAction.enemy;
+    if (!latestLog) return defaultAction;
+    if (latestLog.type === ActionType.UNSPECIFIED) return defaultAction;
+    if (latestLog.type === ActionType.MOVE)
+      return {
+        mode: "hide",
+        me: me,
+        type: "move",
+        direction:
+          latestLog.direction === 0
+            ? "North"
+            : latestLog.direction === 1
+              ? "East"
+              : latestLog.direction === 2
+                ? "South"
+                : "West",
+      };
+    return {
+      mode: "show",
+      me: me,
+      type:
+        latestLog.type === ActionType.FIIRE_TORPEDO
+          ? "fire-torpedo"
+          : "trigger-mine",
+      at: latestLog.at,
+      result:
+        latestLog.result === ActionResult.HIT
+          ? "hit"
+          : latestLog.result === ActionResult.HARD_TO_STARBOARD
+            ? "hard-to-starboard"
+            : "full-speed-ahead",
+    };
+  };
+  const props = usePlayingPageProps({
+    timeout: new Date(Number(logs.timeout)),
+    milliSecondPerTurn: Number(logs.millSecondPerTurn),
+    boardWidth: logs.boardWidth,
+    turn: logs.numTurn,
+    inMyTurn: logs.requireAction,
+
+    at: logs.sectors.filter((x) => x.selfOccupied)[0].sector,
+    islandSectors: islandSectors,
+    enableMoveSectors: filterSectors(ActionType.MOVE),
+    enableTorpedoSectors: filterSectors(ActionType.FIIRE_TORPEDO),
+    enableMineSectors: filterSectors(ActionType.TRIGGER_MINE),
+    action: ({ at, type }) => {
+      fetcher.submit(
+        {
+          type: "action",
+          at: at,
+          act:
+            type === "move"
+              ? ActionType.MOVE
+              : type === "fire-torpedo"
+                ? ActionType.FIIRE_TORPEDO
+                : ActionType.TRIGGER_MINE,
+        },
+        { method: "POST" },
+      );
+    },
+    prevAction: getPrevAction(),
+    loading: fetcher.state !== "idle",
+  });
+  return <PlayingPage {...props} />;
+}
+
+function FinishedPageContainer() {
+  const { logs } = useLoaderData<Route.ComponentProps["loaderData"]>();
+  if (!logs) return null;
+  const islandSectors = logs.sectors
+    .filter((x) => x.island)
+    .map((x) => x.sector);
+  const fetcher = useFetcher();
+  type ActionHistoryLog = Parameters<
+    typeof useFinishedPageProps
+  >[0]["myActionLogs"][number];
+  const makeHistoryLog = (a?: LogsResponse_Action): ActionHistoryLog => {
+    const dummy: ActionHistoryLog = {
+      mode: "dummy",
+    };
+    if (!a) return dummy;
+    if (a.type === ActionType.MOVE)
+      return {
+        mode: "move",
+        me: a.form,
+        sector: a.to,
+        type: "move",
+      };
+    return {
+      mode: "attack",
+      me: a.form,
+      sector: a.to,
+      type:
+        a.type === ActionType.FIIRE_TORPEDO ? "fire-torpedo" : "trigger-mine",
+      result:
+        a.result === ActionResult.HIT
+          ? "hit"
+          : a.result === ActionResult.HARD_TO_STARBOARD
+            ? "hard-to-starboard"
+            : "full-speed-ahead",
+    };
+  };
+  const myActionLogs = logs.actionLogs.map((x) => x.me).map(makeHistoryLog);
+  const enemyActionLogs = logs.actionLogs
+    .map((x) => x.enemy)
+    .map(makeHistoryLog);
+  const props = useFinishedPageProps({
+    winner: logs.win ? "me" : "enemy",
+    boardWidth: logs.boardWidth,
+    islandSectors: islandSectors,
+    gameOverReason:
+      logs.gameOverReason === GameOverReason.TIMEOUT
+        ? "timeout"
+        : GameOverReason.TORPEDO_HIT
+          ? "torpedo-hit"
+          : "mine-hit",
+
+    firstAction: logs.isFirstAction ? "me" : "enemy",
+    myActionLogs: myActionLogs.length > 0 ? myActionLogs : [makeHistoryLog()],
+    enemyActionLogs:
+      enemyActionLogs.length > 0 ? enemyActionLogs : [makeHistoryLog()],
+    exit: () => {
+      fetcher.submit({ type: "exit" }, { method: "POST" });
+    },
+  });
+  return <FinishedPage {...props} />;
 }
